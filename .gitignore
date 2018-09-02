@@ -1,0 +1,6 @@
+auto/
+*.ptc
+*.blg
+*.fdb_latexmk
+*.fls
+*.bbl
