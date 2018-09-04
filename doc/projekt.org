@@ -28,10 +28,10 @@ have to meet several basic prerequisites:
 - we have to write in a structured way.
 
 These and other instructions are also available on the school's website
-\cite{fitWeb}.
+cite:fitWeb.
 
 An overview of the basics of typography and document creation using the system
-\LaTeX{} is shown in \cite{Rybicka}.
+\LaTeX{} is shown in cite:Rybicka.
 
 ** We need to have something to say
 Another important prerequisite for good thesis is to /write for someone/. If
@@ -237,7 +237,7 @@ The forward slash is written without spaces. For example, the school year
 2008/2009.
 
 The rules for writing abbreviations are set out in Czech Spelling Rules
-\cite{Pravidla}. For other reasons, it is appropriate to have this book at hand.
+cite:Pravidla. For other reasons, it is appropriate to have this book at hand.
 
 ** What is a standard page?
 Term /standard page/ refers to the assessment of the extent of the work, not
