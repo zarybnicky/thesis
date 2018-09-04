@@ -1,7 +1,8 @@
-% Created 2018-09-02 Sun 23:59
+% Created 2018-09-04 Tue 20:24
 \documentclass[english,odsaz]{fitthesis}
 \renewcommand\title[1]{}
 \input{metadata}
+\usepackage[figure,table]{totalcount}
 \date{\today}
 \title{projekt}
 \begin{document}
@@ -10,8 +11,8 @@
 \maketitle
 \setlength{\parskip}{0pt}
 {\hypersetup{hidelinks}\tableofcontents}
-%\listoffigures
-%\listoftables
+\iftotalfigures\listoffigures\fi
+\iftotaltables\listoftables\fi
 \iftwoside\cleardoublepage\fi
 \setlength{\parskip}{0.5\bigskipamount}
 

@@ -8,12 +8,13 @@
 # cprint = B&W links, color logo
 # %\graphicspath{{obrazky-figures/}{./obrazky-figures/}}
 #+LaTeX_HEADER: \input{metadata}
+#+LaTeX_HEADER: \usepackage[figure,table]{totalcount}
 #+BEGIN_LaTeX
 \maketitle
 \setlength{\parskip}{0pt}
 {\hypersetup{hidelinks}\tableofcontents}
-%\listoffigures
-%\listoftables
+\iftotalfigures\listoffigures\fi
+\iftotaltables\listoftables\fi
 \iftwoside\cleardoublepage\fi
 \setlength{\parskip}{0.5\bigskipamount}
 #+END_LaTeX
