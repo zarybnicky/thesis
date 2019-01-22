@@ -1,6 +1,12 @@
+# Latex
 auto/
 *.ptc
 *.blg
 *.fdb_latexmk
 *.fls
 *.bbl
+
+# Haskell
+.direnv/
+dist/
+dist-newstyle/
