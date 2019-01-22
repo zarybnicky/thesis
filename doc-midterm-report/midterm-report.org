@@ -1,0 +1,23 @@
+#+TITLE: A Haskell Web Framework
+#+AUTHOR: Jakub Zárybnický
+#+LATEX_CLASS: koma-article
+#+LATEX_CLASS_OPTIONS: [11pt,a4paper]
+#+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:nil -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+
+* A Haskell Web Framework
+
+** Introduction
+Blah
+
+** Project
+Blah
+
+** Work performed so far
+Blah
+
+** Further plans and schedule
+Blah
+
+** Conclusion
+Blah
