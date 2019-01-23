@@ -2,6 +2,9 @@
 
 with lib;
 
+let
+  cfg = config.services.helloServer;
+in
 {
   options = {
     services.helloServer = {
@@ -33,9 +36,12 @@ with lib;
       };
     };
 
-    systemd.services.nginx.virtualHosts.default = mkIf config.enableReverseProxy {
-      locations."/" = {
-        proxyPass = "http://localhost:3000";
+    services.nginx = mkIf cfg.enableReverseProxy {
+      enable = true;
+      virtualHosts.default = {
+        locations."/" = {
+          proxyPass = "http://localhost:3000";
+        };
       };
     };
 
@@ -46,7 +52,7 @@ with lib;
       serviceConfig = {
         User = "helloserver";
         Group = "helloserver";
-        ExecStart = "${config.package}/bin/hello-server";
+        ExecStart = "${cfg.package}/bin/hello-server";
       };
     };
   };
