@@ -13,15 +13,105 @@
 ** Assignment
 "Co děláte, co k tomu používáte, jak to celé funguje (bude fungovat)."
 
+Create "A Haskell Platform for Creating Progressive Web Applications"
+= an easy way to build PWAs on Haskell
+
+Since the start of the project, my goals have drifted a bit:
+- PWA framework and a set of tools
+- full-stack framework, Meteor-alike
+- all the web-dev tools missing from Haskell
+- application patterns - static site, JAM (recompile-on-demand), real-time app, ...
+
+How will it work? A set of libraries and a CLI tool.
+- libraries - PWA utilities (push notifications, ...), data sync and transport library,
+  forms, view-from-model (e.g. Django-like administration generation). To be
+  determined which ones exactly to implement and separate into libraries
+- CLI tool - for scaffolding, building, testing - mostly a set of scripts and utilities
+
 ** Motivation
+Why is this work necessary?
+
+- A gap in the market, and in the Haskell ecosystem
+
+- My personal need - I have paying clients with new projects that are waiting on
+  this. Several companies (QFPL, Obsidian.Systems, Tweag.io, IOHK) are also
+  building similar web-focused tools, though focused on other niches.
 
 ** Technologies
+Haskell, Nix, (JS, CSS)
+
+Haskell - why, what is it, why is it interesting?
+- since 1990, actively developed, rooted in academia and still the target of
+  active research - "Dependent Haskell", "Linear Haskell"
+- purely functional programming language with type inference and lazy evaluation
+- expressive types, dialog with the compiler, types encoding effects
+- language to write reliable software in - it eliminates entire classes of
+  programming errors - usually the ones that remain are logic errors
+- example of a nicely expressive type - servant
+
+#+BEGIN_SRC haskell
+type HackageAPI =
+       "users" :> Get '[JSON] [UserSummary]
+  :<|> "user" :> Capture "username" Username :> Get '[JSON] UserDetailed
+  :<|> "packages" :> Get '[JSON] [Package]
+
+getUsers :: Handler [UserSummary]
+getUser :: Username -> Handler UserDetailed
+getPackages :: Handler [Package]
+
+# server-side
+server :: Server HackageApi
+server = getUsers :<|> getUser :<|> getPackages
+
+# client-side
+getUsers :<|> getUser :<|> getPackages =
+  client @HackageApi "http://hackage.haskell.org"
+#+END_SRC
+
+Nix - why, what is it, why is it interesting?
+- since 2004, Eelco Dolstra's Ph.D. thesis in 2006
+- purely functional, lazy evaluation
+- one program consists of a closure that includes all dependencies including libc
+- atomic upgrades, rollbacks
+- complete isolation of dependencies, no DLL hell
+- NixOS - OS built on top of Nix, NixOps - a cloud deployment tool, combines
+  Terraform/CloudFormation and Puppet/Ansible with Nix (specify desired state,
+  Nix does the magic to make it happen. AWS, VPSs, VirtualBox, ...).
 
 ** Other relevant work
 
 * Work performed
 ** What's done
 "Splnil(a) jste všechny body zadání potřebné pro ISP, co jste udělali, a jak to použijete."
+
+How am I working?
+- in part extracting relevant parts from my existing Haskell applications
+- in part research, type and API design
+
+So far:
+- survey of the Haskell ecosystem around web-development
+- attempts at type design for the sync and transport part - I found a lot of
+  ways that don't work or read/write well
+- attempts at a blog where I post regular updates around this work - a failure
+  so far, I got stuck on the second post for >2 months...
+- type design for the core of the application (= business logic, a la "functional core, imperative shell")
+- proof-of-concept of a full-stack application
+- proof-of-concept of a JAM-stack-alike - a Haskell backend that will generate a
+  new frontend when its data changes
+- proof-of-concept of an offline-capable client application
+- proof-of-concept of a remotely-debuggable server (via Erlang-like CloudHaskell)
+- proof-of-concept of a frontend debugger toolbar (very limited so far)
+- a mile long to-do list full of must-haves and nice-to-haves
+
+So far missing for a PWA:
+- push notifications (should be trivial)
+- data synchronization - needs type (API) design
+
+So far missing for my extra goals:
+- type design and tooling around multi-app project
+- integration with AWS and others (trivial for some cases, not so much for the
+  regularly regenerated frontend case)
+- investigate 'serverless' (AWS Lambda and similar)
 
 ** How does it work?
 
