@@ -27,3 +27,4 @@ executable service-listener
                , jsaddle
                , jsaddle-warp
                , reflex-dom-core
+               , text

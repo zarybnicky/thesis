@@ -14,11 +14,17 @@
     service-listener = overrideCabal super.service-listener (drv: {
       postFixup = ''
         pushd $out/bin/service-listener.jsexe
-        ${pkgs.closurecompiler}/bin/closure-compiler all.js \
+        mv all.js all.unminified.js
+        ${pkgs.closurecompiler}/bin/closure-compiler \
+          all.unminified.js \
           -O ADVANCED \
           --externs=all.js.externs \
           --jscomp_off=checkVars \
-          > ../all.min.js
+          --create_source_map="all.js.map" \
+          --source_map_format=V3 \
+          > all.js
+        echo "//# sourceMappingURL=all.js.map" >> all.js
+        cp ${./static}/* .
         popd
       '';
     });

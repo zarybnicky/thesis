@@ -23,6 +23,10 @@ formal demonstration.
 - [ ] Remote debugging console (CloudHaskell)
 
 ## Techniques
-- [ ] ServiceWorker
+- [x] ServiceWorker
 - [ ] Prebuilt frontend files
 - [ ] Build-on-demand frontend
+
+## Templates
+- [x] Trivial Servant server
+- [ ] Trivial Reflex application

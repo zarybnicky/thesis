@@ -10,3 +10,4 @@ auto/
 .direnv/
 dist/
 dist-newstyle/
+result

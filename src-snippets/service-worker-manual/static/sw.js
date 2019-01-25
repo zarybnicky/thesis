@@ -1,5 +1,5 @@
 var CACHE_NAME = 'dependencies-cache';
-var REQUIRED_FILES = ['index.html', 'all.min.js'];
+var REQUIRED_FILES = ['index.html', 'all.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -12,7 +12,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   var requestUrl = new URL(event.request.url);
   if (requestUrl.pathname === '/') {
-    event.respondWith(caches.match('/index.html'));
+    event.respondWith(caches.match('index.html'));
     return;
   }
   event.respondWith(caches.match(event.request).then(
