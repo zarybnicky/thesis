@@ -1,19 +1,19 @@
 (import ../../reflex-platform {}).project ({ pkgs, ... }: {
   packages = {
-    hello-app = ./hello-app;
+    service-listener = ./service-listener;
   };
 
   shells = {
-    ghc = ["hello-app"];
-    ghcjs = ["hello-app"];
+    ghc = ["service-listener"];
+    ghcjs = ["service-listener"];
   };
 
   tools = ghc: [ ghc.ghcid ];
 
   overrides = with pkgs.haskell.lib; self: super: {
-    hello-app = overrideCabal super.hello-app (drv: {
+    service-listener = overrideCabal super.service-listener (drv: {
       postFixup = ''
-        pushd $out/bin/hello-app.jsexe
+        pushd $out/bin/service-listener.jsexe
         ${pkgs.closurecompiler}/bin/closure-compiler all.js \
           -O ADVANCED \
           --externs=all.js.externs \
