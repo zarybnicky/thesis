@@ -5,6 +5,7 @@ auto/
 *.fdb_latexmk
 *.fls
 *.bbl
+\#*
 
 # Haskell
 .direnv/

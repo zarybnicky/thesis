@@ -19,7 +19,6 @@ import System.IO (hPutStrLn, stderr)
 
 type Api =
   Get '[PlainText] Text :<|>
-  "api" :> Get '[PlainText] Text :<|>
   "hello" :> Capture "name" Text :> Get '[JSON] [Text]
 
 
@@ -34,10 +33,7 @@ main = do
 
 
 server :: Server Api
-server = rootHandler :<|> swagger :<|> hello
-
-rootHandler :: Handler Text
-rootHandler = throwError $ err303 { errHeaders = [("Location", "/api")] }
+server = swagger :<|> hello
 
 swagger :: Handler Text
 swagger = pure . pack . unpack . encodePretty . toSwagger $ Proxy @Api

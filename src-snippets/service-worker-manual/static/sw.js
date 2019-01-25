@@ -9,6 +9,15 @@ self.addEventListener('install', (event) => {
   );
 });
 
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    self.clients.claim()
+      .then(() => self.clients.matchAll())
+      .then(clients => clients.forEach(
+        client => client.postMessage("Ready for offline")))
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   var requestUrl = new URL(event.request.url);
   if (requestUrl.pathname === '/') {
@@ -18,13 +27,4 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(caches.match(event.request).then(
     response => response || fetch(event.request)
   ));
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    self.clients.claim()
-      .then(() => self.clients.matchAll())
-      .then(clients => clients.forEach(
-        client => client.postMessage("Ready for offline")))
-  );
 });

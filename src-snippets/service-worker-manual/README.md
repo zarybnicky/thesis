@@ -1,7 +1,10 @@
 # Simple offline-available application using a ServiceWorker
 
 This snippet contains a simple GHCJS application that listens to messages from
-the Service Worker that gets registered on that page. 
+the Service Worker that gets registered on that page. What the Service Worker
+does? First, it saves all files that the application needs into its cache, and
+afterwards notifies the application (via postMessage) that it's ready to go
+offline.
 
 *Prerequisites*: nix
 
