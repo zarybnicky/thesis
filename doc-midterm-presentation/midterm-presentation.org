@@ -9,33 +9,68 @@
 #+BEAMER_THEME: Madrid
 #+COLUMNS: %45ITEM %10BEAMER_ENV(Env) %10BEAMER_ACT(Act) %4BEAMER_COL(Col) %8BEAMER_OPT(Opt)
 
-* Introduction
+* What, why?
+** Motivation
+- The trend of FP on the frontend, motivated by Elm, PureScript (langs inspired
+  by Haskell, but also limited).
+- The full power of Haskell, sharing common code with the server
+- Rapidly growing area in the Haskell ecosystem, many companies involved:
+  - Obsidian -
+  - Tweag -
+  - QFPL -
+  - IOHK -
+- Growing, but still not established - missing tools and libraries
+- More immediate need - I have clients with projects that are waiting on this
+  thesis' results
+
 ** Assignment
-"Co děláte, co k tomu používáte, jak to celé funguje (bude fungovat)."
-
 Create "A Haskell Platform for Creating Progressive Web Applications"
-= an easy way to build PWAs on Haskell
 
+What's a PWA?
+- "Progressive Web Application"
+- new buzzword from Google
+- an /almost/ native app
+  - load a website
+  - save to phone homepage like an app
+  - available offline, perhaps with data sync
+  - use push notifications, device APIs
+
+Why this particular topic?
+- many missing tools in the ecosystem
+- I chose PWA - personal need, started a new project in August and September
+  without necessary tools
+- The projects is mostly done, but it still isn't a PWA
+
+** Goal drift
 Since the start of the project, my goals have drifted a bit:
 - PWA framework and a set of tools
 - full-stack framework, Meteor-alike
 - all the web-dev tools missing from Haskell
 - application patterns - static site, JAM (recompile-on-demand), real-time app, ...
 
-How will it work? A set of libraries and a CLI tool.
-- libraries - PWA utilities (push notifications, ...), data sync and transport library,
-  forms, view-from-model (e.g. Django-like administration generation). To be
-  determined which ones exactly to implement and separate into libraries
-- CLI tool - for scaffolding, building, testing - mostly a set of scripts and utilities
+* What's done?
+** What have I been doing?
+How am I working?
+- in part extracting relevant parts from my existing Haskell applications
+- in part research, type and API design
 
-** Motivation
-Why is this work necessary?
+So far:
+- survey of web frameworks all around the programming world
+- survey of the Haskell ecosystem around web-development
+- attempts at a blog where I post regular updates around this work - a failure
+  so far, I got stuck on the second post for >2 months...
+- type design for the core of the application (= business logic, a la "functional core, imperative shell")
+- proof-of-concept of a full-stack application
+- proof-of-concept of a JAM-stack-alike
+- proof-of-concept of an offline-capable client application
+- proof-of-concept of a frontend debugger toolbar (very limited so far)
+- attempts at type design for the sync and transport part - I found a lot of
+  ways that don't work or read/write well
 
-- A gap in the market, and in the Haskell ecosystem
+- a mile long to-do list full of must-haves and nice-to-haves
 
-- My personal need - I have paying clients with new projects that are waiting on
-  this. Several companies (QFPL, Obsidian.Systems, Tweag.io, IOHK) are also
-  building similar web-focused tools, though focused on other niches.
+-- add screenshots
+-- what's publicly available? (repo, zarybnicky.com repo)
 
 ** Technologies
 Haskell, Nix, (JS, CSS)
@@ -78,42 +113,26 @@ Nix - why, what is it, why is it interesting?
   Terraform/CloudFormation and Puppet/Ansible with Nix (specify desired state,
   Nix does the magic to make it happen. AWS, VPSs, VirtualBox, ...).
 
-** Other relevant work
+* What's next?
+** Plans
+Three tiers of plans:
+- PWA = basic, as per assignment
+- data sync = extra goal, would be quite an achievement
+- vision for the future = pattern language, ...
 
-* Work performed
-** What's done
-"Splnil(a) jste všechny body zadání potřebné pro ISP, co jste udělali, a jak to použijete."
+-- add images (see board)
 
-How am I working?
-- in part extracting relevant parts from my existing Haskell applications
-- in part research, type and API design
+** Next tasks
+Wrapping up pas work:
+- finish article drafts
+- finish extracting useful patterns from my applications
 
-So far:
-- survey of the Haskell ecosystem around web-development
-- attempts at type design for the sync and transport part - I found a lot of
-  ways that don't work or read/write well
-- attempts at a blog where I post regular updates around this work - a failure
-  so far, I got stuck on the second post for >2 months...
-- type design for the core of the application (= business logic, a la "functional core, imperative shell")
-- proof-of-concept of a full-stack application
-- proof-of-concept of a JAM-stack-alike - a Haskell backend that will generate a
-  new frontend when its data changes
-- proof-of-concept of an offline-capable client application
-- proof-of-concept of a remotely-debuggable server (via Erlang-like CloudHaskell)
-- proof-of-concept of a frontend debugger toolbar (very limited so far)
-- a mile long to-do list full of must-haves and nice-to-haves
-
-So far missing for a PWA:
+Opening new areas:
+- ServiceWorker wrapper or template
 - push notifications (should be trivial)
-- data synchronization - needs type (API) design
-
-So far missing for my extra goals:
-- type design and tooling around multi-app project
-- integration with AWS and others (trivial for some cases, not so much for the
-  regularly regenerated frontend case)
-- investigate 'serverless' (AWS Lambda and similar)
-
-** How does it work?
+- pre-rendering (build- or runtime)
+- CLI tool
+- type design for data channel/synchronization
 
 * Conclusion
 ** What's left?
