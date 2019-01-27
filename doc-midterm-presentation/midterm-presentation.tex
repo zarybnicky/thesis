@@ -1,4 +1,4 @@
-% Created 2019-01-23 Wed 18:07
+% Created 2019-01-27 Sun 17:07
 % Intended LaTeX compiler: pdflatex
 \documentclass[presentation]{beamer}
 \usepackage[utf8]{inputenc}
@@ -14,6 +14,7 @@
 \usepackage{amssymb}
 \usepackage{capt-of}
 \usepackage{hyperref}
+\usepackage{minted}
 \usetheme{Madrid}
 \author{Jakub Zárybnický}
 \date{2019-01-29}
@@ -34,38 +35,239 @@
 \end{frame}
 
 
-\section{Introduction}
-\label{sec:org2b35d6a}
-\begin{frame}[label={sec:org155e4f5}]{Assignment}
-"Co děláte, co k tomu používáte, jak to celé funguje (bude fungovat)."
-\end{frame}
-
-\begin{frame}[label={sec:org8b7bd2b}]{Motivation}
-\end{frame}
-
-\begin{frame}[label={sec:org386f555}]{Technologies}
-\end{frame}
-
-\begin{frame}[label={sec:org3116a91}]{Other relevant work}
-\end{frame}
-
-\section{Work performed}
-\label{sec:org37dfdd5}
-\begin{frame}[label={sec:org4fec038}]{What's done}
-"Splnil(a) jste všechny body zadání potřebné pro ISP, co jste udělali, a jak to použijete."
-\end{frame}
-
-\begin{frame}[label={sec:org914418b}]{How does it work?}
-\end{frame}
-
-\section{Conclusion}
-\label{sec:orgf9c5c15}
-\begin{frame}[label={sec:org37e5b09}]{What's left?}
+\section{What, why?}
+\label{sec:org27da95f}
+\begin{frame}[label={sec:orgd6ecc70}]{Motivation}
 \begin{itemize}
-\item build on the introduction
+\item The trend of FP on the frontend, motivated by Elm, PureScript
+\item The full power of Haskell, sharing common code with the server
+\item Rapidly growing area in the Haskell ecosystem, many companies involved, OSS
+contributors:
+\begin{itemize}
+\item IOHK (Cardano) - iohk-ops, distributed processing
+\item Obsidian - Reflex, Obelisk, Rhyolite
+\item Tweag - Asterius, Inline-js
+\item QFPL - Reflex-workshop, UI components
+\end{itemize}
+\item Growing, but still not established - missing tools and libraries
+\item More immediate need - I have clients with projects that are waiting on this
+thesis' results
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:orgb6415e9}]{Schedule}
+\begin{frame}[label={sec:orga9449ac}]{Assignment}
+\begin{itemize}
+\item My task:
+\begin{itemize}
+\item \emph{"A Haskell Platform for Creating Progressive Web Applications"}
+\end{itemize}
+\end{itemize}
+
+\pause
+
+\begin{itemize}
+\item What's a PWA?
+\begin{itemize}
+\item "Progressive Web Application"
+\item new buzzword from Google
+\item an \emph{almost} native app
+\begin{itemize}
+\item load a website
+\item save to phone homepage like an app
+\item available offline, perhaps with data sync
+\item use push notifications, device APIs
+\end{itemize}
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label={sec:orgbdd1a29}]{Motivation}
+\begin{itemize}
+\item Why this particular topic?
+\begin{itemize}
+\item many missing tools in the ecosystem
+\item I chose PWA - personal need, started a new project in August and September
+without necessary tools
+\item The projects is mostly done, but it still isn't a PWA
+\end{itemize}
+\end{itemize}
+
+\pause
+
+\begin{itemize}
+\item Since the start of the project, my real-world goals have drifted a bit:
+\begin{itemize}
+\item PWA framework and a set of tools
+\item full-stack framework, Meteor-alike
+\item all the web-dev tools missing from Haskell
+\item application patterns
+\begin{itemize}
+\item static site, JAM (recompile-on-demand), real-time app, \ldots{}
+\end{itemize}
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\section{What's done?}
+\label{sec:org8f6475e}
+\begin{frame}[label={sec:orgcdc5b04}]{What have I been doing?}
+\begin{itemize}
+\item How have I been working?
+\begin{itemize}
+\item in part extracting relevant parts from my existing Haskell applications
+\item in part research, type and API design
+\end{itemize}
+\end{itemize}
+
+\pause
+
+\begin{itemize}
+\item What worked out?
+\begin{itemize}
+\item survey of web frameworks all around the programming world
+\item survey of the Haskell ecosystem around web development
+\item proof-of-concept of a full-stack application
+\item proof-of-concept of a JAM-stack-alike
+\item proof-of-concept of an offline-capable client application
+\item proof-of-concept of a frontend debugger toolbar (quite limited so far)
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label={sec:orgbd585d0}]{What haven't I been doing?}
+\begin{itemize}
+\item What didn't work out?
+\begin{itemize}
+\item attempts at a blog with regular updates - a failure this far
+\item attempts at type design for the sync and transport part - I found a lot of
+ways that don't work or read/write well
+\item a mile long to-do list and a backlog of ideas and research topics
+\end{itemize}
+\end{itemize}
+
+\pause
+
+\begin{itemize}
+\item Non-goals:
+\begin{itemize}
+\item write and publish code
+\item write the thesis itself
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label={sec:org540f6c1}]{Technologies}
+The main ones:
+\begin{itemize}
+\item Haskell
+\item Nix
+\end{itemize}
+
+TODO: add logos!
+\end{frame}
+
+\begin{frame}[label={sec:orgce77b40}]{Haskell}
+\begin{itemize}
+\item since 1990, actively developed, rooted in academia and still the target of
+active research - "Dependent Haskell", "Linear Haskell"
+\item purely functional programming language with type inference and lazy evaluation
+\item expressive types, dialog with the compiler, types encoding effects
+\item language to write reliable software in - it eliminates entire classes of
+programming errors - usually the ones that remain are logic errors
+\item example of a nicely expressive type - servant
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile,label={sec:org90416f2}]{Haskell}
+ \begin{minted}[]{haskell}
+type HackageAPI =
+  "users" :> Get '[JSON] [User] :<|>
+  "user" :> Capture "login" Login :> Get '[JSON] User :<|>
+  "packages" :> Get '[JSON] [Package]
+
+getUsers :: Handler [User]
+getUser :: Login -> Handler User
+getPackages :: Handler [Package]
+
+server :: Server HackageApi
+server = getUsers :<|> getUser :<|> getPackages
+
+getUsers :<|> getUser :<|> getPackages =
+  client @HackageApi "http://hackage.haskell.org"
+\end{minted}
+\end{frame}
+
+\begin{frame}[label={sec:org7007353}]{Nix}
+\begin{itemize}
+\item since 2004, Eelco Dolstra's Ph.D. thesis in 2006
+\item purely functional, lazy evaluation
+\item one program consists of a closure that includes all dependencies including libc
+\item atomic upgrades, rollbacks
+\item complete isolation of dependencies, no DLL hell
+\item NixOS = OS built on top of Nix
+\item NixOps = a cloud deployment tool
+\begin{itemize}
+\item conceptually: Terraform/CloudFormation + Puppet/Ansible
+\item a network specification -> magic -> running set of servers on AWS, VPSs,
+VirtualBox, \ldots{}
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile,label={sec:orgf6e3cdc}]{Nix}
+ \begin{minted}[]{nix}
+{
+  network.description = "Web server";
+
+  webserver = { config, pkgs, ... }: {
+    services.httpd.enable = true;
+    services.httpd.adminAddr = "alice@example.org";
+    services.httpd.documentRoot =
+      "${pkgs.valgrind.doc}/share/doc/valgrind/html";
+    networking.firewall.allowedTCPPorts = [ 80 ];
+
+    deployment.targetEnv = "virtualbox";
+  };
+}
+\end{minted}
+\end{frame}
+
+\section{What's next?}
+\label{sec:orgf1c2e72}
+\begin{frame}[label={sec:org9aea2f6}]{Plans}
+Three tiers of plans:
+\begin{itemize}
+\item PWA - basic, as per assignment
+\item data sync - extra goal, would be quite an achievement
+\item pattern language - a vision for the future
+\end{itemize}
+
+TODO: add images (see board)
+\end{frame}
+
+\begin{frame}[label={sec:org31f44b7}]{Next tasks}
+Wrapping up unfinished tasks:
+\begin{itemize}
+\item finish article drafts and publish them
+\item finish extracting useful patterns from my applications
+\end{itemize}
+
+Starting work on new areas:
+\begin{itemize}
+\item ServiceWorker wrapper or template
+\item push notifications
+\item pre-rendering (build- or runtime)
+\item CLI tool
+\item type design for data channel/synchronization
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label={sec:orgdcc8229}]{Finishing up}
+\begin{itemize}
+\item four more months until the publication deadline
+\item tons of work left, mile-long lists of tasks and ideas
+\item basics are well underway
+\item many stretch goals
+\end{itemize}
 \end{frame}
 \end{document}
