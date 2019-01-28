@@ -1,4 +1,4 @@
-% Created 2019-01-27 Sun 17:07
+% Created 2019-01-28 Mon 00:11
 % Intended LaTeX compiler: pdflatex
 \documentclass[presentation]{beamer}
 \usepackage[utf8]{inputenc}
@@ -15,11 +15,13 @@
 \usepackage{capt-of}
 \usepackage{hyperref}
 \usepackage{minted}
+\usepackage{tikzsymbols}
 \usetheme{Madrid}
 \author{Jakub Zárybnický}
 \date{2019-01-29}
 \title{A Haskell Platform for Creating Progressive Web Applications}
 \subtitle{A midterm progress report}
+\title[PWAs in Haskell]{A Haskell Platform for Creating Progressive Web Applications}
 \hypersetup{
  pdfauthor={Jakub Zárybnický},
  pdftitle={A Haskell Platform for Creating Progressive Web Applications},
@@ -36,11 +38,46 @@
 
 
 \section{What, why?}
-\label{sec:org27da95f}
-\begin{frame}[label={sec:orgd6ecc70}]{Motivation}
+\label{sec:org5ab6d18}
+\begin{frame}[label={sec:org1b7f0af}]{Assignment}
+\begin{itemize}
+\item My task:
+\begin{itemize}
+\item \emph{"A Haskell Platform for Creating Progressive Web Applications"}
+\end{itemize}
+\end{itemize}
+
+\pause
+
+\begin{itemize}
+\item What's a PWA?
+\begin{itemize}
+\item new buzzword from Google
+\item an \emph{almost} native app
+\begin{itemize}
+\item load a website
+\item save to phone homepage like an app
+\item available offline, perhaps with data sync
+\item use push notifications, device APIs
+\end{itemize}
+\end{itemize}
+\end{itemize}
+
+\pause
+
+\begin{itemize}
+\item What's a Haskell?
+\begin{itemize}
+\item purely functional programming language with type inference and lazy evaluation
+\item \emph{"If it compiles, it works."}
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label={sec:orgf447b17}]{Motivation}
 \begin{itemize}
 \item The trend of FP on the frontend, motivated by Elm, PureScript
-\item The full power of Haskell, sharing common code with the server
+\item \uline{Sharing common code between the client and the server}
 \item Rapidly growing area in the Haskell ecosystem, many companies involved, OSS
 contributors:
 \begin{itemize}
@@ -55,67 +92,14 @@ thesis' results
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:orga9449ac}]{Assignment}
-\begin{itemize}
-\item My task:
-\begin{itemize}
-\item \emph{"A Haskell Platform for Creating Progressive Web Applications"}
-\end{itemize}
-\end{itemize}
-
-\pause
-
-\begin{itemize}
-\item What's a PWA?
-\begin{itemize}
-\item "Progressive Web Application"
-\item new buzzword from Google
-\item an \emph{almost} native app
-\begin{itemize}
-\item load a website
-\item save to phone homepage like an app
-\item available offline, perhaps with data sync
-\item use push notifications, device APIs
-\end{itemize}
-\end{itemize}
-\end{itemize}
-\end{frame}
-
-\begin{frame}[label={sec:orgbdd1a29}]{Motivation}
-\begin{itemize}
-\item Why this particular topic?
-\begin{itemize}
-\item many missing tools in the ecosystem
-\item I chose PWA - personal need, started a new project in August and September
-without necessary tools
-\item The projects is mostly done, but it still isn't a PWA
-\end{itemize}
-\end{itemize}
-
-\pause
-
-\begin{itemize}
-\item Since the start of the project, my real-world goals have drifted a bit:
-\begin{itemize}
-\item PWA framework and a set of tools
-\item full-stack framework, Meteor-alike
-\item all the web-dev tools missing from Haskell
-\item application patterns
-\begin{itemize}
-\item static site, JAM (recompile-on-demand), real-time app, \ldots{}
-\end{itemize}
-\end{itemize}
-\end{itemize}
-\end{frame}
-
 \section{What's done?}
-\label{sec:org8f6475e}
-\begin{frame}[label={sec:orgcdc5b04}]{What have I been doing?}
+\label{sec:orgeede75e}
+\begin{frame}[label={sec:orgdf131b5}]{What have I been doing?}
 \begin{itemize}
 \item How have I been working?
 \begin{itemize}
-\item in part extracting relevant parts from my existing Haskell applications
 \item in part research, type and API design
+\item in part extracting relevant parts from my existing Haskell applications
 \end{itemize}
 \end{itemize}
 
@@ -126,21 +110,21 @@ without necessary tools
 \begin{itemize}
 \item survey of web frameworks all around the programming world
 \item survey of the Haskell ecosystem around web development
-\item proof-of-concept of a full-stack application
-\item proof-of-concept of a JAM-stack-alike
-\item proof-of-concept of an offline-capable client application
-\item proof-of-concept of a frontend debugger toolbar (quite limited so far)
+\item prototype of a full-stack application
+\item prototype of a JAM-stack-alike
+\item prototype of an offline-capable client application
+\item prototype of a frontend debugger toolbar (quite limited so far)
 \end{itemize}
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:orgbd585d0}]{What haven't I been doing?}
+\begin{frame}[label={sec:orge223630}]{What haven't I been doing?}
+\pause
+
 \begin{itemize}
 \item What didn't work out?
 \begin{itemize}
 \item attempts at a blog with regular updates - a failure this far
-\item attempts at type design for the sync and transport part - I found a lot of
-ways that don't work or read/write well
 \item a mile long to-do list and a backlog of ideas and research topics
 \end{itemize}
 \end{itemize}
@@ -150,35 +134,37 @@ ways that don't work or read/write well
 \begin{itemize}
 \item Non-goals:
 \begin{itemize}
-\item write and publish code
 \item write the thesis itself
+\item write publishable code
 \end{itemize}
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:org540f6c1}]{Technologies}
+\begin{frame}[label={sec:org844ef77}]{Technologies}
 The main ones:
 \begin{itemize}
 \item Haskell
-\item Nix
-\end{itemize}
-
-TODO: add logos!
-\end{frame}
-
-\begin{frame}[label={sec:orgce77b40}]{Haskell}
 \begin{itemize}
-\item since 1990, actively developed, rooted in academia and still the target of
-active research - "Dependent Haskell", "Linear Haskell"
-\item purely functional programming language with type inference and lazy evaluation
-\item expressive types, dialog with the compiler, types encoding effects
-\item language to write reliable software in - it eliminates entire classes of
-programming errors - usually the ones that remain are logic errors
-\item example of a nicely expressive type - servant
+\item \emph{"Haskell is a purely functional programming language with type inference and
+lazy evaluation."} -- Wikipedia
+\item \emph{"If it compiles, it works."}
+\end{itemize}
+\item Nix
+\begin{itemize}
+\item \emph{"Nix package manager, a "purely functional" package and configuration
+manager for computer systems"} -- Wikipedia
+\item \emph{"Describe your end result, then magic happens"} \Smiley
+\item Tools build on top:
+\begin{itemize}
+\item Nix = package manager
+\item NixOS = operating system
+\item NixOps = cloud deployment tool
+\end{itemize}
+\end{itemize}
 \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile,label={sec:org90416f2}]{Haskell}
+\begin{frame}[fragile,label={sec:orgaa94405}]{Haskell example (Servant)}
  \begin{minted}[]{haskell}
 type HackageAPI =
   "users" :> Get '[JSON] [User] :<|>
@@ -197,24 +183,7 @@ getUsers :<|> getUser :<|> getPackages =
 \end{minted}
 \end{frame}
 
-\begin{frame}[label={sec:org7007353}]{Nix}
-\begin{itemize}
-\item since 2004, Eelco Dolstra's Ph.D. thesis in 2006
-\item purely functional, lazy evaluation
-\item one program consists of a closure that includes all dependencies including libc
-\item atomic upgrades, rollbacks
-\item complete isolation of dependencies, no DLL hell
-\item NixOS = OS built on top of Nix
-\item NixOps = a cloud deployment tool
-\begin{itemize}
-\item conceptually: Terraform/CloudFormation + Puppet/Ansible
-\item a network specification -> magic -> running set of servers on AWS, VPSs,
-VirtualBox, \ldots{}
-\end{itemize}
-\end{itemize}
-\end{frame}
-
-\begin{frame}[fragile,label={sec:orgf6e3cdc}]{Nix}
+\begin{frame}[fragile,label={sec:orgc2c6ee1}]{NixOps example}
  \begin{minted}[]{nix}
 {
   network.description = "Web server";
@@ -233,19 +202,8 @@ VirtualBox, \ldots{}
 \end{frame}
 
 \section{What's next?}
-\label{sec:orgf1c2e72}
-\begin{frame}[label={sec:org9aea2f6}]{Plans}
-Three tiers of plans:
-\begin{itemize}
-\item PWA - basic, as per assignment
-\item data sync - extra goal, would be quite an achievement
-\item pattern language - a vision for the future
-\end{itemize}
-
-TODO: add images (see board)
-\end{frame}
-
-\begin{frame}[label={sec:org31f44b7}]{Next tasks}
+\label{sec:org04f1493}
+\begin{frame}[label={sec:orgb03d11a}]{Next tasks}
 Wrapping up unfinished tasks:
 \begin{itemize}
 \item finish article drafts and publish them
@@ -262,7 +220,7 @@ Starting work on new areas:
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:orgdcc8229}]{Finishing up}
+\begin{frame}[label={sec:orgd881de7}]{Finishing up}
 \begin{itemize}
 \item four more months until the publication deadline
 \item tons of work left, mile-long lists of tasks and ideas

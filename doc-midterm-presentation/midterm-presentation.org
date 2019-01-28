@@ -1,19 +1,41 @@
 #+STARTUP: beamer
 #+TITLE: A Haskell Platform for Creating Progressive Web Applications
 #+SUBTITLE: A midterm progress report
+#+BEAMER_HEADER: \title[PWAs in Haskell]{A Haskell Platform for Creating Progressive Web Applications}
 #+DATE: 2019-01-29
 #+AUTHOR: Jakub Zárybnický
 #+OPTIONS: H:2 toc:t num:t
 #+LATEX_CLASS: beamer
 #+LATEX_CLASS_OPTIONS: [presentation]
 #+LATEX_HEADER: \usepackage{minted}
+#+LATEX_HEADER: \usepackage{tikzsymbols}
 #+BEAMER_THEME: Madrid
 #+COLUMNS: %45ITEM %10BEAMER_ENV(Env) %10BEAMER_ACT(Act) %4BEAMER_COL(Col) %8BEAMER_OPT(Opt)
 
 * What, why?
+** Assignment
+- My task:
+  - /"A Haskell Platform for Creating Progressive Web Applications"/
+
+\pause
+
+- What's a PWA?
+  - new buzzword from Google
+  - an /almost/ native app
+    - load a website
+    - save to phone homepage like an app
+    - available offline, perhaps with data sync
+    - use push notifications, device APIs
+
+\pause
+
+- What's a Haskell?
+  - purely functional programming language with type inference and lazy evaluation
+  - /"If it compiles, it works."/
+
 ** Motivation
 - The trend of FP on the frontend, motivated by Elm, PureScript
-- The full power of Haskell, sharing common code with the server
+- _Sharing common code between the client and the server_
 - Rapidly growing area in the Haskell ecosystem, many companies involved, OSS
   contributors:
   - IOHK (Cardano) - iohk-ops, distributed processing
@@ -24,83 +46,51 @@
 - More immediate need - I have clients with projects that are waiting on this
   thesis' results
 
-** Assignment
-- My task:
-  - /"A Haskell Platform for Creating Progressive Web Applications"/
-
-\pause
-
-- What's a PWA?
-  - "Progressive Web Application"
-  - new buzzword from Google
-  - an /almost/ native app
-    - load a website
-    - save to phone homepage like an app
-    - available offline, perhaps with data sync
-    - use push notifications, device APIs
-
-** Motivation
-- Why this particular topic?
-  - many missing tools in the ecosystem
-  - I chose PWA - personal need, started a new project in August and September
-    without necessary tools
-  - The projects is mostly done, but it still isn't a PWA
-
-\pause
-
-- Since the start of the project, my real-world goals have drifted a bit:
-  - PWA framework and a set of tools
-  - full-stack framework, Meteor-alike
-  - all the web-dev tools missing from Haskell
-  - application patterns
-    - static site, JAM (recompile-on-demand), real-time app, ...
-
 * What's done?
 ** What have I been doing?
 - How have I been working?
-  - in part extracting relevant parts from my existing Haskell applications
   - in part research, type and API design
+  - in part extracting relevant parts from my existing Haskell applications
 
 \pause
 
 - What worked out?
   - survey of web frameworks all around the programming world
   - survey of the Haskell ecosystem around web development
-  - proof-of-concept of a full-stack application
-  - proof-of-concept of a JAM-stack-alike
-  - proof-of-concept of an offline-capable client application
-  - proof-of-concept of a frontend debugger toolbar (quite limited so far)
+  - prototype of a full-stack application
+  - prototype of a JAM-stack-alike
+  - prototype of an offline-capable client application
+  - prototype of a frontend debugger toolbar (quite limited so far)
 
 ** What haven't I been doing?
+\pause
+
 - What didn't work out?
   - attempts at a blog with regular updates - a failure this far
-  - attempts at type design for the sync and transport part - I found a lot of
-    ways that don't work or read/write well
   - a mile long to-do list and a backlog of ideas and research topics
 
 \pause
 
 - Non-goals:
-  - write and publish code
   - write the thesis itself
+  - write publishable code
 
 ** Technologies
 The main ones:
 - Haskell
+  - /"Haskell is a purely functional programming language with type inference and
+    lazy evaluation."/ -- Wikipedia
+  - /"If it compiles, it works."/
 - Nix
+  - /"Nix package manager, a "purely functional" package and configuration
+    manager for computer systems"/ -- Wikipedia
+  - /"Describe your end result, then magic happens"/ \Smiley
+  - Tools build on top:
+    - Nix = package manager
+    - NixOS = operating system
+    - NixOps = cloud deployment tool
 
-TODO: add logos!
-
-** Haskell
-- since 1990, actively developed, rooted in academia and still the target of
-  active research - "Dependent Haskell", "Linear Haskell"
-- purely functional programming language with type inference and lazy evaluation
-- expressive types, dialog with the compiler, types encoding effects
-- language to write reliable software in - it eliminates entire classes of
-  programming errors - usually the ones that remain are logic errors
-- example of a nicely expressive type - servant
-
-** Haskell
+** Haskell example (Servant)
 #+BEGIN_SRC haskell :exports code
   type HackageAPI =
     "users" :> Get '[JSON] [User] :<|>
@@ -118,19 +108,7 @@ TODO: add logos!
     client @HackageApi "http://hackage.haskell.org"
 #+END_SRC
 
-** Nix
-- since 2004, Eelco Dolstra's Ph.D. thesis in 2006
-- purely functional, lazy evaluation
-- one program consists of a closure that includes all dependencies including libc
-- atomic upgrades, rollbacks
-- complete isolation of dependencies, no DLL hell
-- NixOS = OS built on top of Nix
-- NixOps = a cloud deployment tool
-  - conceptually: Terraform/CloudFormation + Puppet/Ansible
-  - a network specification -> magic -> running set of servers on AWS, VPSs,
-    VirtualBox, ...
-
-** Nix
+** NixOps example
 #+BEGIN_SRC nix :exports code
   {
     network.description = "Web server";
@@ -148,14 +126,6 @@ TODO: add logos!
 #+END_SRC
 
 * What's next?
-** Plans
-Three tiers of plans:
-- PWA - basic, as per assignment
-- data sync - extra goal, would be quite an achievement
-- pattern language - a vision for the future
-
-TODO: add images (see board)
-
 ** Next tasks
 Wrapping up unfinished tasks:
 - finish article drafts and publish them

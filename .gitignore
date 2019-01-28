@@ -5,6 +5,14 @@ auto/
 *.fdb_latexmk
 *.fls
 *.bbl
+*.vrb
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+_minted*/
 \#*
 
 # Haskell
