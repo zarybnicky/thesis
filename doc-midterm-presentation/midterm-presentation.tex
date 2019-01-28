@@ -1,4 +1,4 @@
-% Created 2019-01-28 Mon 00:11
+% Created 2019-01-28 Mon 18:22
 % Intended LaTeX compiler: pdflatex
 \documentclass[presentation]{beamer}
 \usepackage[utf8]{inputenc}
@@ -32,200 +32,145 @@
 \begin{document}
 
 \maketitle
-\begin{frame}{Outline}
-\tableofcontents
-\end{frame}
-
 
 \section{What, why?}
-\label{sec:org5ab6d18}
-\begin{frame}[label={sec:org1b7f0af}]{Assignment}
+\label{sec:org5fc6903}
+\begin{frame}[label={sec:orgea2542e}]{Full-stack Haskell?}
 \begin{itemize}
-\item My task:
+\item Why Haskell? Why on the frontend?     \pause
 \begin{itemize}
-\item \emph{"A Haskell Platform for Creating Progressive Web Applications"}
-\end{itemize}
-\end{itemize}
-
-\pause
-
+\item Compile-to-JavaScript languages accepted (see Elm)
+\item Code sharing between server and client (business logic, entities)    \pause
+\item Many companies use it, and also contribute to OSS:
 \begin{itemize}
-\item What's a PWA?
-\begin{itemize}
-\item new buzzword from Google
-\item an \emph{almost} native app
-\begin{itemize}
-\item load a website
-\item save to phone homepage like an app
-\item available offline, perhaps with data sync
-\item use push notifications, device APIs
-\end{itemize}
-\end{itemize}
-\end{itemize}
-
-\pause
-
-\begin{itemize}
-\item What's a Haskell?
-\begin{itemize}
-\item purely functional programming language with type inference and lazy evaluation
-\item \emph{"If it compiles, it works."}
-\end{itemize}
-\end{itemize}
-\end{frame}
-
-\begin{frame}[label={sec:orgf447b17}]{Motivation}
-\begin{itemize}
-\item The trend of FP on the frontend, motivated by Elm, PureScript
-\item \uline{Sharing common code between the client and the server}
-\item Rapidly growing area in the Haskell ecosystem, many companies involved, OSS
-contributors:
-\begin{itemize}
-\item IOHK (Cardano) - iohk-ops, distributed processing
 \item Obsidian - Reflex, Obelisk, Rhyolite
 \item Tweag - Asterius, Inline-js
-\item QFPL - Reflex-workshop, UI components
+\item QFPL - Reflex-workshop, many UI components
+\item IOHK (Cardano) - iohk-ops
 \end{itemize}
-\item Growing, but still not established - missing tools and libraries
-\item More immediate need - I have clients with projects that are waiting on this
-thesis' results
+\end{itemize}
 \end{itemize}
 \end{frame}
 
-\section{What's done?}
-\label{sec:orgeede75e}
-\begin{frame}[label={sec:orgdf131b5}]{What have I been doing?}
+\begin{frame}[label={sec:org3c10d16}]{PWA?}
 \begin{itemize}
-\item How have I been working?
+\item New buzzword from Google
+\item Recent web development trend
+\item An \emph{almost} native app
 \begin{itemize}
-\item in part research, type and API design
-\item in part extracting relevant parts from my existing Haskell applications
+\item Load a website
+\item Click "Add to homepage"
+\item Use like a native application
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label={sec:org9593550}]{PWA features}
+\begin{itemize}
+\item \emph{Progressive Web App Checklist} -- Google
+\end{itemize}
+\pause
+\begin{itemize}
+\item Required:
+\begin{itemize}
+\item Responsive and fast ("Native experience")
+\item Available offline
+\item Push notifications
+\item Device APIs
+\end{itemize}
+\end{itemize}
+\pause
+\begin{itemize}
+\item Optional:
+\begin{itemize}
+\item Full functionality when offline
+\item Data sync
+\item Pre-rendered
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label={sec:org09d30cd}]{PWA\ldots{}}
+\begin{itemize}
+\item Technologies:
+\begin{itemize}
+\item Service Workers
+\item Web App Manifest
+\item History API
+\item Web Share API
+\item Network Information API
+\item Credential Management API
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\section{What have I done?}
+\label{sec:org23252d4}
+\begin{frame}[label={sec:org8633cd4}]{What have I been doing?}
+\begin{itemize}
+\item Research:
+\begin{itemize}
+\item PWA developers' expectations (across languages)
+\item Current Haskell libraries and tooling
 \end{itemize}
 \end{itemize}
 
 \pause
 
 \begin{itemize}
-\item What worked out?
+\item Prototypes:
 \begin{itemize}
-\item survey of web frameworks all around the programming world
-\item survey of the Haskell ecosystem around web development
-\item prototype of a full-stack application
-\item prototype of a JAM-stack-alike
-\item prototype of an offline-capable client application
-\item prototype of a frontend debugger toolbar (quite limited so far)
+\item A full-stack application
+\item An offline-capable application
+\item A frontend debugger toolbar
+\item CI/CD for Haskell
 \end{itemize}
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:orge223630}]{What haven't I been doing?}
+\begin{frame}[label={sec:org7092512}]{What haven't I been doing?}
 \pause
 
 \begin{itemize}
-\item What didn't work out?
+\item Regular writing
 \begin{itemize}
-\item attempts at a blog with regular updates - a failure this far
-\item a mile long to-do list and a backlog of ideas and research topics
-\end{itemize}
-\end{itemize}
-
-\pause
-
+\item Blog
+\item Progress reports   \pause
 \begin{itemize}
-\item Non-goals:
-\begin{itemize}
-\item write the thesis itself
-\item write publishable code
-\end{itemize}
-\end{itemize}
-\end{frame}
-
-\begin{frame}[label={sec:org844ef77}]{Technologies}
-The main ones:
-\begin{itemize}
-\item Haskell
-\begin{itemize}
-\item \emph{"Haskell is a purely functional programming language with type inference and
-lazy evaluation."} -- Wikipedia
-\item \emph{"If it compiles, it works."}
-\end{itemize}
-\item Nix
-\begin{itemize}
-\item \emph{"Nix package manager, a "purely functional" package and configuration
-manager for computer systems"} -- Wikipedia
-\item \emph{"Describe your end result, then magic happens"} \Smiley
-\item Tools build on top:
-\begin{itemize}
-\item Nix = package manager
-\item NixOS = operating system
-\item NixOps = cloud deployment tool
+\item Oops\ldots{}
 \end{itemize}
 \end{itemize}
 \end{itemize}
-\end{frame}
-
-\begin{frame}[fragile,label={sec:orgaa94405}]{Haskell example (Servant)}
- \begin{minted}[]{haskell}
-type HackageAPI =
-  "users" :> Get '[JSON] [User] :<|>
-  "user" :> Capture "login" Login :> Get '[JSON] User :<|>
-  "packages" :> Get '[JSON] [Package]
-
-getUsers :: Handler [User]
-getUser :: Login -> Handler User
-getPackages :: Handler [Package]
-
-server :: Server HackageApi
-server = getUsers :<|> getUser :<|> getPackages
-
-getUsers :<|> getUser :<|> getPackages =
-  client @HackageApi "http://hackage.haskell.org"
-\end{minted}
-\end{frame}
-
-\begin{frame}[fragile,label={sec:orgc2c6ee1}]{NixOps example}
- \begin{minted}[]{nix}
-{
-  network.description = "Web server";
-
-  webserver = { config, pkgs, ... }: {
-    services.httpd.enable = true;
-    services.httpd.adminAddr = "alice@example.org";
-    services.httpd.documentRoot =
-      "${pkgs.valgrind.doc}/share/doc/valgrind/html";
-    networking.firewall.allowedTCPPorts = [ 80 ];
-
-    deployment.targetEnv = "virtualbox";
-  };
-}
-\end{minted}
 \end{frame}
 
 \section{What's next?}
-\label{sec:org04f1493}
-\begin{frame}[label={sec:orgb03d11a}]{Next tasks}
-Wrapping up unfinished tasks:
+\label{sec:org2e686fb}
+\begin{frame}[label={sec:org5838b79}]{What's next?}
 \begin{itemize}
-\item finish article drafts and publish them
-\item finish extracting useful patterns from my applications
+\item Must-haves:
+\begin{itemize}
+\item Push notifications (server \& client library)
+\item Browser routing (client library)
+\item Service Worker wrapper (build tool, client library)
 \end{itemize}
-
-Starting work on new areas:
+\end{itemize}
+\pause
 \begin{itemize}
-\item ServiceWorker wrapper or template
-\item push notifications
-\item pre-rendering (build- or runtime)
-\item CLI tool
-\item type design for data channel/synchronization
+\item Nice-to-haves:
+\begin{itemize}
+\item Pre-rendering (server library)
+\item Data sync (server \& client library)
+\end{itemize}
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:orgd881de7}]{Finishing up}
+\begin{frame}[label={sec:org0aeb044}]{Wrapping up}
 \begin{itemize}
-\item four more months until the publication deadline
-\item tons of work left, mile-long lists of tasks and ideas
-\item basics are well underway
-\item many stretch goals
+\item Thanks for listening!
+\end{itemize}
+
+\begin{itemize}
+\item \url{https://github.com/zarybnicky/thesis}
 \end{itemize}
 \end{frame}
 \end{document}

@@ -4,7 +4,7 @@
 #+BEAMER_HEADER: \title[PWAs in Haskell]{A Haskell Platform for Creating Progressive Web Applications}
 #+DATE: 2019-01-29
 #+AUTHOR: Jakub Zárybnický
-#+OPTIONS: H:2 toc:t num:t
+#+OPTIONS: H:2 toc:nil num:t
 #+LATEX_CLASS: beamer
 #+LATEX_CLASS_OPTIONS: [presentation]
 #+LATEX_HEADER: \usepackage{minted}
@@ -13,133 +13,82 @@
 #+COLUMNS: %45ITEM %10BEAMER_ENV(Env) %10BEAMER_ACT(Act) %4BEAMER_COL(Col) %8BEAMER_OPT(Opt)
 
 * What, why?
-** Assignment
-- My task:
-  - /"A Haskell Platform for Creating Progressive Web Applications"/
+** Full-stack Haskell?
+- Why Haskell? Why on the frontend?     \pause
+  - Compile-to-JavaScript languages accepted (see Elm)
+  - Code sharing between server and client (business logic, entities)    \pause
+  - Many companies use it, and also contribute to OSS:
+    - Obsidian - Reflex, Obelisk, Rhyolite
+    - Tweag - Asterius, Inline-js
+    - QFPL - Reflex-workshop, many UI components
+    - IOHK (Cardano) - iohk-ops
 
+** PWA?
+- New buzzword from Google
+- Recent web development trend
+- An /almost/ native app
+  - Load a website
+  - Click "Add to homepage"
+  - Use like a native application
+
+** PWA features
+- /Progressive Web App Checklist/ -- Google
 \pause
-
-- What's a PWA?
-  - new buzzword from Google
-  - an /almost/ native app
-    - load a website
-    - save to phone homepage like an app
-    - available offline, perhaps with data sync
-    - use push notifications, device APIs
-
+- Required:
+  - Responsive and fast ("Native experience")
+  - Available offline
+  - Push notifications
+  - Device APIs
 \pause
+- Optional:
+  - Full functionality when offline
+  - Data sync
+  - Pre-rendered
 
-- What's a Haskell?
-  - purely functional programming language with type inference and lazy evaluation
-  - /"If it compiles, it works."/
+** PWA...
+- Technologies:
+  - Service Workers
+  - Web App Manifest
+  - History API
+  - Web Share API
+  - Network Information API
+  - Credential Management API
 
-** Motivation
-- The trend of FP on the frontend, motivated by Elm, PureScript
-- _Sharing common code between the client and the server_
-- Rapidly growing area in the Haskell ecosystem, many companies involved, OSS
-  contributors:
-  - IOHK (Cardano) - iohk-ops, distributed processing
-  - Obsidian - Reflex, Obelisk, Rhyolite
-  - Tweag - Asterius, Inline-js
-  - QFPL - Reflex-workshop, UI components
-- Growing, but still not established - missing tools and libraries
-- More immediate need - I have clients with projects that are waiting on this
-  thesis' results
-
-* What's done?
+* What have I done?
 ** What have I been doing?
-- How have I been working?
-  - in part research, type and API design
-  - in part extracting relevant parts from my existing Haskell applications
+- Research:
+  - PWA developers' expectations (across languages)
+  - Current Haskell libraries and tooling
 
 \pause
 
-- What worked out?
-  - survey of web frameworks all around the programming world
-  - survey of the Haskell ecosystem around web development
-  - prototype of a full-stack application
-  - prototype of a JAM-stack-alike
-  - prototype of an offline-capable client application
-  - prototype of a frontend debugger toolbar (quite limited so far)
+- Prototypes:
+  - A full-stack application
+  - An offline-capable application
+  - A frontend debugger toolbar
+  - CI/CD for Haskell
 
 ** What haven't I been doing?
 \pause
 
-- What didn't work out?
-  - attempts at a blog with regular updates - a failure this far
-  - a mile long to-do list and a backlog of ideas and research topics
-
-\pause
-
-- Non-goals:
-  - write the thesis itself
-  - write publishable code
-
-** Technologies
-The main ones:
-- Haskell
-  - /"Haskell is a purely functional programming language with type inference and
-    lazy evaluation."/ -- Wikipedia
-  - /"If it compiles, it works."/
-- Nix
-  - /"Nix package manager, a "purely functional" package and configuration
-    manager for computer systems"/ -- Wikipedia
-  - /"Describe your end result, then magic happens"/ \Smiley
-  - Tools build on top:
-    - Nix = package manager
-    - NixOS = operating system
-    - NixOps = cloud deployment tool
-
-** Haskell example (Servant)
-#+BEGIN_SRC haskell :exports code
-  type HackageAPI =
-    "users" :> Get '[JSON] [User] :<|>
-    "user" :> Capture "login" Login :> Get '[JSON] User :<|>
-    "packages" :> Get '[JSON] [Package]
-
-  getUsers :: Handler [User]
-  getUser :: Login -> Handler User
-  getPackages :: Handler [Package]
-
-  server :: Server HackageApi
-  server = getUsers :<|> getUser :<|> getPackages
-
-  getUsers :<|> getUser :<|> getPackages =
-    client @HackageApi "http://hackage.haskell.org"
-#+END_SRC
-
-** NixOps example
-#+BEGIN_SRC nix :exports code
-  {
-    network.description = "Web server";
-
-    webserver = { config, pkgs, ... }: {
-      services.httpd.enable = true;
-      services.httpd.adminAddr = "alice@example.org";
-      services.httpd.documentRoot =
-        "${pkgs.valgrind.doc}/share/doc/valgrind/html";
-      networking.firewall.allowedTCPPorts = [ 80 ];
-
-      deployment.targetEnv = "virtualbox";
-    };
-  }
-#+END_SRC
+- Regular writing
+  - Blog
+  - Progress reports   \pause
+    - Oops...
 
 * What's next?
-** Next tasks
-Wrapping up unfinished tasks:
-- finish article drafts and publish them
-- finish extracting useful patterns from my applications
+** What's next?
 
-Starting work on new areas:
-- ServiceWorker wrapper or template
-- push notifications
-- pre-rendering (build- or runtime)
-- CLI tool
-- type design for data channel/synchronization
+- Must-haves:
+  - Push notifications (server & client library)
+  - Browser routing (client library)
+  - Service Worker wrapper (build tool, client library)
+\pause
+- Nice-to-haves:
+  - Pre-rendering (server library)
+  - Data sync (server & client library)
 
-** Finishing up
-- four more months until the publication deadline
-- tons of work left, mile-long lists of tasks and ideas
-- basics are well underway
-- many stretch goals
+** Wrapping up
+- Thanks for listening!
+\\
+- https://github.com/zarybnicky/thesis
