@@ -1,4 +1,4 @@
-% Created 2019-01-28 Mon 18:22
+% Created 2019-01-28 Mon 22:05
 % Intended LaTeX compiler: pdflatex
 \documentclass[presentation]{beamer}
 \usepackage[utf8]{inputenc}
@@ -34,14 +34,27 @@
 \maketitle
 
 \section{What, why?}
-\label{sec:org5fc6903}
-\begin{frame}[label={sec:orgea2542e}]{Full-stack Haskell?}
+\label{sec:org214f972}
+\begin{frame}[label={sec:org6214eda}]{Frontend Haskell?}
 \begin{itemize}
-\item Why Haskell? Why on the frontend?     \pause
+\item What's Haskell?  \pause
 \begin{itemize}
-\item Compile-to-JavaScript languages accepted (see Elm)
-\item Code sharing between server and client (business logic, entities)    \pause
-\item Many companies use it, and also contribute to OSS:
+\item \emph{"Purely functional programming language with type inference and lazy
+evaluation"}  \pause
+\item \emph{"If it compiles, it works."}   \pause
+\end{itemize}
+\item Why Haskell in the browser?     \pause
+\begin{itemize}
+\item JavaScript doesn't have a monopoly on the frontend
+\begin{itemize}
+\item Compile-to-JS (see TypeScript, see Elm)
+\end{itemize}
+\item Code sharing between server and client (business logic, entities)
+\end{itemize}
+\end{itemize}
+\pause
+\begin{itemize}
+\item Many companies use it, several contribute to OSS:
 \begin{itemize}
 \item Obsidian - Reflex, Obelisk, Rhyolite
 \item Tweag - Asterius, Inline-js
@@ -49,48 +62,50 @@
 \item IOHK (Cardano) - iohk-ops
 \end{itemize}
 \end{itemize}
-\end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:org3c10d16}]{PWA?}
+\begin{frame}[label={sec:org130a101}]{PWA?}
 \begin{itemize}
 \item New buzzword from Google
 \item Recent web development trend
 \item An \emph{almost} native app
 \begin{itemize}
 \item Load a website
-\item Click "Add to homepage"
+\item Click "Add to home screen"
 \item Use like a native application
 \end{itemize}
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:org9593550}]{PWA features}
+\begin{frame}[label={sec:org1ce6ebf}]{PWA features}
 \begin{itemize}
 \item \emph{Progressive Web App Checklist} -- Google
 \end{itemize}
 \pause
 \begin{itemize}
-\item Required:
+\item "Basic PWA":
 \begin{itemize}
 \item Responsive and fast ("Native experience")
 \item Available offline
+\item Has "Add to home screen"
 \item Push notifications
 \item Device APIs
 \end{itemize}
 \end{itemize}
 \pause
 \begin{itemize}
-\item Optional:
+\item "Exemplary PWA":
 \begin{itemize}
-\item Full functionality when offline
-\item Data sync
 \item Pre-rendered
+\item Social share, metadata
+\item Accessible
+\item Full-screen mode
+\item \ldots{}
 \end{itemize}
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:org09d30cd}]{PWA\ldots{}}
+\begin{frame}[label={sec:orgb5779f4}]{PWA technologies}
 \begin{itemize}
 \item Technologies:
 \begin{itemize}
@@ -105,13 +120,18 @@
 \end{frame}
 
 \section{What have I done?}
-\label{sec:org23252d4}
-\begin{frame}[label={sec:org8633cd4}]{What have I been doing?}
+\label{sec:org9677829}
+\begin{frame}[label={sec:orgbca29ce}]{What have I been doing?}
 \begin{itemize}
 \item Research:
 \begin{itemize}
-\item PWA developers' expectations (across languages)
-\item Current Haskell libraries and tooling
+\item Webapp frameworks across languages
+\begin{itemize}
+\item PWA developers' expectations
+\end{itemize}
+\item Available Haskell libraries and tooling    \pause
+\item \(\Rightarrow\) missing tools and libraries
+\item \(\Rightarrow\) only some in scope of my thesis
 \end{itemize}
 \end{itemize}
 
@@ -124,11 +144,12 @@
 \item An offline-capable application
 \item A frontend debugger toolbar
 \item CI/CD for Haskell
+\item \ldots{}
 \end{itemize}
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:org7092512}]{What haven't I been doing?}
+\begin{frame}[label={sec:org560062b}]{What haven't I been doing?}
 \pause
 
 \begin{itemize}
@@ -144,14 +165,14 @@
 \end{frame}
 
 \section{What's next?}
-\label{sec:org2e686fb}
-\begin{frame}[label={sec:org5838b79}]{What's next?}
+\label{sec:org7a59691}
+\begin{frame}[label={sec:org1d88469}]{What's next?}
 \begin{itemize}
 \item Must-haves:
 \begin{itemize}
-\item Push notifications (server \& client library)
 \item Browser routing (client library)
-\item Service Worker wrapper (build tool, client library)
+\item Service Workers (build tool and/or client library)
+\item Push notifications (server \& client library)
 \end{itemize}
 \end{itemize}
 \pause
@@ -162,9 +183,13 @@
 \item Data sync (server \& client library)
 \end{itemize}
 \end{itemize}
+\pause
+\begin{itemize}
+\item Four months should be enough, right? \Smiley
+\end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:org0aeb044}]{Wrapping up}
+\begin{frame}[label={sec:orge53a0c0}]{Wrapping up}
 \begin{itemize}
 \item Thanks for listening!
 \end{itemize}

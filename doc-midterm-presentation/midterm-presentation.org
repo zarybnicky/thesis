@@ -13,39 +13,48 @@
 #+COLUMNS: %45ITEM %10BEAMER_ENV(Env) %10BEAMER_ACT(Act) %4BEAMER_COL(Col) %8BEAMER_OPT(Opt)
 
 * What, why?
-** Full-stack Haskell?
-- Why Haskell? Why on the frontend?     \pause
-  - Compile-to-JavaScript languages accepted (see Elm)
-  - Code sharing between server and client (business logic, entities)    \pause
-  - Many companies use it, and also contribute to OSS:
-    - Obsidian - Reflex, Obelisk, Rhyolite
-    - Tweag - Asterius, Inline-js
-    - QFPL - Reflex-workshop, many UI components
-    - IOHK (Cardano) - iohk-ops
+** Frontend Haskell?
+- What's Haskell?  \pause
+  - /"Purely functional programming language with type inference and lazy
+    evaluation"/  \pause
+  - /"If it compiles, it works."/   \pause
+- Why Haskell in the browser?     \pause
+  - JavaScript doesn't have a monopoly on the frontend
+    - Compile-to-JS (see TypeScript, see Elm)
+  - Code sharing between server and client (business logic, entities)
+\pause
+- Many companies use it, several contribute to OSS:
+  - Obsidian - Reflex, Obelisk, Rhyolite
+  - Tweag - Asterius, Inline-js
+  - QFPL - Reflex-workshop, many UI components
+  - IOHK (Cardano) - iohk-ops
 
 ** PWA?
 - New buzzword from Google
 - Recent web development trend
 - An /almost/ native app
   - Load a website
-  - Click "Add to homepage"
+  - Click "Add to home screen"
   - Use like a native application
 
 ** PWA features
 - /Progressive Web App Checklist/ -- Google
 \pause
-- Required:
+- "Basic PWA":
   - Responsive and fast ("Native experience")
   - Available offline
+  - Has "Add to home screen"
   - Push notifications
   - Device APIs
 \pause
-- Optional:
-  - Full functionality when offline
-  - Data sync
+- "Exemplary PWA":
   - Pre-rendered
+  - Social share, metadata
+  - Accessible
+  - Full-screen mode
+  - ...
 
-** PWA...
+** PWA technologies
 - Technologies:
   - Service Workers
   - Web App Manifest
@@ -57,8 +66,11 @@
 * What have I done?
 ** What have I been doing?
 - Research:
-  - PWA developers' expectations (across languages)
-  - Current Haskell libraries and tooling
+  - Webapp frameworks across languages
+    - PWA developers' expectations
+  - Available Haskell libraries and tooling    \pause
+  - \Rightarrow missing tools and libraries
+  - \Rightarrow only some in scope of my thesis
 
 \pause
 
@@ -67,6 +79,7 @@
   - An offline-capable application
   - A frontend debugger toolbar
   - CI/CD for Haskell
+  - ...
 
 ** What haven't I been doing?
 \pause
@@ -80,13 +93,15 @@
 ** What's next?
 
 - Must-haves:
-  - Push notifications (server & client library)
   - Browser routing (client library)
-  - Service Worker wrapper (build tool, client library)
+  - Service Workers (build tool and/or client library)
+  - Push notifications (server & client library)
 \pause
 - Nice-to-haves:
   - Pre-rendering (server library)
   - Data sync (server & client library)
+\pause
+- Four months should be enough, right? \Smiley
 
 ** Wrapping up
 - Thanks for listening!
