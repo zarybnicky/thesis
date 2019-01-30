@@ -19,6 +19,41 @@
 \setlength{\parskip}{0.5\bigskipamount}
 #+END_LaTeX
 
+Proposed flow of the thesis:
+- a concrete motivating example of a Haskell app that needs a web client, plus
+  why PWA
+- Haskell and PWA technology intro
+  - Web Platform APIs, Service Workers
+  - Haskell, GHCJS
+  - Nix, cross-compiling
+  - WebAssembly mention
+- Tools and libraries needed for a SPA/PWA
+  - Outline the general features for a web app
+  - List features where current frameworks excel and what developers don't like
+    about them and esp. about Haskell
+  - Write about excellent and missing features in Haskell
+- Delineate missing pieces of tooling
+  - in general, what's left
+  - describe my plan = in this work, tools needed specifically for PWA
+    development, not general quality-of-life libraries
+  - namely - routing, notifications, service wrapper, skeleton
+  - write in parenthesis what I want to do, so that it's in the thesis, but mark
+    it as something to clean up later
+- describe an implementation plan, be specific about what I'll be doing
+
+- further chapters about individual features, their design and implementation
+
+- describe the development flow of an app built using these tools
+  - starting out - three layer cake & esp. the inner one
+  - QA (tests, e2e, CI, ...), documentation
+  - development tool options
+  - deployment options
+
+- next avenues, what I'll be working on - define specific topics and make
+  concrete examples
+
+- conclusion, evaluate my results
+
 * Introduction
 In order to be able to write a professional text clearly and comprehensibly, we
 have to meet several basic prerequisites:
@@ -59,7 +94,7 @@ belong.
 In order to achieve this, we must thoroughly organize the subject matter. We
 will decide what the main chapters and subchapters would be and what are the
 connections between them. The chart of such an establishment is a chart that is
-very similar to a tree, but not a string. When organizing a subject matter, the
+similar to a tree, but not a string. When organizing a subject matter, the
 question of what to include in the schema is equally important as a question of
 what to not include. Too many details can be discouraged by readers as well as
 no details.
@@ -69,7 +104,7 @@ the main ideas and the details included therein.
 
 ** We have to write in a structured way
 We must start writing in a structured way, and at the same time we need to use
-the most comprehensible form, including good style and perfect marking.  As soon
+the most comprehensible form, including good style and perfect marking. As soon
 as we have an idea, an idea of a future reader, a goal, and an outline of the
 text, we can start writing. When writing a first concept, we try to capture all
 of our thoughts and opinions regarding to individual chapters and
@@ -156,7 +191,7 @@ settings. When writing a qualification work, make sure to follow the mandatory
 requirements.
 
 The font level for different levels of title is selected according to standard
-typographic rules.  Typically, for all types of headings semi-bold or bold font
+typographic rules. Typically, for all types of headings semi-bold or bold font
 are being used (uniformly either semi-bold everywhere or bold everywhere). Size
 of line spacing is chosen that the following text of regular paragraphs is
 preferably set on a /fixed index/, that is to say on lines with a predefined
@@ -164,7 +199,7 @@ and fixed spacing.
 
 The arrangement of the individual parts of the text must be clear and
 logical. It is necessary to distinguish the names of the chapters and
-subchapters --write them in lowercase letters except for the capital starting
+subchapters -- write them in lowercase letters except for the capital starting
 letters. For each paragraph of the text, offset the first line of the paragraph
 with about one to two squares (always the same preselected value), thus about
 two widths of the capital letter M of the basic text. The last line of the
@@ -210,7 +245,7 @@ defined typesetting. If your work contains a large number of mathematical
 formulas, we recommend using the LaTeX system.
 
 Do not make a space where digits are combined with letters in one word or one
-character.  Punctuation such as dot, comma, semicolon, colon, question mark and
+character. Punctuation such as dot, comma, semicolon, colon, question mark and
 exclamation mark, as well as closing brackets and quotation marks are appended
 to the preceding word without a space. The space is behind them. However, this
 does not apply to decimal points (or decimal dots). The opening bracket and the
@@ -274,6 +309,7 @@ emphasis on the student's own contribution. A compulsory assessment of the
 project's development will also be required, the student will present ideas
 based on the experience with the project and will also show the connections to
 the just completed projects.
+
 * (bibliography, start of appendix)                           :ignoreheading:
 #+BEGIN_LaTeX
 \makeatletter
