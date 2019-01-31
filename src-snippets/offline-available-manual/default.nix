@@ -13,6 +13,10 @@
   overrides = with pkgs.haskell.lib; self: super: {
     service-listener = overrideCabal super.service-listener (drv: {
       postFixup = ''
+        if [ -n $out/bin/service-listener.jsexe ]; then
+          echo "GHC only build? Not compressing JS"
+          exit 0
+        fi
         pushd $out/bin/service-listener.jsexe
         mv all.js all.unminified.js
         ${pkgs.closurecompiler}/bin/closure-compiler \
