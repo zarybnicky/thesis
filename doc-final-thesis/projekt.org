@@ -19,310 +19,407 @@
 \setlength{\parskip}{0.5\bigskipamount}
 #+END_LaTeX
 
-*Assignment*:
-- Study the current state of the Haskell ecosystem for creating web
-  applications.
-- Find suitable libraries as a starting point for creating Progressive Web
-  Applications (PWAs), i.e., web applications that can offer the user
-  functionality such as working offline or push notifications.
-- Implement a framework for PWAs. Focus, in particular, on the implementation of
-  components for offline storage, push notifications, and also support tools.
-- Create a set of example PWAs that utilise the created framework.
-- Compare the created framework with existing (e.g. JavaScript) frameworks for
-  PWAs.
-- Summarize the obtained results and discuss the future work.
-
-
-*Proposed flow of the thesis*:
-- a concrete motivating example of a Haskell app that needs a web client, plus
-  why PWA
-- Haskell and PWA technology intro
-  - Web Platform APIs, Service Workers
-  - Haskell, GHCJS
-  - Nix, cross-compiling
-  - WebAssembly mention
-
-- Tools and libraries needed for a SPA/PWA
-  - Outline the general features for a web app
-  - List features where current frameworks excel and what developers don't like
-    about them and esp. about Haskell
-  - Write about excellent and missing features in Haskell
-
-- Delineate missing pieces of tooling in the Haskell ecosystem
-  - in general, what's left
-  - describe my plan = in this work, tools needed specifically for PWA
-    development, not general quality-of-life libraries
-  - namely - routing, notifications, service wrapper, skeleton, + offline
-    storage (at least a simple version)
-  - write in parenthesis what I want to do, so that it's in the thesis, but mark
-    it as something to clean up later
-  - describe an implementation plan, be specific about what I'll be doing
-
-- further chapters about individual features, their design and implementation
-
-- describe the design and implementation of the example apps
-
-- describe the development flow of an app built using these tools
-  - starting out - three layer cake & esp. the inner one
-  - QA (tests, e2e, CI, ...), documentation
-  - development tool options
-  - deployment options
-
-- next avenues, what I'll be working on - define specific topics and make
-  concrete examples
-
-- conclusion, evaluate my results - return to the comparison in part 1 (with JS, ...)
-
 * Introduction
-In order to be able to write a professional text clearly and comprehensibly, we
-have to meet several basic prerequisites:
-- we need to have something to say,
-- we need to know who we want to target with the text,
-- we have to thoroughly think about the content,
-- we have to write in a structured way.
+- a concrete motivating example of a Haskell app that needs a web client, plus
+  why to write a PWA
+- general trends in Haskell and frontend development
+- related work (Tweag, Obsidian, ...)
 
-These and other instructions are also available on the school's website
-cite:fitWeb.
+* Technologies
+We'll first have a more detailed look at the above-mentioned technologies, [...]
 
-An overview of the basics of typography and document creation using the system
-\LaTeX{} is shown in cite:Rybicka.
+** Haskell
+The programming language Haskell is a rather old one, despite spreading into the
+industry only recently, having been around since 1990 [TODO: reference]. It is a
+language that started out as a basis for research into the design of functional
+languages. It has served as such, and in fact it still is the target of active
+research - some more prominent projects are "Dependent Haskell" [TODO: ref] and
+"Linear Haskell" [TODO: ref].
 
-** We need to have something to say
-Another important prerequisite for good thesis is to /write for someone/. If
-we write notes for ourselves, we write them differently than a research report,
-an article, a diploma thesis, a book or a letter. According to the assumed
-reader, we decide on the type of writing, the scope of information and the
-degree of detail.
+Haskell is described as a "statically typed, purely functional programming
+language with type inference and lazy evaluation" [TODO: ref]. It is a language
+in which its expressive type system enables very precise control over TODO:
+expressive types, dialog with the compiler, types encoding effects, citation for
+"If it compiles, it works".
 
-** We need to know who we want to target with the text
-Another important prerequisite for good thesis is to /write for someone/. If
-we write notes for ourselves, we write them differently than a research report,
-an article, a diploma thesis, a book or a letter. According to the assumed
-reader, we decide on the type of writing, the scope of information and the
-degree of detail.
+TODO: language to write reliable software in - it eliminates entire classes of
+programming errors - usually the ones that remain are logic errors.
 
-** We have to thoroughly think about the content
-We need to thoroughly think about the content and compose the content of the
-message and create the order in which we want to present our ideas to the
-readers. Once we know what we want to say and to whom, we need to plan out the
-subject matter. Ideal is such a layout, which makes a logically accurate and
-psychologically digestible whole, in which everything is in place and whose
-parts fit into each other. All contexts are clear and it is obvious where they
-belong.
+While Haskell is not a language commonly associated with frontend development,
+it is one of the many languages with the ability to use JavaScript as the
+compilation target, instead of plain assembly or LLVM. In fact, such languages
+have now become quite common in frontend development [TODO: ref], as is
+exemplified by the rapid rise of TypeScript, a superset of ECMAScript 6 [TODO:
+ref], or Elm, a framework with its own language based on Haskell [TODO: ref].
 
-In order to achieve this, we must thoroughly organize the subject matter. We
-will decide what the main chapters and subchapters would be and what are the
-connections between them. The chart of such an establishment is a chart that is
-similar to a tree, but not a string. When organizing a subject matter, the
-question of what to include in the schema is equally important as a question of
-what to not include. Too many details can be discouraged by readers as well as
-no details.
+Of the many reasons for selecting a language other than JavaScript for frontend
+development, one of the more notable ones is the ability to share code between
+the server and its client in the case they are written in the same
+language. This is the basic idea of the framework Meteor [TODO: ref], and in
+fact the ability to run 'isomorphic code' - the same code on the client and the
+server both - is its main marketing point.
 
-The outcome of this stage is the outline of the text, which is the sequence of
-the main ideas and the details included therein.
+TODO: Haskell on the frontend is a rapidly growing area with many interested
+companies. The main projects in this area are sponsored and developed by them -
+some of the main contributors are: Obsidian (Reflex, Obelisk), Tweag (Asterius,
+Inline-js), and QFPL (several UI components). [TODO: refs] While it's a quickly
+growing area, it's still not an established one, and there are many libraries
+and tools still missing, ones that developers used to other languages have
+learned to expect and require.
 
-** We have to write in a structured way
-We must start writing in a structured way, and at the same time we need to use
-the most comprehensible form, including good style and perfect marking. As soon
-as we have an idea, an idea of a future reader, a goal, and an outline of the
-text, we can start writing. When writing a first concept, we try to capture all
-of our thoughts and opinions regarding to individual chapters and
-subchapters. Each thought must be explained, described and proven. The main
-sentence should always express the main idea, not the secondary.
+#+BEGIN_SRC haskell :exports code
+  type HackageAPI =
+    "users" :> Get '[JSON] [User] :<|>
+    "user" :> Capture "login" Login :> Get '[JSON] User :<|>
+    "packages" :> Get '[JSON] [Package]
 
-We should approach the writing process in a structured way as well. At the same
-time, as we clarify the structure of the written work, we create key points of
-text that we gradually update. We use those DTP tools that support structured
-text construction (predefined types for titles and text blocks).
+  getUsers :: Handler [User]
+  getUser :: Login -> Handler User
+  getPackages :: Handler [Package]
 
-* Several formal rules
-Our goal is to create a clear and comprehensible text. Therefore, we express
-ourselves properly, we use good Czech (or preferably English) and a good style
-according to the generally accepted customs. The text should provide readers
-with a way to quickly understand the problem, anticipate its difficulties, and
-prevent them. A good style requires impeccable grammar, correct punctuation, and
-appropriate word choice. Avoid using a small selection of words otherwise the
-text might become monotonous, also avoid using some of your favorite words too
-often. If we use foreign words, it is assumed that we know their exact
-meaning. We also must use Czech words in the right sense. It is not wrong to use
-the author's /we/, so we assume that we are solving something, or for
-example, generalizing with the reader. In bachelor or master thesis author's
-/I/ can be used (for example, when we define a share of our own work in
-relation to the translated text), but in casual text excessive use of the first
-person of the single number is not recommended.
+  server :: Server HackageApi
+  server = getUsers :<|> getUser :<|> getPackages
 
-Make sure to precisely select symbols that we use to /mark/. We mean the
-choice of abbreviations and symbols used, for example, to express the types of
-components to identify the main program functions, to name lethal keyboard keys,
-to name variables in mathematical formulas, and so on. Appropriate and
-consistent labeling can greatly benefit reading experience for readers. It is
-appropriate to give a list of the markings at the beginning of the text. Not
-only in marking, but also in references and in overall layout, consistency is
-important.
+  getUsers :<|> getUser :<|> getPackages =
+    client @HackageApi "http://hackage.haskell.org"
+#+END_SRC
 
-This is also associated with a typology term called /highlighting/. Here we mean
-the typesetting for its highlighting. The selected method of marking should
-match the selected highlighting. For example, the keyboard keys can be placed in
-a rectangle, the identifiers from the source text may be written in a
-~typewriter font~, and so on.
+** Nix
+- /"Nix package manager, a "purely functional" package and configuration
+  manager for computer systems"/ -- Wikipedia
+- /"Describe your end result, then magic happens"/ \Smiley
+- Tools build on top:
+  - Nix = package manager
+  - NixOS = operating system
+  - NixOps = cloud deployment tool
+- cross-compiling
 
-If you present some facts, do not conceal their origin and your relationship to
-them. When you claim something, always explicitly state what has been proven and
-what will be proven in our text and what we took over from literature with
-reference to the source. In this respect, never leave the reader in doubt
-whether this is our idea or an idea taken from literature.
+- since 2004, Eelco Dolstra's Ph.D. thesis in 2006
+- purely functional, lazy evaluation
+- one program consists of a closure that includes all dependencies including libc
+- atomic upgrades, rollbacks
+- complete isolation of dependencies, no DLL hell
+- NixOS = OS built on top of Nix
+- NixOps = a cloud deployment tool
+  - conceptually: Terraform/CloudFormation + Puppet/Ansible
+  - a network specification -> magic -> running set of servers on AWS, VPSs,
+    VirtualBox, ...
 
-Never waste reader's time with the interpretation of trivial and insubstantial
-information. Also do not say the exact thing just in different words. With later
-modifications to the text, some previously written passage may seem
-unnecessarily detailed or even totally useless. Dropping such passage or at
-least making it briefer will contribute to better readability of the work! But
-this step requires the courage to throw away the time we have devoted to
-creating it.
+#+BEGIN_SRC nix :exports code
+  {
+    network.description = "Web server";
 
-* It will never be perfect
-When you have already written everything you have been thinking about, take a
-day or two days off, and then read the handwriting again. Make your last edits
-and finish. We are aware that there is always something left unfinished, there
-is always a better way of explaining something, but each stage of the adjustment
-must be final.
+    webserver = { config, pkgs, ... }: {
+      services.httpd.enable = true;
+      services.httpd.adminAddr = "alice@example.org";
+      services.httpd.documentRoot =
+        "${pkgs.valgrind.doc}/share/doc/valgrind/html";
+      networking.firewall.allowedTCPPorts = [ 80 ];
 
-* Typographic and linguistic principles
-When printing /technical report/, When typing a technical text type, a
-technical report, such as the text of the qualification work, A4 format is often
-chosen and we often print only on one side of the paper. VIn that case, make the
-left margin of all pages to be slightly larger than the right - at this place
-the papers will be bound and the binding technique will force this
-requirement. When bounding with a rigid back, the left edge should be slightly
-wider for thick bundles because the pages will be harder to open and the left
-margin will be less exposed to the eye.
+      deployment.targetEnv = "virtualbox";
+    };
+  }
+#+END_SRC
 
-Select the upper and lower edges the same size, or move the printed part
-slightly upwards (the upper edge is smaller than the lower edge). Keep in mind
-that the edges will be slightly cropped after binding.
+** PWA
+- concrete examples of existing apps
+- general reasons for PWA development
+- Web Platform APIs, Service Workers
 
-For an A4 page, it is appropriate to use a font of 11 points for basic
-text. Choose a width of 15 to 16 centimeters and a height of 22 to 23
-centimeters (possible headers and footers included). Line spacing usually should
-be 120 percent of the font used, which is the optimal value for the reading
-speed of the contiguous text. If you decide to use LaTeX, use the default
-settings. When writing a qualification work, make sure to follow the mandatory
-requirements.
+* Research
+In order to write a SPA/PWA, there are some tools and supporting libraries that
+a developer can't live without. As this is not the focus of my thesis, I will
+not explore the Web framework world systematically. We'll first walk through a
+high-level overview of the common features of the Web frameworks of today, then
+go through the most popular frameworks and see where they shine. Afterwards,
+we'll have a look at the ecosystem of Haskell and try to find its strong and
+weak points, and especially the places where the tools or libraries are entirely
+missing.
 
-The font level for different levels of title is selected according to standard
-typographic rules. Typically, for all types of headings semi-bold or bold font
-are being used (uniformly either semi-bold everywhere or bold everywhere). Size
-of line spacing is chosen that the following text of regular paragraphs is
-preferably set on a /fixed index/, that is to say on lines with a predefined
-and fixed spacing.
+** Common features of Web frameworks
+-- A description of the things I'll be looking for, partially from
+Wikipedia's [[https://en.wikipedia.org/wiki/Comparison_of_web_frameworks][Comparison of web frameworks]] and [[https://en.wikipedia.org/wiki/Comparison_of_JavaScript_frameworks][Comparison of JavaScript
+frameworks]], partially from my own experience, and partially from the feature
+lists of the frameworks that I'll be looking into.
 
-The arrangement of the individual parts of the text must be clear and
-logical. It is necessary to distinguish the names of the chapters and
-subchapters -- write them in lowercase letters except for the capital starting
-letters. For each paragraph of the text, offset the first line of the paragraph
-with about one to two squares (always the same preselected value), thus about
-two widths of the capital letter M of the basic text. The last line of the
-preceding paragraph and the first line of the following paragraph are not
-separated by a vertical gap in this case. Spacing between these lines is the
-same as the spacing between the lines inside the paragraph.
+*** Tooling
+I'll start with the things you encounter first when setting up a project, its
+tools. Developers have wildly differing levels of expectations from their tools. A
+Python developer might expect just a text editor and an interpreter, whereas a
+JVM developer might not be satisfied with anything less than a full-featured IDE.
 
-When adding images, choose their size so that they do not exceed the area onto
-where the text is printed (thus text edges from all sides). For large images,
-use a separate page. Place pictures or spreadsheets of sizes larger than A4 in a
-written message in the form of a booklet embedded in an attachment or embedded
-in the tabs on the backboard.
+*Code generators* or scaffolding tools start with creating a package manifest and
+a ~src/~ directory, going on to generators that set up a few different types of
+projects based on templates, all the way to tools that can add an entire website
+module, perhaps even with database migrations.
 
-Pictures and tables must have sequential numbering. The numbering is chosen
-either continuous throughout the text, or -- which is more practical --
-continuous within the chapter. In the second case, the table or image number
-consists of the chapter number and the number of the picture / table in the
-chapter - the numbers are separated by a dot. The numbers of subchapters have no
-effect on the numbering of pictures and tables.
+*Build tools* range from a set of conventions on how to use your build tool that
+might get formalized in your Makefile, through a CLI tool that takes care of
+building, testing and perhaps even deploying your project, to the way of the IDE
+where anything you can think of is just a few clicks away.
 
-Tables and pictures use their own, independent numerical series. Thus in the
-references inside the text we must also provide information about whether we
-refer to a picture or a table (for example ``\ldots /see table
-2.7/\ldots``). Additionally, following this principle is very natural.
+*Debugging tools* also come in many flavors and for many purposes. On the side of
+the server, you have all the usual tools for the language, plus a few more - a
+toolbar with an overview of everything that goes on in a page render or an AJAX
+call, or the option to remotely connect to a running process and to debug
+live. Client-side, we have the now irreplaceable DevTools with a built-in
+debugger and profiler, but some frameworks go even further and provide a
+framework-specific tools - React's component tree, or Elm's time-traveling
+debugger.
 
-For sitelinks, chapters and subchapters, figure numbers and tables and for other
-similar examples, we use special DTP programs to ensure that the correct number
-is generated even if the text is moved by changes in the text itself or by
-adjusting the style parameters. An example of such a too in LaTeX is a reference
-to the corresponding location of the tag in the text, such as a label
-(~\\ref\{navesti\}~ -- according to the location of the labels it will be the
-number of the chapter, subchapter, picture, table, or similar numbered element),
-the page that contains the tag (~\\pageref\{navesti\}~), or a literary reference
-(~\\cite\{identifikator\}~).
+*Quality assurance tools* have many sub-categories. From static code analysis
+tools or linters, as they are commonly known; through tests - unit, integration,
+end-to-end tests, or more exotic ones like marble tests or visual regression
+tests; to profilers - runtime or allocation measurements, frontend performance
+measurements, or more involved tools like performance evolution tracking.
 
-The equation to which we refer in the text is given serial numbers at the right
-margin of the corresponding row. These sequence numbers are written in
-parentheses. The equation numbering can be continuous in the text or in
-individual chapters.
+*** Features
+TODO: Reread and clean up
 
-If you are in doubt when typesetting a mathematical text, try to keep the LaTeX
-defined typesetting. If your work contains a large number of mathematical
-formulas, we recommend using the LaTeX system.
+*Templating*, which at the frontend means a way to compose the HTML that makes up
+an application, usually including some render logic and variable
+interpolation. In some frameworks the whole program is a template (see React),
+some have templates in separate files and pre-compile them during runtime (see
+Angular). Templates sometimes contain CSS as well (see the new CSS-in-JS trend)
 
-Do not make a space where digits are combined with letters in one word or one
-character. Punctuation such as dot, comma, semicolon, colon, question mark and
-exclamation mark, as well as closing brackets and quotation marks are appended
-to the preceding word without a space. The space is behind them. However, this
-does not apply to decimal points (or decimal dots). The opening bracket and the
-front quotes are appended to the following word and the space is omitted before
-them -- (like this) and~ ~like this~.
+*Forms* are the basic element of interactive applications. There are a few layers
+of abstraction at which a framework can decide to implement forms - starting at
+raw DOM manipulation, going on to data containers with validation (but manual
+rendering), all the way up to form builders, manual or automatic. Under 'forms'
+I count a way to render a form, to validate user input, and collect the result.
 
-We do not use the same character for hyphen and dash. For a dash another
-character is reserved (longer). In the TeX system (LaTeX), the hyphen is written
-as one character ~hyphen~ (example ~Brno-město~), For an interval or
-pairs, rivals, and similarly the source text uses a pair of characters ~dash~
-(such as ~match Sparta -- Slavie~; ~price 23--25 Crowns~), For the
-distinctive separation of a part of the sentence, for the distinct separation of
-the inserted sentence, for the expression of an unspoken idea, and in other
-situations (see Czech Spelling Rules), the longest type of dash is used, which
-is written in the source text as three characters ~dash~ (such as ~Another
-term --- however it may seem insignificant --- will be informally defined in the
-following paragraph.~). For the mathematical minus symbol, a different character
-is used. In TeX system it is written as a normal minus symbol in the source text
-(thus symbol ~dash~). The typesetting in the mathematical environment where
-the formula is surrounded by dollars will ensure that the correct output is
-generated.
+*Routing* means manipulating the displayed URL using the History API and changing
+the application state to reflect it, and also loading the correct state on
+application start-up. This can also include animated transitions between pages.
 
-The forward slash is written without spaces. For example, the school year
-2008/2009.
+*Internationalization* has many levels. At its most basic, it means simple string
+translations, pluralization, and word order. Going further, it means also RTL
+scripts, date/time formats, currency, or time zones.
 
-The rules for writing abbreviations are set out in Czech Spelling Rules
-cite:Pravidla. For other reasons, it is appropriate to have this book at hand.
+Modern web frameworks also provide a way to use a web application's code and
+compile it into a *native mobile application*. It's commonly implemented as a
+wrapper application around web apps using Cordova, but technologies like React
+Native go further and use native UI elements. Mobile applications can be faster
+to use and faster to load, can access device-specific APIs not exposed via Web
+Platform APIs.
 
-** What is a standard page?
-Term /standard page/ refers to the assessment of the extent of the work, not
-the number of sheets printed. From the historical point of view, it is the
-number of pages of manuscript written on a typewriter on special preprinted
-forms, with an average length of 60 characters per line and 30 lines per page of
-the manuscript. Because of the correctio nmarkers, line spacing 2 (every other
-row) was used. These data (the number of characters per line, the number of rows
-and the line spacing between them) do not determine to the final printed
-result. They are only used for range assessment. One standard page is therefore
-60 * 30 = 1800 characters. Images included in the text are counted in the scope
-of the written work approximately same as the amount of text that would produce
-the same size in the resulting document.
+Some frameworks also support creating a *desktop application* that reuses a web
+application's code. The underlying technology here is Electron and not Cordova,
+but the benefits are the same - greater speed and access to device-specific
+functionality.
 
-The approximate range of work in standard pages can be determined by the /Word
-Count/ function in the Microsoft Word /Tools menu/ by dividing the value
-/Characters (including spaces)/ by constant 1800. Only the text written in the
-core of the work is included in the scope of work. Parts such as abstract,
-keywords, statements, content, literature, or attachments do not count towards
-the scope of work. Therefore, it is necessary first to select the core of the
-work and then have the number of characters counted for you. You can estimate
-the approximate range of images manually. Similarly, you can use
-OpenOffice. When using LaTeX, the situation is a bit more complicated. For a
-rough estimate of the number of standard pages, you can use the sum of sizes of
-the source files of the work divided by a constant of about 2000 (normally we
-would divide by 1800, but in the source files there are also commands which are
-not counted in the range). For a more accurate estimate, plain text from PDF can
-be extracted (for example, using the cut-and-paste or /Save as Text.../ method
-and divide it by 1800.
+*** Accessibility (ARIA, ...)
+- the key word now is ARIA = support for screen readers
+- also, semantic elements, text contrast, customization
+- also also, keyboard-accessibility (shortcuts, every clickable element
+  accessible via keyboard = tabindex)
+- accessibility testing (automatic as well, see aXe)
+
+*** Optimistic updates
+- one of the things I want to focus on
+- broadly, expecting that every network request will be successful and updating
+  the GUI accordingly
+- rolling back app state in case of failure, with notifications
+
+*** Web Platform
+- location, camera, touch, vibration, ...
+
+*** Pre-render
+- one approach to shortening start-up times
+- serving HTML with all the content already inside, no need for more requests to
+  the backend for the initial page load
+- JS takes over and uses what's already been loaded
+- can be static or dynamic:
+  - static = JAM stack, serving a bunch of files rendered at compile-time
+  - dynamic = rendering the HTML at runtime
+
+TODO: What about the backend feature write-ups I have?
+
+** JavaScript ecosystem
+*** Angular
+TODO: what is it?
+On a first look, Angular looks like a well thought-out frontend
+framework. Written in Typescript with comprehensive documentation and great
+tooling, it seems that the authors have learned from their mistakes with
+AngularJS.
+
+Some notable features:
+- command line tool, ~ng~ - it streamlines setting up the entire project -
+  scaffolding, preparing build and testing tools, starting a
+  development server, ...
+- runtime environments - from server-side rendering, PWAs with ServiceWorkers,
+  to native and desktop applications, it seems that Angular tries to cover every
+  possible use-case
+- tooling other than the ~ng~ tool - browser extensions for runtime debugging,
+  IDEs and others. I haven't thought of a tool I would miss, but I'm used to
+  minimalism in tooling from the Haskell world...
+
+Some negatives that developers complain about:
+- Angular is intimidating for a new developer, it's too complex and there's a
+  lot to learn
+- Too much 'magic' - related to the previous point, there's a lot of abstraction
+  and it's not easy to understand all the layers
+- Code bloat - the amount of boilerplate and also the size of the resulting bundle
+- Too opinionated - if you don't like 'the angular way', you're out of luck here
+- scattered documentation - too many articles and tutorials out there for
+  AngularJS that can't work with the new Angular
+
+*** React
+React is not a framework in itself. Rather, it's a library that focuses on a
+single thing and does it in a unique enough way that there's sprung up an entire
+ecosystem around it. In it, there are groups of libraries that build upon React,
+each focusing on a single feature - UI components, state management, forms etc.
+
+There's a large jungle of libraries, each one with a different scope and
+focus. Choosing a library that fits your problem can sometimes take many
+attempts. Add to it the fact that libraries, frameworks and tools come and go
+quite quickly - the main cause of the so-called "JavaScript fatigue - and the
+fact that in JavaScript, it's fashionable to write extremely small libraries,
+and you have a recipe for a quite unpleasant development experience.
+
+I'll try to go through some of the most popular 'frameworks' that build on
+React, though each one is more of a pre-built toolkit of libraries and tools
+and bits of glue in between, rather than cohesive frameworks. In general, the
+React world is a lot more mix-and-match than developers used to enterprise
+frameworks would expect.
+
+Create-react-app, nwb, Razzle, and Neutrino all cover only the build
+process. Next.js is the first one that I've found that goes a step beyond just
+pre-configuring Webpack and other build tools - it provides other features that
+are starting become standard - server-side runtime rendering, link prefetching,
+and build-time prerendering. It's also the first tool I found that considers
+that a website can consist of multiple applications, via its 'zones' feature.
+
+TODO: developers' opinions
+
+*** Gatsby
+One rather unique framework I found - and this is a framework in a strong
+sense, not like the React tools above - is Gatsby. It's unique in the sense that
+while it's a frontend framework, it's not supposed to run in a browser. It's a
+part of a growing movement centered around the 'JAM stack' - "JavaScript, APIs,
+and Markup". That doesn't tell you much, but the main feature is that at
+build-time, you fetch data from your APIs, and render the application to plain
+HTML files, so that you don't need a server other than an S3 bucket or similar.
+
+It's a framework targeted at a specific subset of website - not single-page
+applications, but more blogs or e-shops, and a workflow exemplified by Netlify.
+This means it doesn't need to concern itself with many features that would be
+missing in a frontend framework intended for a browser, and those are delegated
+to a different part of the stack.
+
+TODO: opinions, structured pro/cons
+
+*** Vue.js
+TODO: Vue.js
+
+*** Polymer
+TODO: Polymer
+
+** Haskell ecosystem
+TODO: Compare Haskell compared to the above list
+
+- its strong points
+- passable but not ideal libraries
+- what's missing
+
+** Implementation plan
+TODO: Somehow use the "Evolving frameworks" article
+
+In this thesis, I'll focus mainly on the tools that are necessary specifically
+for PWA development, not general quality-of-life libraries.
+
+*Goal = app that fulfills the basic PWA criteria*:
+- Pages are responsive on tablets & mobile devices
+- All app URLs load while offline
+- Metadata provided for Add to Home screen
+- Page transitions don't feel like they block on the network
+- Each page has a URL
+- Pages use the History API
+- Site uses cache-first networking
+- Site appropriately informs the user when they're offline
+- Push notifications (consists of several related requirements)
+
+To achieve this, I need to create:
+- A full-featured browser routing library. While there are some existing
+  implementations, they are either incomplete or long abandoned.
+- A wrapper around ServiceWorkers, or a template to simplify project creation.
+- A push notifications library.
+- A library or a script that will render HTML 'shells' of all pages on the site,
+  for fast first load.
+- CLI tool (requirement from assignment? "support tools")
+- An offline storage library (some variant of it)
+
+Not required by the checklist, but would improve the quality of my work:
+- A template of an application, with predefined internal architecture, that uses
+  all of the above libraries
+- A utility library for querying and caching data from an API, be it HTTP, WebSocket,
+  GraphQL, or others.
+
+*Stretch goals*:
+- a library to use in code shared between the server and client - a way to
+  define the shape of the transport channel (and its API for non-Haskell
+  applications)
+- a server library, to allow user code to implement the specified protocol
+- a client library with a storage component for entities and pending requests
+
+TODO: talk about how these tools will fit into a 'platform', so that I check of
+a box from the assignment
+
+An application using these tools and libraries would consist of a server written
+independently, and of a browser application. Implementing the communication
+between them is left to the developer, as is implementing many common
+conveniences usually provided by a framework.
+
+*Stretch*: An application using these libraries would consist of a server and a client
+sharing code that contains the definition of their communication channel. I do
+not yet know how much these libraries would affect the shape/architecture of the
+server, but the client library would form the core of the client - with the
+libraries from the previous plan forming the shell.
+
+These goals also include fully documenting the code written, as well as testing
+and benchmarking it to remove the most obvious bottlenecks.
+
+TODO: talk about Serverless, JAM stack, and alternative app structures:
+- Client only. An application that doesn't need to communicate with a server,
+  like a web presentation, or a blog, a set of pre-compiled HTML+JS files.
+- Server only. Either just an API, or a plain HTML website with no JavaScript.
+- Server and client, with the client rendered during run-time by the server.
+- Server and client, with the client rendered during build-time and served
+  separately (e.g. via an S3 bucket).
+- Server and client, with the client re-rendered on demand, whenever the data that
+  it shows changes. This is the shape of a 'JAM stack' application.
+- Projects with multiple clients and/or servers (even more pressure on
+  supporting tools)
+
+* Components
+TODO: Demonstrate the principles of components on 'src-snippets' code, where
+I'll show the smallest possible code that implements that functionality
+
+** Component A
+*** Design
+*** Implementation
+*** Testing
+*** Other options, possible improvements
+
+* Applications
+** Workflow and tools
+TODO: describe the development flow of an app built using these tools
+
+- starting out - three layer cake & esp. the inner one
+- QA (tests, e2e, CI, ...), documentation
+- development tool options
+- deployment options
+
+** TodoMVC
+
+** RealWorld
 
 * Conclusion
+TODO: return to the comparison with JS, PHP, ... frameworks
+
+TODO: describe possible follow-up work, what I'll be working on - define
+  specific topics and make concrete examples
+
 The final chapter includes an evaluation of the achieved results with a special
 emphasis on the student's own contribution. A compulsory assessment of the
 project's development will also be required, the student will present ideas
@@ -353,7 +450,8 @@ the just completed projects.
 \iftwoside\cleardoublepage\fi
 #+END_LaTeX
 
-* Obsah přiloženého paměťového média
-...
-* Plakát
-...
+* Contents of the attached data storage
+TODO: fill in
+
+* Poster
+TODO: fill in
