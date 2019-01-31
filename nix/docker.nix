@@ -6,25 +6,30 @@
 with pkgs;
 
 let
-  system = (import "${nixpkgs.path}/nixos/lib/eval-config.nix" {
+  eval = (import "${nixpkgs.path}/nixos/lib/eval-config.nix" {
     modules = [{
       imports = [
         "${nixpkgs.path}/nixos/modules/profiles/docker-container.nix"
       ];
       environment.systemPackages = [ nixpkgs.pkgs.nixops ];
     }];
-  }).config.system;
+  });
 
 in dockerTools.buildImageWithNixDb {
   name = "zarybnicky/nixos-thesis";
   tag = "latest";
   created = "now";
   contents = [
-    system.build.etc
-    system.path
+    eval.config.system.build.etc
+    eval.config.system.path
   ] ++ builtins.attrValues (import ../src-snippets);
+  runAsRoot = ''
+    #!${stdenv.shell}
+    export PATH=/bin:/usr/bin:/sbin:/usr/sbin:$PATH
+    ${dockerTools.shadowSetup}
+    mkdir -m 777 tmp
+  '';
   config = {
-    Cmd = ["/bin/bash"];
-    Env = ["LANG=en_US.UTF-8"];
+    EntryPoint = [ "bash" ];
   };
 }
