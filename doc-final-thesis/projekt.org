@@ -19,7 +19,21 @@
 \setlength{\parskip}{0.5\bigskipamount}
 #+END_LaTeX
 
-Proposed flow of the thesis:
+*Assignment*:
+- Study the current state of the Haskell ecosystem for creating web
+  applications.
+- Find suitable libraries as a starting point for creating Progressive Web
+  Applications (PWAs), i.e., web applications that can offer the user
+  functionality such as working offline or push notifications.
+- Implement a framework for PWAs. Focus, in particular, on the implementation of
+  components for offline storage, push notifications, and also support tools.
+- Create a set of example PWAs that utilise the created framework.
+- Compare the created framework with existing (e.g. JavaScript) frameworks for
+  PWAs.
+- Summarize the obtained results and discuss the future work.
+
+
+*Proposed flow of the thesis*:
 - a concrete motivating example of a Haskell app that needs a web client, plus
   why PWA
 - Haskell and PWA technology intro
@@ -27,21 +41,26 @@ Proposed flow of the thesis:
   - Haskell, GHCJS
   - Nix, cross-compiling
   - WebAssembly mention
+
 - Tools and libraries needed for a SPA/PWA
   - Outline the general features for a web app
   - List features where current frameworks excel and what developers don't like
     about them and esp. about Haskell
   - Write about excellent and missing features in Haskell
-- Delineate missing pieces of tooling
+
+- Delineate missing pieces of tooling in the Haskell ecosystem
   - in general, what's left
   - describe my plan = in this work, tools needed specifically for PWA
     development, not general quality-of-life libraries
-  - namely - routing, notifications, service wrapper, skeleton
+  - namely - routing, notifications, service wrapper, skeleton, + offline
+    storage (at least a simple version)
   - write in parenthesis what I want to do, so that it's in the thesis, but mark
     it as something to clean up later
-- describe an implementation plan, be specific about what I'll be doing
+  - describe an implementation plan, be specific about what I'll be doing
 
 - further chapters about individual features, their design and implementation
+
+- describe the design and implementation of the example apps
 
 - describe the development flow of an app built using these tools
   - starting out - three layer cake & esp. the inner one
@@ -52,7 +71,7 @@ Proposed flow of the thesis:
 - next avenues, what I'll be working on - define specific topics and make
   concrete examples
 
-- conclusion, evaluate my results
+- conclusion, evaluate my results - return to the comparison in part 1 (with JS, ...)
 
 * Introduction
 In order to be able to write a professional text clearly and comprehensibly, we
