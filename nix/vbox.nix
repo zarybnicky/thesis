@@ -46,10 +46,4 @@ let
       ] ++ builtins.attrValues (import ../src-snippets);
     }];
   };
-  ova = baseSystem.config.system.build.virtualBoxOVA;
-  vmdk = pkgs.runCommand "nixops-ova-to-vmdk" {} ''
-    mkdir -p $out
-    echo ${ova}
-    tar -xf ${ova}/*.ova && mv nixos*.vmdk $out/nixos.vmdk
-  '';
-in vmdk
+in baseSystem.config.system.build.virtualBoxOVA
