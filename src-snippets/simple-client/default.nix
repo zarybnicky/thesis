@@ -1,11 +1,11 @@
 (import ../../reflex-platform {}).project ({ pkgs, ... }: {
   packages = {
-    trivial-client = ./.;
+    simple-client = ./.;
   };
 
   shells = {
-    ghc = ["trivial-client"];
-    ghcjs = ["trivial-client"];
+    ghc = ["simple-client"];
+    ghcjs = ["simple-client"];
   };
 
   tools = ghc: [ ghc.ghcid ];

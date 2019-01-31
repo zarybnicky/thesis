@@ -2,7 +2,7 @@
 , reflex-dom-core, stdenv
 }:
 mkDerivation {
-  pname = "trivial-client";
+  pname = "simple-client";
   version = "0.1.0.0";
   src = ./.;
   isLibrary = false;

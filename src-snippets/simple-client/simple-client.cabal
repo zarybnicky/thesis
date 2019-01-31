@@ -1,4 +1,4 @@
-name:                trivial-client
+name:                simple-client
 version:             0.1.0.0
 license:             BSD3
 author:              Jakub Zárybnický
@@ -7,7 +7,7 @@ category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
 
-executable trivial-client
+executable simple-client
   main-is:             Main.hs
   default-language:    Haskell2010
   ghc-options: -Wall
