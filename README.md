@@ -13,7 +13,7 @@ necessary tools and dependencies - get it
 [here](https://zarybnicky.com/static/nixos-18.09pre-git-x86_64-linux.ova). The
 login is `demo` (password `demo`), and the contents of this repository are
 bundled with the image in `~/thesis`. The source code for the image is available
-in [nix/vbox.nix]()).
+in [nix/vbox.nix](nix/vbox.nix)).
 
 ## Repository structure
 - `doc-midterm-report/` - midterm progress report
