@@ -8,6 +8,7 @@
 # cprint = B&W links, color logo
 # %\graphicspath{{obrazky-figures/}{./obrazky-figures/}}
 #+LaTeX_HEADER: \input{metadata}
+#+LATEX_HEADER: \usepackage{minted}
 #+LaTeX_HEADER: \usepackage[figure,table]{totalcount}
 #+BEGIN_LaTeX
 \maketitle
@@ -87,7 +88,7 @@ learned to expect and require.
 ** Nix
 - /"Nix package manager, a "purely functional" package and configuration
   manager for computer systems"/ -- Wikipedia
-- /"Describe your end result, then magic happens"/ \Smiley
+- /"Describe your end result, then magic happens"/
 - Tools build on top:
   - Nix = package manager
   - NixOS = operating system
@@ -583,7 +584,7 @@ The final chapter includes an evaluation of the achieved results with a special
 emphasis on the student's own contribution. A compulsory assessment of the
 project's development will also be required, the student will present ideas
 based on the experience with the project and will also show the connections to
-the just completed projects.
+the just completed projects. cite:Pravidla
 
 * (bibliography, start of appendix)                           :ignoreheading:
 #+BEGIN_LaTeX
