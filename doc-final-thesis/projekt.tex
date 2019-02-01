@@ -1,4 +1,4 @@
-% Created 2019-02-01 Fri 16:13
+% Created 2019-02-01 Fri 16:37
 % Intended LaTeX compiler: pdflatex
 \documentclass[english,odsaz]{fitthesis}
 \renewcommand\title[1]{}
@@ -19,14 +19,14 @@
 % * (front matter)                                              :ignoreheading:
 \maketitle
 \setlength{\parskip}{0pt}
-\{\hypersetup{hidelinks}\tableofcontents\}
+{\hypersetup{hidelinks}\tableofcontents}
 \iftotalfigures\listoffigures\fi
 \iftotaltables\listoftables\fi
 \iftwoside\cleardoublepage\fi
 \setlength{\parskip}{0.5\bigskipamount}
 
 \chapter{Introduction}
-\label{sec:orgb206161}
+\label{sec:org06f850b}
 \begin{itemize}
 \item a concrete motivating example of a Haskell app that needs a web client, plus
 why to write a PWA
@@ -35,11 +35,11 @@ why to write a PWA
 \end{itemize}
 
 \chapter{Technologies}
-\label{sec:orgc801d41}
+\label{sec:org94b3c11}
 We'll first have a more detailed look at the above-mentioned technologies, [\ldots{}]
 
 \section{Haskell}
-\label{sec:org750025f}
+\label{sec:org72a8337}
 The programming language Haskell is a rather old one, despite spreading into the
 industry only recently, having been around since 1990 [TODO: reference]. It is a
 language that started out as a basis for research into the design of functional
@@ -96,7 +96,7 @@ getUsers :<|> getUser :<|> getPackages =
 \end{minted}
 
 \section{Nix}
-\label{sec:org6d3bbd4}
+\label{sec:org2d5be15}
 \begin{itemize}
 \item \emph{"Nix package manager, a "purely functional" package and configuration
 manager for computer systems"} -- Wikipedia
@@ -140,7 +140,7 @@ VirtualBox, \ldots{}
 \end{minted}
 
 \section{PWA}
-\label{sec:org08c60c8}
+\label{sec:org250af13}
 \begin{itemize}
 \item concrete examples of existing apps
 \item general reasons for PWA development
@@ -148,7 +148,7 @@ VirtualBox, \ldots{}
 \end{itemize}
 
 \chapter{Research}
-\label{sec:org711ec91}
+\label{sec:org8d5aae7}
 In order to write a SPA/PWA, there are some tools and supporting libraries that
 a developer can't live without. We'll first walk through a high-level overview
 of the common features of the Web frameworks of today, then go through the most
@@ -157,14 +157,14 @@ the ecosystem of Haskell and try to find its strong and weak points, and
 especially the places where the tools or libraries are entirely missing.
 
 \section{Common features of Web frameworks}
-\label{sec:org5b63cff}
+\label{sec:org6d68e49}
 -- A description of the things I'll be looking for, partially from
 Wikipedia's \href{https://en.wikipedia.org/wiki/Comparison\_of\_web\_frameworks}{Comparison of web frameworks} and \href{https://en.wikipedia.org/wiki/Comparison\_of\_JavaScript\_frameworks}{Comparison of JavaScript
 frameworks}, partially from my own experience, and partially from the feature
 lists of the frameworks that I'll be looking into.
 
 \subsection{Tooling}
-\label{sec:orgcc8ef1c}
+\label{sec:org0909b17}
 I'll start with the things you encounter first when setting up a project, its
 tools. Developers have wildly differing levels of expectations from their tools. A
 Python developer might expect just a text editor and an interpreter, whereas a
@@ -196,7 +196,7 @@ tests; to profilers - runtime or allocation measurements, frontend performance
 measurements, or more involved tools like performance evolution tracking.
 
 \subsection{Features}
-\label{sec:org51ab80a}
+\label{sec:org71e19d2}
 TODO: Reread and clean up
 
 \textbf{Templating}, which at the frontend means a way to compose the HTML that makes up
@@ -232,7 +232,7 @@ but the benefits are the same - greater speed and access to device-specific
 functionality.
 
 \subsection{Accessibility (ARIA, \ldots{})}
-\label{sec:orga623315}
+\label{sec:orgc1fdb11}
 \begin{itemize}
 \item the key word now is ARIA = support for screen readers
 \item also, semantic elements, text contrast, customization
@@ -242,7 +242,7 @@ accessible via keyboard = tabindex)
 \end{itemize}
 
 \subsection{Optimistic updates}
-\label{sec:org8219bbf}
+\label{sec:org22f479c}
 \begin{itemize}
 \item one of the things I want to focus on
 \item broadly, expecting that every network request will be successful and updating
@@ -251,13 +251,13 @@ the GUI accordingly
 \end{itemize}
 
 \subsection{Web Platform}
-\label{sec:orgc643ea8}
+\label{sec:org8a17782}
 \begin{itemize}
 \item location, camera, touch, vibration, \ldots{}
 \end{itemize}
 
 \subsection{Pre-render}
-\label{sec:org6246010}
+\label{sec:org25dd468}
 \begin{itemize}
 \item one approach to shortening start-up times
 \item serving HTML with all the content already inside, no need for more requests to
@@ -273,9 +273,9 @@ the backend for the initial page load
 TODO: What about the backend feature write-ups I have?
 
 \section{JavaScript ecosystem}
-\label{sec:org4db5855}
+\label{sec:org17dc5f4}
 \subsection{Angular}
-\label{sec:org48cf689}
+\label{sec:org7f55e9e}
 TODO: what is it?
 On a first look, Angular looks like a well thought-out frontend
 framework. Written in Typescript with comprehensive documentation and great
@@ -308,7 +308,7 @@ AngularJS that can't work with the new Angular
 \end{itemize}
 
 \subsection{React}
-\label{sec:org5c410c4}
+\label{sec:org6677fa9}
 React is not a framework in itself. Rather, it's a library that focuses on a
 single thing and does it in a unique enough way that there's sprung up an entire
 ecosystem around it. In it, there are groups of libraries that build upon React,
@@ -337,7 +337,7 @@ that a website can consist of multiple applications, via its 'zones' feature.
 TODO: developers' opinions
 
 \subsection{Gatsby}
-\label{sec:org296504a}
+\label{sec:orgd101388}
 One rather unique framework I found - and this is a framework in a strong
 sense, not like the React tools above - is Gatsby. It's unique in the sense that
 while it's a frontend framework, it's not supposed to run in a browser. It's a
@@ -355,19 +355,19 @@ to a different part of the stack.
 TODO: opinions, structured pro/cons
 
 \subsection{Vue.js}
-\label{sec:org0c2f358}
+\label{sec:org317ae1d}
 TODO: Vue.js
 
 \subsection{Polymer}
-\label{sec:orgee09768}
+\label{sec:org9edf765}
 TODO: Polymer
 
 \section{PHP ecosystem}
-\label{sec:org08d3196}
+\label{sec:org20cd722}
 TODO: PHP ecosystem
 
 \section{Haskell ecosystem}
-\label{sec:orgac5f833}
+\label{sec:orge80f0df}
 TODO: Compare Haskell compared to the above list
 
 \begin{itemize}
@@ -377,7 +377,7 @@ TODO: Compare Haskell compared to the above list
 \end{itemize}
 
 \subsection{UI toolkit}
-\label{sec:org8cf5adc}
+\label{sec:orgfb5f79d}
 At the frontend, the UI toolkit defines what the entire application will look
 like, its architecture as well as the tools it can use. There is significant
 pressure on well-defined types in Haskell, and the UI libraries have pushed
@@ -403,7 +403,7 @@ no ecosystem right now and not fully mature.
 TODO: examples of Reflex, Miso, Concur
 
 \subsection{Build tools}
-\label{sec:org8ca7010}
+\label{sec:org4af2283}
 The UI toolkit constrains the choice of possible build tools. In Haskell, there
 are three mature options - Cabal (new-build) [TODO: ref], Stack, and Nix. There
 is also a new fourth option aiming for the best of these four, Snack [TODO:
@@ -437,7 +437,7 @@ integration - usually via GHCi only, but projects like haskell-dap (+ Phoityne
 editor plugin) exist.
 
 \subsection{UI components}
-\label{sec:org337bc77}
+\label{sec:orge5f0ab9}
 Preferred approach - implement UI and logic inside application code. FFI is
 usable and quite simple for bigger components (see reflex-dom-ace).
 
@@ -445,7 +445,7 @@ Reflex and Concur - self-contained components and global state both (-> reusabil
 Miso - single state atom only (see TEA)
 
 \subsection{Forms}
-\label{sec:org6b15749}
+\label{sec:org8d8e902}
 No good options exist for any of the frameworks. While there are some attempts
 at a forms library for Reflex, there is not a single feature-complete
 library. Part of the reason - validation-only libraries exist in Haskell and
@@ -453,13 +453,13 @@ commonly used (see \texttt{validation}, \texttt{digestive-functors}). There are 
 the backend (see \texttt{yesod-form}) with almost automatic form generation.
 
 \subsection{Routing}
-\label{sec:orgf41fa22}
+\label{sec:org8dc81d7}
 Miso has routing built-in. There are several attempts at a Reflex routing
 library but not a single accepted solution. Concur with its small ecosystem
 doesn't have even that.
 
 \subsection{Mobile/desktop apps}
-\label{sec:org7953a3b}
+\label{sec:orgc8dbab7}
 Reflex has this built-in via reflex-platform. Obelisk, building on top of
 reflex-platform, includes bundling apps for App/Play Store. Cross-compilation via
 Nix to Android/iOS, reflex-dom's bindings to WkWebView on desktop. I haven't
@@ -467,19 +467,19 @@ found any attempt to do this for Miso or Concur (Concur has beginnings of React
 Native and SDL backends, but the development seems to have stalled).
 
 \subsection{Accessibility}
-\label{sec:orgfd3d99d}
+\label{sec:orgbc6e532}
 I haven't found anything related to this topic, so I must assume no one has even
 attempted to tackle this topic. Building accessible applications by yourself
 isn't hard though.
 
 \subsection{Optimistic updates}
-\label{sec:org3cde453}
+\label{sec:orgabf7642}
 I haven't found anything related to this topic. For FRP though, this should be
 implemented at the data or network layers though, so this is something to work
 towards when building the 'offline storage' library as per my assignment.
 
 \subsection{Web Plaftorm}
-\label{sec:org472434a}
+\label{sec:org4720514}
 The library JSaddle wraps the entirety of the Web Platform APIs using
 WebIDL. Any UI library can use this library, though there are limited
 event-based bindings, which means writing manual wrappers. (Reflex has some
@@ -487,13 +487,13 @@ machinery for a subset for it, Miso has subscriptions for some of them, Concur
 uses ghcjs-vdom which has also some limited bindings.)
 
 \subsection{Prerender (Isomorphic rendering)}
-\label{sec:org9bd88aa}
+\label{sec:org3690e0d}
 Reflex has explicit support, \texttt{preRender} allows even for two variants of an
 element if it doesn't render well. Miso has explicit support as well. I haven't
 found anything like this for Concur.
 
 \subsection{Support tools}
-\label{sec:orgac67c30}
+\label{sec:orgfe6a32e}
 Linter - Haskell standard is Hlint, support for custom rules, well-supported and
 mature. Code formatter situation is more divided, Hindent follows gofmt with a
 single code style for all code (but doesn't cover edge cases esp. for type-heavy
@@ -515,7 +515,7 @@ TODO: more code generation tooling - 'rails new
 controller/scaffold/module/model/migration'
 
 \subsection{Quality Assurance}
-\label{sec:orgf74ee0c}
+\label{sec:org88b1d3c}
 On this front, Haskell is very developed, at least theoretically. QuickCheck
 originated in Haskell and quickly propagated to many other languages - followup
 tools like SmallCheck and similar. That's generative, or property-based testing,
@@ -533,14 +533,14 @@ Benchmarking - best in class - criterion, no competition. Weigh - allocation
 measurements as a benchmark.
 
 \subsection{Documentation}
-\label{sec:org6c008b1}
+\label{sec:org5feaa75}
 It is generally agreed that documentation is Haskell's weakest point. Despite
 having a great standard API docs tool (haddock), documentation is often an
 afterthought, with incomplete docs or unclear starting points (which means no
 tutorials etc. either).
 
 \subsection{Server-side tools}
-\label{sec:org8ab9455}
+\label{sec:orgdaa3c09}
 \begin{itemize}
 \item Communication - typed APIs (HTTP - servant, WebSocket - some attempts, nothing
 production-ready)
@@ -551,7 +551,7 @@ here, and that's SQL only)
 \end{itemize}
 
 \section{Implementation plan}
-\label{sec:orgdb7a8d2}
+\label{sec:org402967f}
 TODO: Somehow use the "Evolving frameworks" article
 
 In this thesis, I'll focus mainly on the tools that are necessary specifically
@@ -631,25 +631,25 @@ supporting tools)
 \end{itemize}
 
 \chapter{Components}
-\label{sec:orgc382420}
+\label{sec:org8a5b091}
 TODO: Demonstrate the principles of components on 'src-snippets' code, where
 I'll show the smallest possible code that implements that functionality
 
 \section{Component A}
-\label{sec:org073fa74}
+\label{sec:orgb786ab8}
 \subsection{Design}
-\label{sec:org387b696}
+\label{sec:orge19c543}
 \subsection{Implementation}
-\label{sec:org2313038}
+\label{sec:org253c664}
 \subsection{Testing}
-\label{sec:orgd6a30e6}
+\label{sec:org1f810eb}
 \subsection{Other options, possible improvements}
-\label{sec:org100d9bd}
+\label{sec:org5b8ffb9}
 
 \chapter{Applications}
-\label{sec:org2d042a0}
+\label{sec:org2418a9d}
 \section{Workflow and tools}
-\label{sec:org333237e}
+\label{sec:org5838504}
 TODO: describe the development flow of an app built using these tools
 
 \begin{itemize}
@@ -660,13 +660,13 @@ TODO: describe the development flow of an app built using these tools
 \end{itemize}
 
 \section{TodoMVC}
-\label{sec:org1e4d0b5}
+\label{sec:org9039ca9}
 
 \section{RealWorld}
-\label{sec:org040d0fb}
+\label{sec:org33da4c1}
 
 \chapter{Conclusion}
-\label{sec:org3589e86}
+\label{sec:org3eef492}
 TODO: return to the comparison with JS, PHP, \ldots{} frameworks
 
 TODO: describe possible follow-up work, what I'll be working on - define
@@ -696,15 +696,15 @@ the just completed projects. \cite{Pravidla}
 
 \startcontents[chapters]
 % \setlength{\parskip}{0pt}
-% \printcontents[chapters]{l}{0}\{\setcounter{tocdepth}{2}\}
+% \printcontents[chapters]{l}{0}{\setcounter{tocdepth}{2}}
 % \setlength{\parskip}{0.5\bigskipamount}
 \iftwoside\cleardoublepage\fi
 
 \chapter{Contents of the attached data storage}
-\label{sec:orge8b856d}
+\label{sec:org43411b8}
 TODO: fill in
 
 \chapter{Poster}
-\label{sec:org13d39f2}
+\label{sec:org8c111fa}
 TODO: fill in
 \end{document}

@@ -10,7 +10,7 @@
 #+LaTeX_HEADER: \input{metadata}
 #+LATEX_HEADER: \usepackage{minted}
 #+LaTeX_HEADER: \usepackage[figure,table]{totalcount}
-#+BEGIN_LaTeX
+#+BEGIN_EXPORT latex
 \maketitle
 \setlength{\parskip}{0pt}
 {\hypersetup{hidelinks}\tableofcontents}
@@ -18,7 +18,7 @@
 \iftotaltables\listoftables\fi
 \iftwoside\cleardoublepage\fi
 \setlength{\parskip}{0.5\bigskipamount}
-#+END_LaTeX
+#+END_EXPORT
 
 * Introduction
 - a concrete motivating example of a Haskell app that needs a web client, plus
@@ -207,7 +207,7 @@ application's code. The underlying technology here is Electron and not Cordova,
 but the benefits are the same - greater speed and access to device-specific
 functionality.
 
-*** Accessibility (ARIA, ...)
+*** Accessibility
 - the key word now is ARIA = support for screen readers
 - also, semantic elements, text contrast, customization
 - also also, keyboard-accessibility (shortcuts, every clickable element
@@ -587,7 +587,7 @@ based on the experience with the project and will also show the connections to
 the just completed projects. cite:Pravidla
 
 * (bibliography, start of appendix)                           :ignoreheading:
-#+BEGIN_LaTeX
+#+BEGIN_EXPORT latex
 \makeatletter
 \def\@openbib@code{\addcontentsline{toc}{chapter}{Bibliography}}
 \makeatother
@@ -608,7 +608,7 @@ the just completed projects. cite:Pravidla
 % \printcontents[chapters]{l}{0}{\setcounter{tocdepth}{2}}
 % \setlength{\parskip}{0.5\bigskipamount}
 \iftwoside\cleardoublepage\fi
-#+END_LaTeX
+#+END_EXPORT
 
 * Contents of the attached data storage
 TODO: fill in
