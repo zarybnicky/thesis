@@ -21,13 +21,72 @@
 #+END_EXPORT
 
 * Introduction
-- a concrete motivating example of a Haskell app that needs a web client, plus
-  why to write a PWA
-- general trends in Haskell and frontend development
-- related work (Tweag, Obsidian, ...)
+Let's imagine we want to create a new e-shop, with all the conveniences that
+users are nowadays used to - [TODO: ...], a notification when the order is
+ready, and ideally an offline-available overview of the order for when the user
+is picking it up. What would be the easiest way to implement such a service? If
+we want to show something offline inside an application, we need a mobile
+application, the same for notifications. But [TODO: research about mobile
+engagement] and downloading a mobile application means another dozen megabytes.
+
+That's what the new trend of Progressive Web Applications is trying to
+solve. Fast - no need to wait for page reloads, Reliable - service workers help
+overcome problems with unreliable internet - both for page load (by caching the
+app itself, and in-app caching of app-specific data) and for background sync of
+user-modified data.
+
+Why Haskell? Strongly typed language, helps ensure correctness and prevent
+undefined behaviors - but less verbose and more expressive than Java and other
+languages a developer would imagine as 'strongly typed'. Haskell is one of the
+many languages that can be used in the browser - not directly, but by compiling
+down to JavaScript. WebAssembly is a technology that encourages this way
+of working, enabling any language to run in the browser via LLVM. (Compiling
+Haskell to WebAssembly is almost doable [TODO: ref WebGHC, Asterius].)
+
+Compile-to-JavaScript languages aren't as rare as it may seem. While languages
+that aren't based on JavaScript itself aren't exactly common, web developers
+have been using JavaScript compilers for a long time - CoffeeScript is rather
+popular language announced in 2010 [TODO: ref], and developers wanting to use
+new ECMAScript 6 or 7 features (now supported in most browsers) also had no
+choice but to use compilers [TODO: ref Babel history].
+
+There are several other projects in this area: Tweag is working on a
+Haskell-to-WebAssembly compiler, Obsidian Systems is working on a UI toolkit
+called Reflex (that I use in my work), [TODO: a few more]
 
 * Technologies
 We'll first have a more detailed look at the above-mentioned technologies, [...]
+
+** Progressive Web Application
+"Progressive Web Application" is a term that covers several relatively new
+technologies. It is the continuation of the general trend of expanding the
+capabilities of browser applications and closing the gap between them and native
+mobile applications. While many of these technologies apply also on desktop, the
+main target audience is mobile - [TODO: some statistics].
+
+The technologies are:
+- Web App Manifest - a specification for the centralized location of application
+  metadata - its name, icons, display mode, ...
+- Service Workers - "a scriptable network proxy" [TODO: as per Wiki]. The
+  technology that takes care of offline-availability, push notifications, and
+  background synchronization.
+- IndexedDB - a storage location that is accessible from the browser as well as
+  the service worker, it allows background sync to work with the application
+  state directly
+- Web Platform APIs - a set of APIs that expose capabilities of the underlying
+  system [TODO: https://whatwebcando.today/] - examples include geolocation or
+  audio/video capture
+
+What is a Progressive Web Applications exactly is defined by a checklist created
+by Google, the https://developers.google.com/web/progressive-web-apps/checklist
+[TODO: ref]. It describes two levels of PWAs, a 'Baseline PWA' and an 'Exemplary
+PWA'. The main defining characteristics of a Baseline PWA are: served over
+HTTPS, responsive design, all URLs available even while offline, and
+non-blocking page transitions. While there are more requirements for an
+Exemplary PWA, these are the most important ones.
+
+Some more notable PWAs are: Instagram, Twitter [TODO: refs, see wiki], Uber,
+Flipkart, or Tinder.
 
 ** Haskell
 The programming language Haskell is a rather old one, despite spreading into the
@@ -43,8 +102,10 @@ in which its expressive type system enables very precise control over TODO:
 expressive types, dialog with the compiler, types encoding effects, citation for
 "If it compiles, it works".
 
-TODO: language to write reliable software in - it eliminates entire classes of
-programming errors - usually the ones that remain are logic errors.
+It is a language that enables its users to write reliable software - it
+eliminates entire classes of programming errors [TODO: ref, enumerate]. The
+errors that remain even after the program successfully compiles are usually
+logic or conceptual errors.
 
 While Haskell is not a language commonly associated with frontend development,
 it is one of the many languages with the ability to use JavaScript as the
@@ -86,25 +147,32 @@ learned to expect and require.
 #+END_SRC
 
 ** Nix
-- /"Nix package manager, a "purely functional" package and configuration
-  manager for computer systems"/ -- Wikipedia
-- /"Describe your end result, then magic happens"/
-- Tools build on top:
-  - Nix = package manager
-  - NixOS = operating system
-  - NixOps = cloud deployment tool
-- cross-compiling
+One technology that wasn't yet mentioned but that will support our entire build
+process - from compiling to deploying - is Nix. Nix is a package manager with
+focus on reproducibility and isolation. It is described as a purely functional
+package manager, where every package is build by a function that doesn't have
+side-effects and is immutable after being built, where Nix ensures that the
+exact version of dependencies is used even during runtime - up to ~libc~ [TODO:
+ref homepage]
 
-- since 2004, Eelco Dolstra's Ph.D. thesis in 2006
-- purely functional, lazy evaluation
-- one program consists of a closure that includes all dependencies including libc
-- atomic upgrades, rollbacks
-- complete isolation of dependencies, no DLL hell
-- NixOS = OS built on top of Nix
-- NixOps = a cloud deployment tool
-  - conceptually: Terraform/CloudFormation + Puppet/Ansible
-  - a network specification -> magic -> running set of servers on AWS, VPSs,
-    VirtualBox, ...
+Nix is a declarative build tool, similar in purpose to Make and in philosophy to
+Haskell. There are other tools built on top of Nix though, the most interesting
+being NixOS, a declarative operating system, and NixOps, a cloud deployment tool
+[TODO: refs]. Nix shines at cross-compilation, which is the main I'll use it in
+this thesis - compiling to JavaScript or Android/iOS is trivial after the
+initial setup.
+
+Nix is another rather old technology actively developed since 2004 after Eelco
+Dolstra developed this idea in his academic work [TODO: refs]. One package
+consists of a closure of all of its runtime dependencies, so even packages using
+different versions of dynamically linked libraries or even libc can coexist on
+the same machine. Adding atomic deployments and rollbacks is then quite easy, as
+a user environment only consists of symbolic links to the read-only Nix store -
+that is very useful for NixOS or NixOps.
+
+[TODO: add an example Nix derivation]
+
+[TODO: talk about why NixOps is my deployment tool of choice]
 
 #+BEGIN_SRC nix :exports code
   {
@@ -121,11 +189,6 @@ learned to expect and require.
     };
   }
 #+END_SRC
-
-** PWA
-- concrete examples of existing apps
-- general reasons for PWA development
-- Web Platform APIs, Service Workers
 
 * Research
 In order to write a SPA/PWA, there are some tools and supporting libraries that
@@ -207,30 +270,35 @@ application's code. The underlying technology here is Electron and not Cordova,
 but the benefits are the same - greater speed and access to device-specific
 functionality.
 
-*** Accessibility
-- the key word now is ARIA = support for screen readers
-- also, semantic elements, text contrast, customization
-- also also, keyboard-accessibility (shortcuts, every clickable element
-  accessible via keyboard = tabindex)
-- accessibility testing (automatic as well, see aXe)
+In the fields of web design and user experience, there is currently a large
+focus on *accessibility*. Not only is it one of widely recognized web trends for
+2018 [TODO: ref some trend lists, Delotte?], but it can be legally required in
+some cases [TODO: ref ADA]. Accessibility on the web includes a range of
+features, from semantic elements and text contrast (for screen-readers and users
+with low vision), to keyboard accessibility and transcripts of audio/video
+content. Support in frameworks ranges from ARIA attributes and key managers to
+integrated accessibility testing (e.g. via aXe).
 
-*** Optimistic updates
-- one of the things I want to focus on
-- broadly, expecting that every network request will be successful and updating
-  the GUI accordingly
-- rolling back app state in case of failure, with notifications
+A part of real-time applications are *optimistic updates*, which broadly means
+expecting that every network request will be successful and updating the GUI
+accordingly, and rolling back the application state in the case of failure. It
+is one of the topics I would like focus on, as it is a basic technique of good
+UX (user experience), but I haven't found any good abstraction over it - likely
+because it is a mixed responsibility of the UI, network and storage layers.
 
-*** Web Platform
-- location, camera, touch, vibration, ...
+Support for the *Web Platform* is relevant for frameworks with non-trivial
+application architecture, those that need to wrap external calls before they are
+usable. Examples here include React's Hooks or Cycle.js's drivers. [TODO: refs].
 
-*** Pre-render
-- one approach to shortening start-up times
-- serving HTML with all the content already inside, no need for more requests to
-  the backend for the initial page load
-- JS takes over and uses what's already been loaded
-- can be static or dynamic:
-  - static = JAM stack, serving a bunch of files rendered at compile-time
-  - dynamic = rendering the HTML at runtime
+One common technique for optimizing page speed - and also a requirement of a
+PWA - is rendering the application's HTML on the server. Whether that means
+rendering and sending just an application shell that will be filled when the
+application itself loads or the rendered HTML of the entire application that the
+application will take over depends on the level of the optimization, but the
+intent here is to increase the perceived speed, as modern applications can get
+quite big. This prerendering can take part during the build-time, or during
+run-time - run-time rendering is called 'Server-side Rendering' and build-time
+is either a [TODO: look up the terms].
 
 TODO: What about the backend feature write-ups I have?
 
@@ -483,10 +551,40 @@ tutorials etc. either).
   here, and that's SQL only)
 
 ** Implementation plan
-TODO: Somehow use the "Evolving frameworks" article
+I will use the nomenclature from the "Evolving Frameworks" paper [TODO: ref] to
+describe my my goals. [TODO: describe the general outline of that paper]
+Long-term, I am aiming to go from "Three Examples", a place to look for commonly
+repeated patterns, through a "White-Box Framework", a general
+structure/architecture of an application wrapped into a library, through a
+"Component Library", when that library will be extended with commonly duplicated
+functionality, all the way to "Pluggable Objects", where the framework provides
+most of the commonly used functionality so that application logic is the only
+thing missing from a finished prototype.
 
-In this thesis, I'll focus mainly on the tools that are necessary specifically
-for PWA development, not general quality-of-life libraries.
+TODO: include the Evolving Frameworks image
+
+Building an integrated platform is not my primary goal - it is hard for a new
+and opinionated platform to succeed in the Haskell ecosystem (an not only
+there). In this thesis, I expect to do the first step only - anything beyond
+that is extra - create a few applications, fill in all the holes that aren't
+covered by existing libraries, and extract a common application skeleton, a set
+of libraries, and a set of guides or tutorials that make it is easy go from the
+skeleton to a working prototype of a PWA. Anything beyond that - a "Component
+Library" or "Pluggable Objects" - is only a bonus at this stage.
+
+To get to a working Progressive Web Application, there are several features that
+aren't covered by any existing Haskell library or tool. Only to be able to
+create a PWA, disregarding any general utilities commonly provided by frontend
+frameworks, the following are missing:
+- A full-featured browser routing library. While there are some existing
+  implementations, they are either incomplete or long abandoned.
+- A wrapper around ServiceWorkers, or a template to simplify project creation.
+- A push notifications library. This will need to be both a server-side library,
+  for creating them, and a client-side consumer, to parse them.
+- A way to prerender the application - either just the HTML 'shell' or all pages on the site.
+- An offline storage library for the client. There are many variants of this
+  task, I will start from the most basic storage.
+- CLI tool (TODO: requirement from assignment? "support tools")
 
 *Goal = app that fulfills the basic PWA criteria*:
 - Pages are responsive on tablets & mobile devices
@@ -498,16 +596,6 @@ for PWA development, not general quality-of-life libraries.
 - Site uses cache-first networking
 - Site appropriately informs the user when they're offline
 - Push notifications (consists of several related requirements)
-
-To achieve this, I need to create:
-- A full-featured browser routing library. While there are some existing
-  implementations, they are either incomplete or long abandoned.
-- A wrapper around ServiceWorkers, or a template to simplify project creation.
-- A push notifications library.
-- A library or a script that will render HTML 'shells' of all pages on the site,
-  for fast first load.
-- CLI tool (requirement from assignment? "support tools")
-- An offline storage library (some variant of it)
 
 Not required by the checklist, but would improve the quality of my work:
 - A template of an application, with predefined internal architecture, that uses
