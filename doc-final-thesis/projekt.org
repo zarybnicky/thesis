@@ -22,40 +22,46 @@
 
 * Introduction
 Let's imagine we want to create a new e-shop, with all the conveniences that
-users are nowadays used to - [TODO: ...], a notification when the order is
+customers are nowadays used to - [TODO: ...], a notification when the order is
 ready, and ideally an offline-available overview of the order for when the user
 is picking it up. What would be the easiest way to implement such a service? If
-we want to show something offline inside an application, we need a mobile
-application, the same for notifications. But [TODO: research about mobile
-engagement] and downloading a mobile application means another dozen megabytes.
+we want to show something offline, we need a mobile application, the same for
+notifications. But [TODO: research about mobile engagement] and downloading a
+mobile application means another dozen megabytes.
 
-That's what the new trend of Progressive Web Applications is trying to
+That's what the new trend of Progressive Web Applications (PWAs) is trying to
 solve. Fast - no need to wait for page reloads, Reliable - service workers help
 overcome problems with unreliable internet - both for page load (by caching the
 app itself, and in-app caching of app-specific data) and for background sync of
 user-modified data.
 
-Why Haskell? Strongly typed language, helps ensure correctness and prevent
-undefined behaviors - but less verbose and more expressive than Java and other
-languages a developer would imagine as 'strongly typed'. Haskell is one of the
-many languages that can be used in the browser - not directly, but by compiling
-down to JavaScript. WebAssembly is a technology that encourages this way
-of working, enabling any language to run in the browser via LLVM. (Compiling
-Haskell to WebAssembly is almost doable [TODO: ref WebGHC, Asterius].)
+But my language of choice is Haskell, for both frontend and backend development,
+and while writing Haskell applications for the browser is possible, creating a
+Progressive Web Application requires more than just the ability to manipulate
+the DOM. That is what this work is about - filling in the gaps and creating all
+the prerequisites for writing Progressive Web Applications in Haskell. We will
+start by identifying what is exactly is lacking in the Haskell ecosystem and
+design and implement those missing pieces. Afterwards, we'll walk through the
+process of creating a PWA from prototype to production and see what else could
+be made easier and more straightforward as a follow-up to this work.
 
-Compile-to-JavaScript languages aren't as rare as it may seem. While languages
-that aren't based on JavaScript itself aren't exactly common, web developers
-have been using JavaScript compilers for a long time - CoffeeScript is rather
-popular language announced in 2010 [TODO: ref], and developers wanting to use
-new ECMAScript 6 or 7 features (now supported in most browsers) also had no
-choice but to use compilers [TODO: ref Babel history].
+** Related work
+While using Haskell in the browser is not a common choice, it is still a quickly
+growing niche. it is a relatively recent one as GHCJS, the Haskell-to-JavaScript
+compiler, has been in development since 2010 [TODO: gh repo link] but it had a
+production-ready version only in 2013 [luite's blog]. It is not the target of
+academic work, but there are several commercially sponsored projects. To name a
+few, Reflex and Obelisk from Obsidian Systems [TODO: link], Asterius from Tweag,
+and many learning materials from QFPL [TODO: their github].
 
-There are several other projects in this area: Tweag is working on a
-Haskell-to-WebAssembly compiler, Obsidian Systems is working on a UI toolkit
-called Reflex (that I use in my work), [TODO: a few more]
+While it's a quickly growing area, it's still not an established one, and there
+are many libraries and tools still missing, ones that developers used to other
+languages have learned to expect and require.
 
 * Technologies
-We'll first have a more detailed look at the above-mentioned technologies, [...]
+We'll first have a more detailed look at the above-mentioned technologies, at
+what the term Progressive Web Application means and why would one want to use
+Haskell when creating browser applications.
 
 ** Progressive Web Application
 "Progressive Web Application" is a term that covers several relatively new
@@ -102,6 +108,21 @@ in which its expressive type system enables very precise control over TODO:
 expressive types, dialog with the compiler, types encoding effects, citation for
 "If it compiles, it works".
 
+Why Haskell? Strongly typed language, helps ensure correctness and prevent
+undefined behaviors - but less verbose and more expressive than Java and other
+languages a developer would imagine as 'strongly typed'. Haskell is one of the
+many languages that can be used in the browser - not directly, but by compiling
+down to JavaScript. WebAssembly is a technology that encourages this way
+of working, enabling any language to run in the browser via LLVM. (Compiling
+Haskell to WebAssembly is almost doable [TODO: ref WebGHC, Asterius].)
+
+Compile-to-JavaScript languages aren't as rare as it may seem. While languages
+that aren't based on JavaScript itself aren't exactly common, web developers
+have been using JavaScript compilers for a long time - CoffeeScript is rather
+popular language announced in 2010 [TODO: ref], and developers wanting to use
+new ECMAScript 6 or 7 features (now supported in most browsers) also had no
+choice but to use compilers [TODO: ref Babel history].
+
 It is a language that enables its users to write reliable software - it
 eliminates entire classes of programming errors [TODO: ref, enumerate]. The
 errors that remain even after the program successfully compiles are usually
@@ -120,14 +141,6 @@ the server and its client in the case they are written in the same
 language. This is the basic idea of the framework Meteor [TODO: ref], and in
 fact the ability to run 'isomorphic code' - the same code on the client and the
 server both - is its main marketing point.
-
-TODO: Haskell on the frontend is a rapidly growing area with many interested
-companies. The main projects in this area are sponsored and developed by them -
-some of the main contributors are: Obsidian (Reflex, Obelisk), Tweag (Asterius,
-Inline-js), and QFPL (several UI components). [TODO: refs] While it's a quickly
-growing area, it's still not an established one, and there are many libraries
-and tools still missing, ones that developers used to other languages have
-learned to expect and require.
 
 #+BEGIN_SRC haskell :exports code
   type HackageAPI =
@@ -303,35 +316,27 @@ is either a [TODO: look up the terms].
 TODO: What about the backend feature write-ups I have?
 
 ** JavaScript ecosystem
-*** Angular
-TODO: what is it?
+*** UI toolkit
+The most popular JavaScript toolkits currently are Angular and React. Vue.js is
+another one, relatively new but quickly growing. Of these, Angular is the
+framework closest to traditional frameworks where to create an application, the
+framework is all you need. Vue.js is a bit further
+
+TODO: shorten snippet about Angular
 On a first look, Angular looks like a well thought-out frontend
 framework. Written in Typescript with comprehensive documentation and great
 tooling, it seems that the authors have learned from their mistakes with
 AngularJS.
 
-Some notable features:
-- command line tool, ~ng~ - it streamlines setting up the entire project -
-  scaffolding, preparing build and testing tools, starting a
-  development server, ...
-- runtime environments - from server-side rendering, PWAs with ServiceWorkers,
-  to native and desktop applications, it seems that Angular tries to cover every
-  possible use-case
-- tooling other than the ~ng~ tool - browser extensions for runtime debugging,
-  IDEs and others. I haven't thought of a tool I would miss, but I'm used to
-  minimalism in tooling from the Haskell world...
+Some negatives that developers complain about: Angular is intimidating for a new
+developer, it's too complex and there's a lot to learn. Too much 'magic' -
+related to the previous point, there's a lot of abstraction and it's not easy to
+understand all the layers. Code bloat - the amount of boilerplate and also the
+size of the resulting bundle. Too opinionated - if you don't like 'the angular
+way', you're out of luck here. Scattered documentation - too many articles and
+tutorials out there for AngularJS that can't work with the new Angular
 
-Some negatives that developers complain about:
-- Angular is intimidating for a new developer, it's too complex and there's a
-  lot to learn
-- Too much 'magic' - related to the previous point, there's a lot of abstraction
-  and it's not easy to understand all the layers
-- Code bloat - the amount of boilerplate and also the size of the resulting bundle
-- Too opinionated - if you don't like 'the angular way', you're out of luck here
-- scattered documentation - too many articles and tutorials out there for
-  AngularJS that can't work with the new Angular
-
-*** React
+TODO: shorten snippet about React
 React is not a framework in itself. Rather, it's a library that focuses on a
 single thing and does it in a unique enough way that there's sprung up an entire
 ecosystem around it. In it, there are groups of libraries that build upon React,
@@ -350,16 +355,7 @@ and bits of glue in between, rather than cohesive frameworks. In general, the
 React world is a lot more mix-and-match than developers used to enterprise
 frameworks would expect.
 
-Create-react-app, nwb, Razzle, and Neutrino all cover only the build
-process. Next.js is the first one that I've found that goes a step beyond just
-pre-configuring Webpack and other build tools - it provides other features that
-are starting become standard - server-side runtime rendering, link prefetching,
-and build-time prerendering. It's also the first tool I found that considers
-that a website can consist of multiple applications, via its 'zones' feature.
-
-TODO: developers' opinions
-
-*** Gatsby
+TODO: shorten snippet about gatsby
 One rather unique framework I found - and this is a framework in a strong
 sense, not like the React tools above - is Gatsby. It's unique in the sense that
 while it's a frontend framework, it's not supposed to run in a browser. It's a
@@ -374,40 +370,87 @@ This means it doesn't need to concern itself with many features that would be
 missing in a frontend framework intended for a browser, and those are delegated
 to a different part of the stack.
 
-TODO: opinions, structured pro/cons
-
-*** Vue.js
 TODO: Vue.js
-
-*** Polymer
 TODO: Polymer
+
+*** Build tools
+TODO: Webpack
+TODO: Babel, ...
+
+TODO: react's tools
+Create-react-app, nwb, Razzle, and Neutrino all cover only the build
+process. Next.js is the first one that I've found that goes a step beyond just
+pre-configuring Webpack and other build tools - it provides other features that
+are starting become standard - server-side runtime rendering, link prefetching,
+and build-time prerendering. It's also the first tool I found that considers
+that a website can consist of multiple applications, via its 'zones' feature.
+
+*** UI components
+TODO: mention the large libraries
+
+*** Forms
+TODO: mention angular's integration
+TODO: mention React's breadth of tools
+
+*** Routing
+TODO: built-ins in angular, several libraries and approaches for react, not a
+concern for gatsby
+
+*** Mobile/desktop apps
+- runtime environments - from server-side rendering, PWAs with ServiceWorkers,
+  to native and desktop applications, it seems that Angular tries to cover every
+  possible use-case
+React - not explicit support, but Electron etc.
+
+*** Accessibility
+TODO: Explicit instructions and support in both React and Angular
+
+*** Optimistic updates
+TODO: angular
+TODO: react
+
+*** Web Platform
+native support, no need for special support
+but - TODO: react/angular wrappers for streams or contexts, ...
+
+*** Prerender
+TODO: react-server
+TODO: angular also builtin? TODO: check
+
+*** Support tools
+Angular
+- command line tool, ~ng~ - it streamlines setting up the entire project -
+  scaffolding, preparing build and testing tools, starting a
+  development server, ...
+- tooling other than the ~ng~ tool - browser extensions for runtime debugging,
+  IDEs and others. I haven't thought of a tool I would miss, but I'm used to
+  minimalism in tooling from the Haskell world...
+
+React - depends in the distribution
 
 ** PHP ecosystem
 TODO: PHP ecosystem
 
 ** Haskell ecosystem
-TODO: Compare Haskell compared to the above list
-
-- its strong points
-- passable but not ideal libraries
-- what's missing
-
 *** UI toolkit
-At the frontend, the UI toolkit defines what the entire application will look
-like, its architecture as well as the tools it can use. There is significant
-pressure on well-defined types in Haskell, and the UI libraries have pushed
-strongly in favor of FRP (Functional Reactive Programming) or its derivatives
-(see 'Elm architecture' [TODO: ref]).
+At the frontend, it is the UI toolkit that defines what the entire application
+will look like, its architecture as well as the tools it can use. There is
+significant focus on the semantics of libraries in the Haskell community, with
+well-defined and law-abiding foundation types, so UI libraries have mostly used
+Functional Reactive Programming (FRP) or its derivatives like 'the Elm
+architecture' [TODO: ref] as their basis.
 
-I've managed to find five production-ready libraries that are usable with
-GHCJS. Out of these five, ~react-flux~ and ~transient~ are unmaintained, and ~reflex~,
-~miso~, and ~concur~ all wildly differ in their philosophy, architecture, and
-maturity.
+There are five production-ready browser UI toolkits that I have found. Out of
+these five, ~react-flux~ and ~transient~ are unmaintained. ~Reflex~, ~miso~, and ~concur~
+are actively developed and ready for production use. Each one is a conceptually
+different approach to the problem of browser user interfaces, but they differ in
+their maturity and the size of their community as well.
 
-~Reflex~ ([TODO: ref] and ~reflex-dom~ [TODO: ref], its DOM bindings) seems like the
-most actively maintained one, and also the most promising one regarding its
-future outlooks - it's sponsored by Obsidian Systems [TODO: ref, again] and
-actively developed for general use on GitHub. [TODO: describe its FRP, ...]
+~Reflex~ [TODO: ref] and ~reflex-dom~ [TODO: ref], its DOM bindings, seem like the
+most actively maintained ones. ~Reflex~ is also sponsored by Obsidian Systems
+[TODO: ref] and the most popular one in the Haskell community, so its future
+seems promising. ~Reflex~ follows the traditional FRP with events and behaviors,
+adding 'dynamics' to the mix, and building a rich combinator library on top of them.
 
 ~Miso~ [TODO: ref] - TODO: Elm architecture re-implementation in Haskell
 
@@ -478,7 +521,7 @@ Native and SDL backends, but the development seems to have stalled).
 
 *** Accessibility
 I haven't found anything related to this topic, so I must assume no one has even
-attempted to tackle this topic. Building accessible applications by yourself
+attempted to tackle it. Building accessible applications by yourself
 isn't hard though.
 
 *** Optimistic updates
@@ -538,11 +581,13 @@ measurements as a benchmark.
 
 *** Documentation
 It is generally agreed that documentation is Haskell's weakest point. Despite
-having a great standard API docs tool (haddock), documentation is often an
-afterthought, with incomplete docs or unclear starting points (which means no
-tutorials etc. either).
+having a standardized high-quality APIdoc tool (haddock), documentation is often an
+afterthought, with even commonly used packages having no documentation at all,
+or written in such a way that a new user has no choice but to study its code to
+understand the package.
 
 *** Server-side tools
+
 - Communication - typed APIs (HTTP - servant, WebSocket - some attempts, nothing
   production-ready)
 - Entities - many options, some great, some less
@@ -572,21 +617,9 @@ of libraries, and a set of guides or tutorials that make it is easy go from the
 skeleton to a working prototype of a PWA. Anything beyond that - a "Component
 Library" or "Pluggable Objects" - is only a bonus at this stage.
 
-To get to a working Progressive Web Application, there are several features that
-aren't covered by any existing Haskell library or tool. Only to be able to
-create a PWA, disregarding any general utilities commonly provided by frontend
-frameworks, the following are missing:
-- A full-featured browser routing library. While there are some existing
-  implementations, they are either incomplete or long abandoned.
-- A wrapper around ServiceWorkers, or a template to simplify project creation.
-- A push notifications library. This will need to be both a server-side library,
-  for creating them, and a client-side consumer, to parse them.
-- A way to prerender the application - either just the HTML 'shell' or all pages on the site.
-- An offline storage library for the client. There are many variants of this
-  task, I will start from the most basic storage.
-- CLI tool (TODO: requirement from assignment? "support tools")
-
-*Goal = app that fulfills the basic PWA criteria*:
+The goal of this work is to make it possible to create Progressive Web
+Applications. To reiterate the description from the introduction, these are the
+requirements:
 - Pages are responsive on tablets & mobile devices
 - All app URLs load while offline
 - Metadata provided for Add to Home screen
@@ -597,47 +630,37 @@ frameworks, the following are missing:
 - Site appropriately informs the user when they're offline
 - Push notifications (consists of several related requirements)
 
-Not required by the checklist, but would improve the quality of my work:
-- A template of an application, with predefined internal architecture, that uses
-  all of the above libraries
-- A utility library for querying and caching data from an API, be it HTTP, WebSocket,
-  GraphQL, or others.
+To get there, there are several features that aren't covered by any existing
+Haskell library or tool. What follows is a list of tools that are required:
+- A full-featured browser routing library. While there are some existing
+  implementations, they are either incomplete or long abandoned.
+- A wrapper around ServiceWorkers, or a template to simplify project creation.
+- A push notifications library. This will need to be both a server-side library,
+  for creating them, and a client-side consumer, to parse them.
+- A way to prerender the application - either just the HTML 'shell' or all pages on the site.
+- An offline storage library for the client.
 
-*Stretch goals*:
-- a library to use in code shared between the server and client - a way to
-  define the shape of the transport channel (and its API for non-Haskell
-  applications)
-- a server library, to allow user code to implement the specified protocol
-- a client library with a storage component for entities and pending requests
+There are many variations on the last point, 'offline storage', these are some of
+them:
+- plain storage datatype with LocalStorage, SessionStorage, and IndexedDB backends
+- a storage including a transparent cache integrated with the network layer
+- a storage with an invalidation or auto-refresh functionality, using an event
+  stream from the server
+- a storage with offline-capable synchronization capabilities
 
-TODO: talk about how these tools will fit into a 'platform', so that I check of
-a box from the assignment
+While my eventual goal is the last version, even just the first one would be
+sufficient for the purposes of this work.
 
-An application using these tools and libraries would consist of a server written
-independently, and of a browser application. Implementing the communication
-between them is left to the developer, as is implementing many common
-conveniences usually provided by a framework.
+While these tools don't comprise a fully integrated 'platform' in the sense of
+Angular or Symfony, those are quite uncommon in the Haskell ecosystem. More
+common are collections of libraries that play well together, where one library
+provides the fundamental datatype - the 'architecture' of the application, and
+other libraries fill in the functionality. Of the proposed libraries, only the
+routing library is an 'architectural' one in the sense that it will influence
+the shape of the application and its fundamental datatypes.
 
-*Stretch*: An application using these libraries would consist of a server and a client
-sharing code that contains the definition of their communication channel. I do
-not yet know how much these libraries would affect the shape/architecture of the
-server, but the client library would form the core of the client - with the
-libraries from the previous plan forming the shell.
-
-These goals also include fully documenting the code written, as well as testing
-and benchmarking it to remove the most obvious bottlenecks.
-
-TODO: talk about Serverless, JAM stack, and alternative app structures:
-- Client only. An application that doesn't need to communicate with a server,
-  like a web presentation, or a blog, a set of pre-compiled HTML+JS files.
-- Server only. Either just an API, or a plain HTML website with no JavaScript.
-- Server and client, with the client rendered during run-time by the server.
-- Server and client, with the client rendered during build-time and served
-  separately (e.g. via an S3 bucket).
-- Server and client, with the client re-rendered on demand, whenever the data that
-  it shows changes. This is the shape of a 'JAM stack' application.
-- Projects with multiple clients and/or servers (even more pressure on
-  supporting tools)
+These goals of course also include full documentation of their code, as well as
+a test suite and benchmarks for performance-critical code.
 
 * Components
 TODO: Demonstrate the principles of components on 'src-snippets' code, where
