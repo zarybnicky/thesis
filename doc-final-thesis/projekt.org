@@ -325,16 +325,36 @@ projects based on templates, all the way to tools that can add an entire website
 module, perhaps even with database migrations.
 
 ** JavaScript ecosystem
-The most popular JavaScript toolkits currently are Angular and React. Vue.js is
-another one, relatively new but quickly growing. Of these, Angular is the
+The most popular JavaScript *UI toolkits* currently are Angular and React. Vue.js
+is another one, relatively new but quickly growing. Of these, Angular is the
 framework closest to traditional frameworks where to create an application, the
-framework is all you need. Vue.js is a bit further
+framework is all you need. React and Vue are both rather small libraries but
+have many supporting tools that together also create a platform, although they
+are less cohesive than Angular's platform.
 
-TODO: shorten snippet about Angular
+There are fundamental architectural differences between them. Angular 
+
 On a first look, Angular looks like a well thought-out frontend
 framework. Written in Typescript with comprehensive documentation and great
 tooling, it seems that the authors have learned from their mistakes with
 AngularJS.
+
+React is not a framework in itself. Rather, it's a library that focuses on a
+single thing and does it in a unique enough way that there's sprung up an entire
+ecosystem around it. In it, there are groups of libraries that build upon React,
+each focusing on a single feature - UI components, state management, forms etc.
+
+TODO: Vue.js
+TODO: Polymer
+
+*Developer experience* - complaints about Angular, React, the good things as well.
+
+There's a large jungle of libraries, each one with a different scope and
+focus. Choosing a library that fits your problem can sometimes take many
+attempts. Add to it the fact that libraries, frameworks and tools come and go
+quite quickly - the main cause of the so-called "JavaScript fatigue - and the
+fact that in JavaScript, it's fashionable to write extremely small libraries,
+and you have a recipe for a quite unpleasant development experience.
 
 Some negatives that developers complain about: Angular is intimidating for a new
 developer, it's too complex and there's a lot to learn. Too much 'magic' -
@@ -344,29 +364,6 @@ size of the resulting bundle. Too opinionated - if you don't like 'the angular
 way', you're out of luck here. Scattered documentation - too many articles and
 tutorials out there for AngularJS that can't work with the new Angular
 
-TODO: shorten snippet about React
-React is not a framework in itself. Rather, it's a library that focuses on a
-single thing and does it in a unique enough way that there's sprung up an entire
-ecosystem around it. In it, there are groups of libraries that build upon React,
-each focusing on a single feature - UI components, state management, forms etc.
-
-There's a large jungle of libraries, each one with a different scope and
-focus. Choosing a library that fits your problem can sometimes take many
-attempts. Add to it the fact that libraries, frameworks and tools come and go
-quite quickly - the main cause of the so-called "JavaScript fatigue - and the
-fact that in JavaScript, it's fashionable to write extremely small libraries,
-and you have a recipe for a quite unpleasant development experience.
-
-I'll try to go through some of the most popular 'frameworks' that build on
-React, though each one is more of a pre-built toolkit of libraries and tools
-and bits of glue in between, rather than cohesive frameworks. In general, the
-React world is a lot more mix-and-match than developers used to enterprise
-frameworks would expect.
-
-TODO: Vue.js
-TODO: Polymer
-
-*Developer experience* - complaints about Angular, React, the good things as well.
 
 TODO: mention the large *UI component* libraries - material, bootstrap, ...
 
