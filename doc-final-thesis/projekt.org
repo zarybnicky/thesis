@@ -183,9 +183,19 @@ the same machine. Adding atomic deployments and rollbacks is then quite easy, as
 a user environment only consists of symbolic links to the read-only Nix store -
 that is very useful for NixOS or NixOps.
 
-[TODO: add an example Nix derivation]
+#+BEGIN_SRC nix :exports code
+{ stdenv, fetchurl, perl }:
 
-[TODO: talk about why NixOps is my deployment tool of choice]
+stdenv.mkDerivation {
+  name = "hello-2.1.1";
+  builder = ./builder.sh;
+  src = fetchurl {
+    url = ftp://ftp.nluug.nl/pub/gnu/hello/hello-2.1.1.tar.gz;
+    sha256 = "1md7jsfd8pa45z73bz1kszpp01yw6x5ljkjk2hx7wl800any6465";
+  };
+  inherit perl;
+}
+#+END_SRC
 
 #+BEGIN_SRC nix :exports code
   {
