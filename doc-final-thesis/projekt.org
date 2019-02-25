@@ -648,8 +648,46 @@ TODO: describe the development flow of an app built using these tools
 - deployment options
 
 ** TodoMVC
+There is an abundance of web frameworks, and there are several projects that aim
+to give developers a side-by-side comparison of them. Out of these, the original
+and most well-known one is TodoMVC, which is aimed at 'MV* frontend
+frameworks'. There are currently 64 implementations of their specification -
+some of them are variants of the same framework though. There are a few others -
+HNPWA is aimed at Progressive Web Applications and it is a tad smaller, with 42
+implementations. The last comparison project that I've selected is
+RealWorld. This one has both a frontend and a backend part and there is also a
+small number of full-stack frameworks. It offers a quite thorough comparison,
+with 18 frontends, 34 backends, and 3 full-stack implementations.
+
+We will start with TodoMVC as it is the simplest of the three. TodoMVC is, as
+the name hints, a web application for managing a to-do list. It is not a complex
+project but it should exercise the basics of a framework - DOM manipulation,
+forms and validation, state management (in-memory and in LocalStorage), and
+routing.
+
+http://todomvc.com/
+
+** HNPWA
+HNPWA is a client for Hacker News, a technological news site. Unlike TodoMVC,
+HNPWA does not provide a rigid specification and consists only of a rough
+guideline of what to implement. The task is to create a Progressive Web
+Application that displays information from a given API. The application must be
+well optimized (to achieve score 90 in the Lighthouse tool) with optional
+server-side rendering.
+
+https://hnpwa.com/
 
 ** RealWorld
+RealWorld is the most complex of the comparison projects. It is a clone of
+Medium, an online publishing platform, so it requires everything a "real world"
+application would. The task is split into a backend, defined by an API
+specification, and a frontend, defined by an HTML structure.
+
+There is a number of features the application needs to support, namely: JWT
+(JSON Web Token) authentication with registration and user management, the
+ability to post articles and comments, and to follow users and favorite articles.
+
+https://github.com/gothinkster/realworld
 
 * Conclusion
 TODO: return to the comparison with JS, PHP, ... frameworks
