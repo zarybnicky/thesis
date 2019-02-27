@@ -214,122 +214,153 @@ stdenv.mkDerivation {
 #+END_SRC
 
 * Research
-In order to write a SPA/PWA, there are some tools and supporting libraries that
-a developer can't live without. We'll first walk through a high-level overview
-of the common features of the Web frameworks of today, then go through the most
-popular frameworks and see where they shine. Afterwards, we'll have a look at
-the ecosystem of Haskell and try to find its strong and weak points, and
-especially the places where the tools or libraries are entirely missing.
+As this work doesn't live in a vacuum, we also need to consider commonly used
+Web frameworks and platforms and decide what features to we need to implement in
+this work. We will first walk through the features that frameworks today
+implement, describe them and define the relevant terms. Afterwards, we will have
+a look at the ecosystems of JavaScript -- today almost the only option for
+writing frontend applications -- and Haskell, my language of choice, and try to
+find the places where Haskell is lagging behind and especially the features that
+we will need to fill in in this work.
 
 ** Features of Web frameworks
--- defining the terms, introducing the subject
+The basis of a web framework is the *UI toolkit*, which defines the structure,
+architecture and paradigm of the rest of the application. I am intentionally
+using the now-uncommon term 'toolkit', as the UI frameworks we will see vary in
+their scope - e.g. React is just a library with a very small API, whereas
+Angular provides a quite opinionated platform, rather than a
+framework. Individual frameworks are very disparate, with large differences in
+the size of their community, maturity, developer friendliness and the breadth of
+features or available libraries.
 
--- A description of the things I'll be looking for, partially from
-Wikipedia's [[https://en.wikipedia.org/wiki/Comparison_of_web_frameworks][Comparison of web frameworks]] and [[https://en.wikipedia.org/wiki/Comparison_of_JavaScript_frameworks][Comparison of JavaScript
-frameworks]], partially from my own experience, and partially from the feature
-lists of the frameworks that I'll be looking into.
+Frameworks usually have one defining feature they are built around (virtual DOM
+for React or event streams for Angular), but there are several features that a
+framework needs to take care of - *templating* is one of them. It is a way of
+composing the HTML that makes up an application which also usually includes some
+'view logic' and variable interpolation. In some frameworks the whole program is
+a template (purely-functional React), some have templates in separate files and
+pre-compile them during the build process or even in the browser
+(Angular). Templates may also contain CSS as well - see the new CSS-in-JS trend.
 
-The UI *toolkit* determines the overall structure of the application. I'm
-intentionally using the now-uncommon term 'toolkit', as the UI frameworks vary
-in their scope (React is just a library with a very small API, whereas Angular
-provides a 'platform', rather than a framework).
+The second defining feature of frameworks is *state management*. This rather vague
+concept may include receiving input from the user, displaying the state back to
+the user, communicating with APIs and caching the responses, etc. While state
+management is simple at a small scale, there are many problems that appear only
+in larger applications with several developers. Some approaches include: a
+'single source of the truth' and immutable data (Redux), local state in
+hierarchical components (Angular), or unidirectional data flow with several
+entity stores (Flux).
 
-*Developer friendliness* - *documentation*, *community* and technical support, breadth
-of libraries available.
+Another must-have feature of a framework is *routing*, which means manipulating
+the displayed URL using the History API, and changing it to reflect the
+application state and vice-versa. It also includes switching the application to
+the correct state on start-up. While the router is usually a rather small
+component, it is fundamental to the application in the same way the previous two
+items are.
 
-*Under the topic of libraries also fall UI components*, of which the best
-examples is a *forms* system. They are the basic element of interactive web
-applications. There are a few layers of abstraction at which a framework can
-decide to implement forms - starting at raw DOM manipulation, going on to data
-containers with validation (but manual rendering), all the way up to form
-builders, manual or automatic. Under 'forms' I count a way to render a form, to
-validate user input, and collect the result.
+A component where frameworks differ a lot is a *forms* system. There are a few
+layers of abstraction at which a framework can decide to implement forms,
+starting at raw DOM manipulation, going on to data containers with validation
+but manual rendering, all the way up to form builders using domain-specific
+languages. The topic of "forms" includes rendering a form and its data,
+accepting data from the user and validating it, and sometimes even submitting it
+to an API.
 
-*Templating*, which at the frontend means a way to compose the HTML that makes up
-an application, usually including some render logic and variable
-interpolation. In some frameworks the whole program is a template (see React),
-some have templates in separate files and pre-compile them during runtime (see
-Angular). Templates sometimes contain CSS as well (see the new CSS-in-JS trend)
+There are other features that a framework can provide - authentication,
+standardized UI components, and others - but frameworks usually leave these to
+third party libraries. There is one more topic I would like to mention that is
+usually too broad to cover in the core of a framework, but very important to
+consider when developing an application. *Accessibility* is an area concerned with
+removing barriers that would prevent any user from using a website. It has many
+parts to it - while the main focus is making websites accessible to
+screen-readers, it also includes supporting other modes of interaction, like
+keyboard-only interaction. Shortening *load times* on slow connections also makes
+a website accessible in parts of the world with slower Internet connections, and
+supporting *internationalization* removes language and cultural barriers.
 
-*Routing* means manipulating the displayed URL using the History API and changing
-the application state to reflect it, and also loading the correct state on
-application start-up. This can also include animated transitions between pages.
+Accessibility is something that requires framework support on several
+levels. Making a site accessible requires considerations during both design
+(e.g. high color contrast) and implementation (semantic elements and ARIA
+attributes), and that is usually left up to application code and accessibility
+checklists, with the exception of some specialized components like keyboard
+focus managers. There are however tools like aXe-core that check how accessible
+a finished framework is, and these can be integrated into the build process.
 
-*Animations*
+Supporting *internationalization* in a framework is easier - not to implement, but
+simple to package as a library. At the most basic level, it means simple string
+translations, perhaps with pluralization and word order. Going further, it may
+also mean supporting RTL scripts, different date/time formats, currency, or time
+zones.
 
--- Libraries - support for the *Web Platform* is relevant for frameworks with non-trivial
-application architecture, those that need to wrap external calls before they are
-usable. Examples here include React's Hooks or Cycle.js's drivers. [TODO: refs].
+As for *load times*, there are many techniques frameworks use to speed up the
+initial load of an application. We can talk about the first load, which can be
+sped up by compressing assets (CSS, fonts, fonts or scripts) and removing
+redundant ones, or by preparing some HTML that can be displayed to the user
+while the rest of the application is loading to increase the perceived
+speed. After the first load, the browser has some of the application's assets
+cached, so loading will be faster. One of the requirements of a PWA is using the
+Service Worker for instantaneous loading after the first load.
 
-Then comes the big topic of *user experience*, a topic that has been growing in
-the past few years. A good choice of a framework can save a lot of work,
-for example in the following areas:
+There are two patterns of preparing the HTML that is shown while the rest of the
+application is loading - so called *prerendering*. One is called "app shell",
+which is a simple static HTML file that contains the basic structure of the
+application's layout. The other is "server-side rendering", and it is a somewhat
+more advanced technique where the entire contents of the requested URI is
+rendered on the server including the data of the first page, and the browser
+part of the application takes over only afterwards, but doesn't need to fetch
+anymore data. There is another variant of "server-side rendering" called the
+"JAM stack" pattern, where after application state changes, the HTML of the
+entire application, of all application URLs is rendered all at once and saved so
+that the server doesn't need to render the HTML for every request. These
+techniques are usually part of a framework's *supporting tools*, about which we
+will talk now.
 
-*Internationalization* has many levels. At its most basic, it means simple string
-translations, pluralization, and word order. Going further, it means also RTL
-scripts, date/time formats, currency, or time zones.
+Developers from different ecosystems have wildly varying expectations on their
+tools. A Python developer might expect just a text editor and an interpreter,
+whereas a JVM or .NET developer might not be satisfied with anything less than a
+full-featured IDE. We will start with the essentials, with *build
+tools*. Nowadays, even the simplest JavaScript application usually uses a build
+step that packages all its source code and styles into a single bundle for
+faster loading. A framework's tool-chain may range from a set of conventions on
+how to use the compiler that might get formalized in a Makefile, through a CLI
+tool that takes care of building, testing and perhaps even deploying the
+application, to the way of the IDE, where any build variant is just a few clicks
+away.
 
-In the fields of web design and user experience, there is currently a large
-focus on *accessibility*. Not only is it one of widely recognized web trends for
-2018 [TODO: ref some trend lists, Delotte?], but it can be legally required in
-some cases [TODO: ref ADA]. Accessibility on the web includes a range of
-features, from semantic elements and text contrast (for screen-readers and users
-with low vision), to keyboard accessibility and transcripts of audio/video
-content. Support in frameworks ranges from ARIA attributes and key managers to
-integrated accessibility testing (e.g. via aXe).
+*Debugging tools* are the next area. After building an application, trying it out
+and finding an error, these tools help to find the error. There are general
+language-specific tools - a stepping debugger is a typical example - and there
+are also framework-specific tools, like an explorer of the component hierarchy
+(React) or a time-traveling debugger (Redux). In the web world, all modern
+browsers provide the basic debugging tools inside the 'DevTools' - a stepping
+debugger and a profiler. some frameworks provide an extension to DevTools that
+interacts with the application in the current window, and some integrate their
+debugging tools into the application itself.
 
-*Loading speed* is a big concern in web applications and *prerendering* is one of
-the techniques used to speed them up.
+When building a large application with several developers, it is necessary to
+ensure good practices from all of them - a good practice
+to require a common style for the entire code base. *Quality assurance tools* have
+many sub-categories. From static code analysis tools or linters, as they are
+commonly known; through tests - unit, integration, end-to-end tests, or more
+exotic ones like marble tests or visual regression tests; to profilers - runtime
+or allocation measurements, frontend performance measurements, or more involved
+tools like performance evolution tracking.
 
-One common technique for optimizing page speed - and also a requirement of a
-PWA - is *prerendering* the application's HTML on the server. Whether that means
-rendering and sending just an application shell that will be filled when the
-application itself loads or the rendered HTML of the entire application that the
-application will take over depends on the level of the optimization, but the
-intent here is to increase the perceived speed, as modern applications can get
-quite big. This prerendering can take part during the build-time, or during
-run-time - run-time rendering is called 'Server-side Rendering' and build-time
-is either a [TODO: look up the terms].
+TODO: editor support
 
-I'll start with the things you encounter first when setting up a project, the
-*tooling* around it. Developers have wildly differing levels of expectations from
-their tools. A Python developer might expect just a text editor and an
-interpreter, whereas a JVM developer might not be satisfied with anything less
-than a full-featured IDE.
-
-*Build tools* range from a set of conventions on how to use your build tool that
-might get formalized in your Makefile, through a CLI tool that takes care of
-building, testing and perhaps even deploying your project, to the way of the IDE
-where anything you can think of is just a few clicks away.
-
-*Debugging tools* also come in many flavors and for many purposes. On the side of
-the server, you have all the usual tools for the language, plus a few more - a
-toolbar with an overview of everything that goes on in a page render or an AJAX
-call, or the option to remotely connect to a running process and to debug
-live. Client-side, we have the now irreplaceable DevTools with a built-in
-debugger and profiler, but some frameworks go even further and provide a
-framework-specific tools - React's component tree, or Elm's time-traveling
-debugger.
-
-*Quality assurance tools* have many sub-categories. From static code analysis
-tools or linters, as they are commonly known; through tests - unit, integration,
-end-to-end tests, or more exotic ones like marble tests or visual regression
-tests; to profilers - runtime or allocation measurements, frontend performance
-measurements, or more involved tools like performance evolution tracking.
-
-Modern web frameworks also provide a way to use a web application's code and
-compile it into a *native mobile application*. It's commonly implemented as a
-wrapper application around web apps using Cordova, but technologies like React
-Native go further and use native UI elements. Mobile applications can be faster
-to use and faster to load, can access device-specific APIs not exposed via Web
-Platform APIs.
+TODO: general 'platforms' intro: Modern web frameworks also provide a way to use
+a web application's code and compile it into a *native mobile application*. It's
+commonly implemented as a wrapper application around web apps using Cordova, but
+technologies like React Native go further and use native UI elements. Mobile
+applications can be faster to use and faster to load, can access device-specific
+APIs not exposed via Web Platform APIs.
 
 Some frameworks also support creating a *desktop application* that reuses a web
 application's code. The underlying technology here is Electron and not Cordova,
 but the benefits are the same - greater speed and access to device-specific
 functionality.
 
-*Code generators* or scaffolding tools start with creating a package manifest and
+TODO: "one last tool, a bonus, if you would" *Code generators* or scaffolding tools start with creating a package manifest and
 a ~src/~ directory, going on to generators that set up a few different types of
 projects based on templates, all the way to tools that can add an entire website
 module, perhaps even with database migrations.
@@ -342,8 +373,7 @@ framework is all you need. React and Vue are both rather small libraries but
 have many supporting tools that together also create a platform, although they
 are less cohesive than Angular's platform.
 
-There are fundamental architectural differences between them. Angular 
-
+TODO: finish: There are fundamental architectural differences between them. Angular 
 On a first look, Angular looks like a well thought-out frontend
 framework. Written in Typescript with comprehensive documentation and great
 tooling, it seems that the authors have learned from their mistakes with
@@ -376,6 +406,8 @@ tutorials out there for AngularJS that can't work with the new Angular
 
 
 TODO: mention the large *UI component* libraries - material, bootstrap, ...
+TODO: fill in, mention library names and relative quality and architecture
+differences
 
 *Templating* - Angular and Vue's custom HTML, React's JSX or plain JS
 
@@ -383,10 +415,6 @@ TODO: mention the large *UI component* libraries - material, bootstrap, ...
 abstraction levels
 
 *Routing* is built into Angular, several libraries and approaches for React
-
-*Web Platform* - native in JS but needs wrappers for streams (Ng) and contexts (Re)
-
-*User experience*: speed, ?
 
 *Accessibility* is explicitly supported in React and Angular, a11y testing tools
 
@@ -403,11 +431,11 @@ are starting become standard - server-side runtime rendering, link prefetching,
 and build-time prerendering. It's also the first tool I found that considers
 that a website can consist of multiple applications, via its 'zones' feature.
 
-*Mobile/desktop apps* - Angular claims built-in support for native and desktop
+TODO: more fluent *Mobile/desktop apps* - Angular claims built-in support for native and desktop
 applications. React does not have explicit support but Cordova and Electron (and
 others) are all built for JavaScript.
 
-*Support tools* - Angular has its ~ng~ tool which it streamlines setting up the
+TODO: more fluent *Support tools* - Angular has its ~ng~ tool which it streamlines setting up the
 entire project (scaffolding, preparing build and testing tools, starting a
 development server) and also browser extensions for runtime debugging,
 IDEs and others. I haven't thought of a tool I would miss, but I'm used to
@@ -416,7 +444,7 @@ for runtime debugging but other tools depend on the distribution and/or time and
 effort to set them up.
 
 ** Haskell ecosystem
-At the frontend, it is the *UI toolkit* that defines what the entire application
+TODO: remove intro: At the frontend, it is the *UI toolkit* that defines what the entire application
 will look like, its architecture as well as the tools it can use. There is
 significant focus on the semantics of libraries in the Haskell community, with
 well-defined and law-abiding foundation types, so UI libraries have mostly used
@@ -443,82 +471,76 @@ no ecosystem right now and not fully mature.
 
 TODO: examples of Reflex, Miso, Concur
 
-The preferred approach for *UI components* is to re-implement UI and logic inside
-application code. FFI is usable and quite simple for bigger components (see
-reflex-dom-ace). No real separation of concerns, at least markup and data flow
-are tightly interlinked (style separate, no CSS-in-JS equivalent yet). Better
-type-safety and clearer interdependencies, but requires a high baseline of
-Haskell experience.
+TODO: English! In all of these frameworks, the preferred approach for *UI components* is to
+re-implement UI and logic inside application code. FFI is usable and quite
+simple for bigger components (see reflex-dom-ace). No real separation of
+concerns, at least markup and data flow are tightly interlinked (style separate,
+no CSS-in-JS equivalent yet). Better type-safety and clearer interdependencies,
+but requires a high baseline of Haskell experience.
 
-Reflex and Concur - self-contained components and global state both (->
+TODO: English! Reflex and Concur - self-contained components and global state both (->
 reusability) Miso - single state atom only (see TEA)
 
-I haven't found any good options for *forms* in any of the frameworks. While there
+TODO: less subjective! I haven't found any good options for *forms* in any of the frameworks. While there
 are some attempts at a forms library for Reflex, there is not a single
 feature-complete library. Part of the reason - validation-only libraries exist
 in Haskell and commonly used (see ~validation~, ~digestive-functors~). There are
 forms libraries at the backend (see ~yesod-form~) with almost automatic form
 generation.
 
-Miso has *routing* built-in. There are several attempts at a Reflex routing
+TODO: English! Miso has *routing* built-in. There are several attempts at a Reflex routing
 library but not a single accepted solution. Concur with its small ecosystem
 doesn't have even that.
 
-I haven't found anything related to *accessibility*, so I must assume no one has
-even attempted to tackle it in a systematic way. Building accessible
-applications by yourself isn't hard though.
-
-The library JSaddle wraps the entirety of the *Web Platform* APIs using
-WebIDL. Any UI library can use this library, though there are limited
-event-based bindings, which means writing manual wrappers. (Reflex has some
-machinery for a subset for it, Miso has subscriptions for some of them, Concur
-uses ghcjs-vdom which has also some limited bindings.)
+TODO: mention no support, reusing JS tools! I haven't found anything related to
+*accessibility*, so I must assume no one has even attempted to tackle it in a
+systematic way. Building accessible applications by yourself isn't hard though.
 
 *Loading speed* - big JS output, so prerendering (Isomorphic rendering) and HTTP/2
 Push.  Reflex has explicit support for prerendering, where an element can have
 two variants if it doesn't render well. Miso has explicit support as well. I
 haven't found anything like this for Concur.
 
-The UI toolkit constrains the choice of possible *build tools*. In Haskell, there
+TODO: English! The UI toolkit constrains the choice of possible *build tools*. In Haskell, there
 are three mature options - Cabal (new-build) [TODO: ref], Stack, and Nix. There
 is also a new fourth option aiming for the best of these four, Snack [TODO:
 ref]. While it's not yet mature enough for serious use, it's a tool worth future
 investigation.
 
-Cabal - old, Cabal hell. Stack came, divided the Haskell community. Nix came out
+TODO: English! Cabal - old, Cabal hell. Stack came, divided the Haskell community. Nix came out
 of nowhere, converted a significant portion but isn't yet dominant, and now
 cabal new-build is almost equivalent to stack. Free choice between cabal and
 stack, nix is more capable in general but slower learning curve. TODO: more
 about snack
 
-GHCJS ecosystem not so well supported with Cabal (old or new one), Nix is
+TODO: English! GHCJS ecosystem not so well supported with Cabal (old or new one), Nix is
 usually recommended at the frontend (one command setup, binary cache,
 cross-platform), Reflex especially - uses the great Nix cross-compilation
 capabilities for Android, iOS, desktop. Stack usable for plain GHCJS dev, but
 old GHC (7.10?).
 
-Slow compiler - common workaround is to use the REPL, but there are other
+TODO: English! Slow compiler - common workaround is to use the REPL, but there are other
 solutions like Snack which are promising although not widely used.
 
-GHCJS output size and speed - GHCJS should be obsoleted by WebAssembly very
+TODO: English! GHCJS output size and speed - GHCJS should be obsoleted by WebAssembly very
 soon - it's already in alpha state, and I expect it will be ready for
 production by the end of 2019.
 
-Lack of *editor integration* - solved with LSP+HIE (usable in VSCode and other modern
-editors), but Emacs is still the safest choice. Hlint (linter), Hindent
-(formatter) built into HIE and Intero both, same goes for 'go-to-definition' and
-'type-at-point' features common to modern IDEs. What's missing is debugger
-integration - usually via GHCi only, but projects like haskell-dap (+ Phoityne
-editor plugin) exist.
+TODO: English! Lack of *editor integration* - solved with LSP+HIE (usable in
+VSCode and other modern editors), but Emacs is still the safest choice. Hlint
+(linter), Hindent (formatter) built into HIE and Intero both, same goes for
+'go-to-definition' and 'type-at-point' features common to modern IDEs. What's
+missing is debugger integration - usually via GHCi only, but projects like
+haskell-dap (+ Phoityne editor plugin) exist.
 
-*Mobile/desktop apps* - reflex has this built-in via reflex-platform. Obelisk,
+TODO: English! *Mobile/desktop apps* - reflex has this built-in via reflex-platform. Obelisk,
 building on top of reflex-platform, includes bundling apps for App/Play
 Store. Cross-compilation via Nix to Android/iOS, reflex-dom's bindings to
 WkWebView on desktop. I haven't found any attempt to do this for Miso or Concur
 (Concur has beginnings of React Native and SDL backends, but the development
 seems to have stalled).
 
-*Support tools*, starting with a linter - Haskell standard is Hlint, support for
+TODO: English! *Support tools*, starting with a linter - Haskell standard is Hlint, support for
 custom rules, well-supported and mature. Code formatter situation is more
 divided, Hindent follows gofmt with a single code style for all code (but
 doesn't cover edge cases esp. for type-heavy code, so not ideal). Brittany is an
@@ -526,9 +548,9 @@ ambitious project using GHC's parser itself, nicely designed formatting rules,
 but supports only a limited subset of the language. Several other projects, some
 unmaintained, some brand new, but Hindent seems to be standard at the moment.
 
-The situation around *code generators* isn't ideal. Stack bundles several
-templates, but is limited to Stack users. Cabal has a single template, nothing
-else. Nix doesn't care about scaffolding. Several other tools, mostly
+TODO: English! The situation around *code generators* isn't ideal. Stack bundles
+several templates, but is limited to Stack users. Cabal has a single template,
+nothing else. Nix doesn't care about scaffolding. Several other tools, mostly
 unmaintained - Summoner is a notable one, with a fixed project structure; Hi is
 another one, supports arbitrary templates. There is no standard tool, usually
 only 'git clone' a project template and start developing. Obelisk has a standard
@@ -538,8 +560,7 @@ predetermined routing library obelisk-route, ...).
 TODO: more code generation tooling - 'rails new
 controller/scaffold/module/model/migration'
 
-*** Quality Assurance
-On this front, Haskell is very developed, at least theoretically. QuickCheck
+*Quality Assurance* - on this front, Haskell is very developed, at least theoretically. QuickCheck
 originated in Haskell and quickly propagated to many other languages - followup
 tools like SmallCheck and similar. That's generative, or property-based testing,
 best in class.
@@ -555,21 +576,11 @@ testing CLI based applications.)
 Benchmarking - best in class - criterion, no competition. Weigh - allocation
 measurements as a benchmark.
 
-*** Documentation
-It is generally agreed that documentation is Haskell's weakest point. Despite
-having a standardized high-quality APIdoc tool (haddock), documentation is often an
-afterthought, with even commonly used packages having no documentation at all,
-or written in such a way that a new user has no choice but to study its code to
-understand the package.
-
-*** Server-side tools
-
-- Communication - typed APIs (HTTP - servant, WebSocket - some attempts, nothing
-  production-ready)
-- Entities - many options, some great, some less
-- Migrations - weak point, I've found many half-baked implementations, but no
-  standard solution (not only a Haskell problem, Liquibase is the only standard
-  here, and that's SQL only)
+*Documentation* - it is generally agreed that documentation is Haskell's weakest
+point. Despite having a standardized high-quality APIdoc tool (haddock),
+documentation is often an afterthought, with even commonly used packages having
+no documentation at all, or written in such a way that a new user has no choice
+but to study its code to understand the package.
 
 ** Implementation plan
 I will use the nomenclature from the "Evolving Frameworks" paper [TODO: ref] to
@@ -616,7 +627,7 @@ Haskell library or tool. What follows is a list of tools that are required:
 - A way to prerender the application - either just the HTML 'shell' or all pages on the site.
 - An offline storage library for the client.
 
-There are many variations on the last point, 'offline storage', these are some of
+There are many variations on the last point ('offline storage'), these are some of
 them:
 - plain storage datatype with LocalStorage, SessionStorage, and IndexedDB backends
 - a storage including a transparent cache integrated with the network layer
