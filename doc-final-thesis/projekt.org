@@ -238,7 +238,7 @@ for React or event streams for Angular), but there are several features that a
 framework needs to take care of - *templating* is one of them. It is a way of
 composing the HTML that makes up an application which also usually includes some
 'view logic' and variable interpolation. In some frameworks the whole program is
-a template (purely-functional React), some have templates in separate files and
+a template (purely functional React), some have templates in separate files and
 pre-compile them during the build process or even in the browser
 (Angular). Templates may also contain CSS as well - see the new CSS-in-JS trend.
 
@@ -272,10 +272,10 @@ third party libraries. There is one more topic I would like to mention that is
 usually too broad to cover in the core of a framework, but very important to
 consider when developing an application. *Accessibility* is an area concerned with
 removing barriers that would prevent any user from using a website. It has many
-parts to it - while the main focus is making websites accessible to
-screen-readers, it also includes supporting other modes of interaction, like
-keyboard-only interaction. Shortening *load times* on slow connections also makes
-a website accessible in parts of the world with slower Internet connections, and
+parts to it - while the focus is making websites accessible to screen-readers,
+it also includes supporting other modes of interaction, like keyboard-only
+interaction. Shortening *load times* on slow connections also makes a website
+accessible in parts of the world with slower Internet connections, and
 supporting *internationalization* removes language and cultural barriers.
 
 Accessibility is something that requires framework support on several
@@ -327,185 +327,179 @@ tool that takes care of building, testing and perhaps even deploying the
 application, to the way of the IDE, where any build variant is just a few clicks
 away.
 
-*Debugging tools* are the next area. After building an application, trying it out
-and finding an error, these tools help to find the error. There are general
+*Debugging tools* are the next area. After building an application, trying it out,
+and finding an error, these tools help in finding the error. There are generic
 language-specific tools - a stepping debugger is a typical example - and there
-are also framework-specific tools, like an explorer of the component hierarchy
+are also framework-specific tool, like an explorer of the component hierarchy
 (React) or a time-traveling debugger (Redux). In the web world, all modern
-browsers provide the basic debugging tools inside the 'DevTools' - a stepping
-debugger and a profiler. some frameworks provide an extension to DevTools that
-interacts with the application in the current window, and some integrate their
-debugging tools into the application itself.
+browsers provide basic debugging tools inside the 'DevTools' - a stepping
+debugger and a profiler. Some frameworks build on that and provide an extension
+to DevTools that interacts with the application in the current window, some
+provide debugging tools integrated into the application itself.
 
-When building a large application with several developers, it is necessary to
-ensure good practices from all of them - a good practice
-to require a common style for the entire code base. *Quality assurance tools* have
-many sub-categories. From static code analysis tools or linters, as they are
-commonly known; through tests - unit, integration, end-to-end tests, or more
-exotic ones like marble tests or visual regression tests; to profilers - runtime
-or allocation measurements, frontend performance measurements, or more involved
-tools like performance evolution tracking.
+When building or maintaining a large application with several developers, it is
+necessary to ensure good practices in all steps of the development
+process. There are two general categories in *quality assurance* tools - testing
+(dynamic analysis) tools and static analysis tools. In the commonly used
+variants, tests are used either an aid while writing code (test-driven
+development), or to prevent regressions in functionality (continuous integration
+using unit tests and end-to-end tests). Static analysis tools are, in the
+general practice, used to ensure a consistent code style and prevent some
+categories of errors ('linters'). Frameworks commonly provide pre-configured
+sets of tools of both types. If necessary - e.g. in integration testing where
+the burden of set up is bigger - they also provide utility libraries to ease the
+initial set up. Some frameworks also use uncommon types of tests like 'marble
+tests' used in functional reactive programming systems.
 
-TODO: editor support
+*Editor support* is also important in some ecosystems, which includes common IDE
+features like auto-completion or refactoring tools. The situation here is quite
+good lately, with the new Language Server Protocol (LSP) playing a big role in
+enabling editors to support a wide variety of languages. There are some parts of
+editor support that can be framework-specific - supporting an embedded DSL,
+integrating framework-specific debugging tools, ...
 
-TODO: general 'platforms' intro: Modern web frameworks also provide a way to use
-a web application's code and compile it into a *native mobile application*. It's
-commonly implemented as a wrapper application around web apps using Cordova, but
-technologies like React Native go further and use native UI elements. Mobile
-applications can be faster to use and faster to load, can access device-specific
-APIs not exposed via Web Platform APIs.
+While we were talking about Web frameworks so far, some of them support not only
+the browser runtime environment but can be packaged as a *mobile app* for Android
+or iOS, or a *native desktop application* the many desktop operating systems. For
+mobile support, frameworks either provide wrappers around Apache Cordova, but
+some go further and support native mobile interfaces (React Native). For desktop
+support it isn't Cordova but Electron which is the basis here. The main benefit
+of packaging an application specifically for a platform is performance, as they
+are usually faster to load and to use. There are other benefits, like access to
+device-specific APIs or branding.
 
-Some frameworks also support creating a *desktop application* that reuses a web
-application's code. The underlying technology here is Electron and not Cordova,
-but the benefits are the same - greater speed and access to device-specific
-functionality.
-
-TODO: "one last tool, a bonus, if you would" *Code generators* or scaffolding tools start with creating a package manifest and
-a ~src/~ directory, going on to generators that set up a few different types of
-projects based on templates, all the way to tools that can add an entire website
-module, perhaps even with database migrations.
+The last point in this section is *code generators*. of which there are two
+variants: project skeleton generators, which are provided in a large majority of
+frameworks and which include all files for a project to compile and run. Then
+there are component generators, which may include generating a template, a URL
+route and its corresponding controller, or an entire subsection of a
+website. These are less common, but some frameworks also provide them.
 
 ** JavaScript ecosystem
-The most popular JavaScript *UI toolkits* currently are Angular and React. Vue.js
-is another one, relatively new but quickly growing. Of these, Angular is the
-framework closest to traditional frameworks where to create an application, the
-framework is all you need. React and Vue are both rather small libraries but
-have many supporting tools that together also create a platform, although they
-are less cohesive than Angular's platform.
+Moving on, we will take a quick tour of the JavaScript ecosystem and what the
+library ecosystem looks there, following the same general structure as we have
+used in the section above.
 
-TODO: finish: There are fundamental architectural differences between them. Angular 
-On a first look, Angular looks like a well thought-out frontend
-framework. Written in Typescript with comprehensive documentation and great
-tooling, it seems that the authors have learned from their mistakes with
-AngularJS.
+The most popular *UI toolkits* in JavaScript are currently Angular and
+React. Vue.js is another, a relatively new but quickly growing one. Of these,
+Angular is the framework closest to traditional frameworks where it tries to
+provide everything you might need to create an application. React and Vue are
+both rather small libraries but have many supporting tools and libraries that
+together also create a platform, although they are much less cohesive than Angular's
+platform.
 
-React is not a framework in itself. Rather, it's a library that focuses on a
-single thing and does it in a unique enough way that there's sprung up an entire
-ecosystem around it. In it, there are groups of libraries that build upon React,
-each focusing on a single feature - UI components, state management, forms etc.
+There are fundamental architectural differences between them. Angular uses plain
+HTML as a base for its templates, and uses explicit event stream manipulation
+for its data flow. React uses a functional approach where a component is (de
+facto) just a function producing a JavaScript object, in combination with an
+event-driven data flow. Vue uses HTML, CSS and JavaScript separately for its
+templates, and its data flow is a built-in reactive engine.
 
-TODO: Vue.js
-TODO: Polymer
+The most common complaint about the JavaScript ecosystem in general is that it
+is a 'jungle', with dozens or hundreds of small libraries doing the same thing,
+most however incomplete or unmaintained, with no good way to decide between
+them. Frameworks avoid this by having a recommended set of libraries for common
+use cases, but that doesn't help with another complaint called the 'JavaScript
+fatigue', where libraries come and go each year, where the common belief is that
+you're missing out on opportunities if you're not learning at least one new
+framework per year.
 
-*Developer experience* - complaints about Angular, React, the good things as well.
+As for the individual frameworks mentioned above: Angular is an integrated
+framework that covers many common use cases in the basic platform. To some
+though, it is too opinionated, too complex to learn easily, or with too much
+abstraction to understand.
 
-There's a large jungle of libraries, each one with a different scope and
-focus. Choosing a library that fits your problem can sometimes take many
-attempts. Add to it the fact that libraries, frameworks and tools come and go
-quite quickly - the main cause of the so-called "JavaScript fatigue - and the
-fact that in JavaScript, it's fashionable to write extremely small libraries,
-and you have a recipe for a quite unpleasant development experience.
+React and Vue are rather small libraries which means they are very flexible and
+customizable. There are many variants of libraries for each feature a web
+application might need, but this also means that it is easy to get stuck
+deciding on which library to pick out of the many options. There are React and
+Vue 'distributions', however, that try to avoid this by picking a set of libraries and
+build tools that works together well.
 
-Some negatives that developers complain about: Angular is intimidating for a new
-developer, it's too complex and there's a lot to learn. Too much 'magic' -
-related to the previous point, there's a lot of abstraction and it's not easy to
-understand all the layers. Code bloat - the amount of boilerplate and also the
-size of the resulting bundle. Too opinionated - if you don't like 'the angular
-way', you're out of luck here. Scattered documentation - too many articles and
-tutorials out there for AngularJS that can't work with the new Angular
-
-
-TODO: mention the large *UI component* libraries - material, bootstrap, ...
-TODO: fill in, mention library names and relative quality and architecture
-differences
-
-*Templating* - Angular and Vue's custom HTML, React's JSX or plain JS
-
-*Forms* - Angular's several options, React's breadth of tools @ different
-abstraction levels
-
-*Routing* is built into Angular, several libraries and approaches for React
-
-*Accessibility* is explicitly supported in React and Angular, a11y testing tools
-
-*Prerendering* supported by a server (react-server) or with static
-prerender. TODO: angular, vue, polymer?
-
-*Build tools* - Webpack, Babel, ...
-
-TODO: react's tools
-Create-react-app, nwb, Razzle, and Neutrino all cover only the build
-process. Next.js is the first one that I've found that goes a step beyond just
-pre-configuring Webpack and other build tools - it provides other features that
-are starting become standard - server-side runtime rendering, link prefetching,
-and build-time prerendering. It's also the first tool I found that considers
-that a website can consist of multiple applications, via its 'zones' feature.
-
-TODO: more fluent *Mobile/desktop apps* - Angular claims built-in support for native and desktop
-applications. React does not have explicit support but Cordova and Electron (and
-others) are all built for JavaScript.
-
-TODO: more fluent *Support tools* - Angular has its ~ng~ tool which it streamlines setting up the
-entire project (scaffolding, preparing build and testing tools, starting a
-development server) and also browser extensions for runtime debugging,
-IDEs and others. I haven't thought of a tool I would miss, but I'm used to
-minimalism in tooling from the Haskell world... React has a browser extension
-for runtime debugging but other tools depend on the distribution and/or time and
-effort to set them up.
+For many of the topics mentioned in the previous section - routing, forms, build
+tools, mobile and desktop applications - it is true that they are built into
+Angular, and that there are many available libraries for React and Vue.
+In my investigation, I haven't found a weak side to any of them - which is just
+what I expected, given that JavaScript is the native language of the Web.
 
 ** Haskell ecosystem
-TODO: remove intro: At the frontend, it is the *UI toolkit* that defines what the entire application
-will look like, its architecture as well as the tools it can use. There is
-significant focus on the semantics of libraries in the Haskell community, with
-well-defined and law-abiding foundation types, so UI libraries have mostly used
-Functional Reactive Programming (FRP) or its derivatives like 'the Elm
-architecture' [TODO: ref] as their basis.
+Going on to the Haskell ecosystem, we will also walk through it using the
+structure from the "Features" section. There is significant focus on the
+semantics of libraries in the Haskell community, e.g. writing down mathematical
+laws for the foundational types of a library and using them to prove correctness
+of the code, so UI libraries have mostly used Functional Reactive Programming
+(FRP) or its derivatives like 'the Elm architecture' [TODO: ref] as their basis,
+as traditional event-based imperative programming does not really fit those
+criteria.
 
-There are five production-ready browser UI toolkits that I have found. Out of
-these five, React-flux and Transient are unmaintained. Reflex, Miso, and Concur
-are actively developed and ready for production use. Each one is a conceptually
-different approach to the problem of browser user interfaces, but they differ in
-their maturity and the size of their community as well.
+There are five production-ready UI toolkits for the Web that I have found. Out
+of these five, React-flux and Transient are unmaintained, and Reflex, Miso, and
+Concur are actively developed and ready for production use. Each one uses a
+conceptually different approach to the problem of browser user interfaces, and
+they differ in their maturity and the size of their community as well.
 
-*Reflex* [TODO: ref] and Reflex-DOM [TODO: ref], its DOM bindings, seem like the
-most actively maintained ones. Reflex is also sponsored by Obsidian Systems
-[TODO: ref] and the most popular one in the Haskell community, so its future
-seems promising. Reflex follows the traditional FRP with events and behaviors,
-adding 'dynamics' to the mix, and building a rich combinator library on top of them.
+*Reflex* [TODO: ref] (and Reflex-DOM [TODO: ref], its DOM bindings) seem like the
+most actively maintained and developed ones. Reflex is also sponsored by
+Obsidian Systems [TODO: ref] and the most popular one in the Haskell community,
+so its future seems promising. Reflex follows the traditional FRP with events
+and behaviors, adding 'dynamics' to the mix, and building a rich combinator
+library on top of them.
 
-*Miso* [TODO: ref] - TODO: Elm architecture re-implementation in Haskell
+*Miso* [TODO: ref] was built as a re-implementation of the 'Elm architecture' in
+Haskell. It uses a very strict form of uni-directional dataflow with a central
+data store at the one side, and the view as a function from the state to a view
+on the other, passing well-defined events from the view to the store.
 
-*Concur* [TODO: ref] - TODO: an experimental architecture but actively developed,
-variants in PureScript as well. A technology to investigate in the future, but
-no ecosystem right now and not fully mature.
+*Concur* [TODO: ref] tries to explore a different paradigm, which tries to combine
+'the best of parts' of the previous two approaches. So far it has a very small
+range of features, focusing on exploring on how this paradigm fits into browser,
+desktop or terminal applications. It is a technology I intend to explore in the
+future when it's more mature, but that doesn't seem viable for a large-scale
+application, at least compared to its competitors.
 
 TODO: examples of Reflex, Miso, Concur
 
-TODO: English! In all of these frameworks, the preferred approach for *UI components* is to
-re-implement UI and logic inside application code. FFI is usable and quite
-simple for bigger components (see reflex-dom-ace). No real separation of
-concerns, at least markup and data flow are tightly interlinked (style separate,
-no CSS-in-JS equivalent yet). Better type-safety and clearer interdependencies,
-but requires a high baseline of Haskell experience.
+In all of these frameworks, *templating* is a feature that has been side-stepped
+by creating a domain-specific language for HTML mixed with control flow. There
+have been attempts at creating a more HTML-like language embedded into Haskell
+or external templates, but they are incomplete or unmaintained. It is however
+possible to reuse existing JavaScript components using the foreign function
+interface (FFI) between Haskell and JavaScript, and that it exactly what one of
+the unmaintained frameworks did to use React as its backend (react-flux).
 
-TODO: English! Reflex and Concur - self-contained components and global state both (->
-reusability) Miso - single state atom only (see TEA)
+*State management* is where the frameworks differ the most. Miso follows the Elm
+architecture strictly with a central data store that can be only changed by
+messages from the view, Whereas Reflex and Concur are more generic, allowing for
+both centralized and component-local state. A common complaint in Reflex is that
+there is no recommended architecture to the application - it errs on the other
+side of the flexibility vs. best practices spectrum.
 
-TODO: less subjective! I haven't found any good options for *forms* in any of the frameworks. While there
-are some attempts at a forms library for Reflex, there is not a single
-feature-complete library. Part of the reason - validation-only libraries exist
-in Haskell and commonly used (see ~validation~, ~digestive-functors~). There are
-forms libraries at the backend (see ~yesod-form~) with almost automatic form
-generation.
+As for *routing*, Miso has routing built into its base library. In Reflex, there
+are several attempts at a routing library, but not a universally accepted
+solution. Concur with its small ecosystem does not have routing at all, it would
+be necessary to implement form scratch for a production-ready application.
 
-TODO: English! Miso has *routing* built-in. There are several attempts at a Reflex routing
-library but not a single accepted solution. Concur with its small ecosystem
-doesn't have even that.
+In *forms* - and UI components in general - the selection is not very good. For
+Reflex, there are a few collections of components that use popular CSS
+frameworks (Bootstrap, Semantic UI), but there are many missing pieces that are
+re-implemented in each application - forms in particular. Miso and Concur do not have any publicly
+available UI component libraries (or at least none that I have been able to find).
 
-TODO: mention no support, reusing JS tools! I haven't found anything related to
-*accessibility*, so I must assume no one has even attempted to tackle it in a
-systematic way. Building accessible applications by yourself isn't hard though.
+*Accessibility* as a whole has not been a focus of Web development in Haskell. It
+is possible to reuse JavaScript accessibility testing tools however, but I
+haven't seen any sort of automated testing done on any of the publicly available
+Haskell applications. The only area with continued developer focus is *loading
+speed*, as the size of build artifacts was a problem for a long time. That has
+been ameliorated to the level of a common JavaScript application however, so
+that is not a critical concern. *Prerendering* is also supported by Miso and
+Reflex, which helps speed up load times as well.
 
-*Loading speed* - big JS output, so prerendering (Isomorphic rendering) and HTTP/2
-Push.  Reflex has explicit support for prerendering, where an element can have
-two variants if it doesn't render well. Miso has explicit support as well. I
-haven't found anything like this for Concur.
-
-TODO: English! The UI toolkit constrains the choice of possible *build tools*. In Haskell, there
-are three mature options - Cabal (new-build) [TODO: ref], Stack, and Nix. There
-is also a new fourth option aiming for the best of these four, Snack [TODO:
-ref]. While it's not yet mature enough for serious use, it's a tool worth future
-investigation.
+Moving on to the topic of *build tools*: there are three options in Haskell -
+Cabal v2 [TODO: ref], Stack [TODO: ref], and Nix [TODO: ref]. There is also a
+new fourth option aiming for the best of these four, Snack [TODO: ref], but it
+is not yet ready for production use. Cabal is the original Haskell build tool
+which gained a bad reputation for some of its bad design decisions. There is a
+version 2 of the tool which fixes most of them
 
 TODO: English! Cabal - old, Cabal hell. Stack came, divided the Haskell community. Nix came out
 of nowhere, converted a significant portion but isn't yet dominant, and now
