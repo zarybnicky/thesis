@@ -351,12 +351,12 @@ the burden of set up is bigger - they also provide utility libraries to ease the
 initial set up. Some frameworks also use uncommon types of tests like 'marble
 tests' used in functional reactive programming systems.
 
-*Editor support* is also important in some ecosystems, which includes common IDE
-features like auto-completion or refactoring tools. The situation here is quite
-good lately, with the new Language Server Protocol (LSP) playing a big role in
-enabling editors to support a wide variety of languages. There are some parts of
-editor support that can be framework-specific - supporting an embedded DSL,
-integrating framework-specific debugging tools, ...
+*Editor integration* is also important in some ecosystems, which includes common
+IDE features like auto-completion or refactoring tools. The situation here is
+quite good lately, with the new Language Server Protocol (LSP) playing a big
+role in enabling editors to support a wide variety of languages. There are some
+parts of editor support that can be framework-specific - supporting an embedded
+DSL, integrating framework-specific debugging tools, ...
 
 While we were talking about Web frameworks so far, some of them support not only
 the browser runtime environment but can be packaged as a *mobile app* for Android
@@ -494,92 +494,92 @@ been ameliorated to the level of a common JavaScript application however, so
 that is not a critical concern. *Prerendering* is also supported by Miso and
 Reflex, which helps speed up load times as well.
 
-Moving on to the topic of *build tools*: there are three options in Haskell -
-Cabal v2 [TODO: ref], Stack [TODO: ref], and Nix [TODO: ref]. There is also a
-new fourth option aiming for the best of these four, Snack [TODO: ref], but it
-is not yet ready for production use. Cabal is the original Haskell build tool
-which gained a bad reputation for some of its bad design decisions. There is a
-version 2 of the tool which fixes most of them
+Moving on to the topic of *build tools*: there are three main options in Haskell -
+Cabal v2 [TODO: ref], Stack [TODO: ref], and Nix [TODO: ref]. There are also
+other options - Snack [TODO: ref], aiming for the best of these three but not
+yet ready for production use, or Mafia [TODO: ref], which is not too popular in
+the community at large. Cabal is the original Haskell build tool which gained a
+bad reputation for some of its design decisions (the so-called 'Cabal hell'),
+but most of them were fixed in 'Cabal v2' which puts it on par with its main
+competitor, Stack. Stack tried to bring Haskell closer to other mainstream
+programming language with several new features like automatic download of the
+selected compiler or a curated subset of the main Haskell package repository,
+Stackage. Nix is a not a Haskell-specific build tool but rather a
+general-purpose one, but it has very good Haskell support and cross-compilation
+capabilities, which is the reason it is especially used for frontend Haskell.
 
-TODO: English! Cabal - old, Cabal hell. Stack came, divided the Haskell community. Nix came out
-of nowhere, converted a significant portion but isn't yet dominant, and now
-cabal new-build is almost equivalent to stack. Free choice between cabal and
-stack, nix is more capable in general but slower learning curve. TODO: more
-about snack
+Glasgow Haskell Compiler (GHC) is the main Haskell *compiler* used for native
+compilation. Compilation to JavaScript, as required for frontend development, is
+supported by a separate compiler, GHCJS, which uses GHC as a library. Setting up
+a GHCJS development environment with Cabal is not a trivial process and using
+Stack limits the developer to old GHC versions, so it is Nix that is usually
+recommended. When set up correctly, Nix offers almost a cross-platform one-click
+setup, downloading the compiler and all dependencies from a binary cache or
+compiling them if unavailable. Reflex especially, in the reflex-platform [TODO:
+ref] project uses the cross-compilation capabilities of Nix to allow
+applications to compile for Android, iOS, desktop, or the web simultaneously.
 
-TODO: English! GHCJS ecosystem not so well supported with Cabal (old or new one), Nix is
-usually recommended at the frontend (one command setup, binary cache,
-cross-platform), Reflex especially - uses the great Nix cross-compilation
-capabilities for Android, iOS, desktop. Stack usable for plain GHCJS dev, but
-old GHC (7.10?).
+The main problem of GHCJS has been speed and the size of the compiled
+JavaScript. The latter has been gradually improving and is now mostly on par
+with modern JavaScript framework. The former though is harder to improve and
+GHCJS applications are still within a factor of 3 of native JavaScript ones
+[TODO: ref bench]. However, this should be improved soon by compiling to
+WebAssembly instead of JavaScript. There are two projects working on this in
+parallel - Asterius [TODO: ref], and WebGHC [TODO: ref]. So far they are in
+alpha, but I expect them to be production-ready by the end of 2019.
 
-TODO: English! Slow compiler - common workaround is to use the REPL, but there are other
-solutions like Snack which are promising although not widely used.
+Moving on to the topic of *debugging tools*, this is where Haskell on the frontend
+is lacking the most. While it is possible to use the browser's built-in DevTools
+and their debugger and profiler, the compiled output of GHCJS does not
+correspond to the original Haskell code very much, which makes using the
+debugger quite hard. There are no further debugging tools. In my experience
+though, I didn't ever feel the need to use more than tracing to the console.
 
-TODO: English! GHCJS output size and speed - GHCJS should be obsoleted by WebAssembly very
-soon - it's already in alpha state, and I expect it will be ready for
-production by the end of 2019.
+In contrast, there are many *quality assurance* tools available for Haskell in
+general, of which almost all are available for use in frontend
+development. Starting with static quality assurance, Hlint is the standard
+'linter' for Haskell, well-supported and mature. There are several code
+formatters, Hindent is the most widely used one, which enforces a single style
+of code as is common in other contemporary languages (e.g. gofmt for Go).
+As for test frameworks, there are many options. HSpec or HUnit are examples of
+unit- or integration-testing frameworks, property-based testing is also very
+common in Haskell - with QuickCheck being the most well-known example. For
+end-to-end testing in the browser, there are libraries that integrate with Selenium.
 
-TODO: English! Lack of *editor integration* - solved with LSP+HIE (usable in
-VSCode and other modern editors), but Emacs is still the safest choice. Hlint
-(linter), Hindent (formatter) built into HIE and Intero both, same goes for
-'go-to-definition' and 'type-at-point' features common to modern IDEs. What's
-missing is debugger integration - usually via GHCi only, but projects like
-haskell-dap (+ Phoityne editor plugin) exist.
+Haskell has a quite bad reputation for the lack of *editor integration*. The
+situation is better with the recent Language Server Protocol (LSP) project,
+where haskell-ide-engine (HIE), Haskell's language server, enables users to
+write Haskell in contemporary editors like Atom easily. HIE supports
+type-checking, linting and formatting, and also common IDE features like
+'go-to-definition' or 'type-at-point'.
 
-TODO: English! *Mobile/desktop apps* - reflex has this built-in via reflex-platform. Obelisk,
-building on top of reflex-platform, includes bundling apps for App/Play
-Store. Cross-compilation via Nix to Android/iOS, reflex-dom's bindings to
-WkWebView on desktop. I haven't found any attempt to do this for Miso or Concur
-(Concur has beginnings of React Native and SDL backends, but the development
-seems to have stalled).
+Compiling applications as *mobile or desktop apps* is well-supported in Reflex
+(but not in Miso or Concur). When using the Nix scaffolding of reflex-platform,
+compilation automatically switches between GHCJS (for the Web), regular GHC (for
+the desktop) and cross-compiling GHC (for iOS or Android). Bundling the compiled
+applications for distribution a bit more involved, but most of the process is
+automated.
 
-TODO: English! *Support tools*, starting with a linter - Haskell standard is Hlint, support for
-custom rules, well-supported and mature. Code formatter situation is more
-divided, Hindent follows gofmt with a single code style for all code (but
-doesn't cover edge cases esp. for type-heavy code, so not ideal). Brittany is an
-ambitious project using GHC's parser itself, nicely designed formatting rules,
-but supports only a limited subset of the language. Several other projects, some
-unmaintained, some brand new, but Hindent seems to be standard at the moment.
+*Code generators* are quite limited in Haskell. Stack has a templating system for
+new project initialization, but there are no templates for frontend development.
+Cabal comes with a single standard template for a blank project, but it does not
+have an option for creating frontend-specific templates. And Nix does not do
+code generation at all. The common practice so far is to make copy of a
+repository containing the basics, edit project-specific details, and use that as
+a base for a new project. I have not found any attempts at component generation
+in Haskell.
 
-TODO: English! The situation around *code generators* isn't ideal. Stack bundles
-several templates, but is limited to Stack users. Cabal has a single template,
-nothing else. Nix doesn't care about scaffolding. Several other tools, mostly
-unmaintained - Summoner is a notable one, with a fixed project structure; Hi is
-another one, supports arbitrary templates. There is no standard tool, usually
-only 'git clone' a project template and start developing. Obelisk has a standard
-structure, but it's a very limiting one (Snap as the only server library,
-predetermined routing library obelisk-route, ...).
-
-TODO: more code generation tooling - 'rails new
-controller/scaffold/module/model/migration'
-
-*Quality Assurance* - on this front, Haskell is very developed, at least theoretically. QuickCheck
-originated in Haskell and quickly propagated to many other languages - followup
-tools like SmallCheck and similar. That's generative, or property-based testing,
-best in class.
-
-Classical unit and integration testing has also many options - hspec, hedgehog,
-tasty, doctest, ... Mocking via free monads or other MonadX
-implementations. TODO
-
-End-to-end testing - Selenium webdriver wrappers exist, and Selenium is the
-standard for testing servers and clients. (Or alternately shelltestrunner for
-testing CLI based applications.)
-
-Benchmarking - best in class - criterion, no competition. Weigh - allocation
-measurements as a benchmark.
-
-*Documentation* - it is generally agreed that documentation is Haskell's weakest
-point. Despite having a standardized high-quality APIdoc tool (haddock),
-documentation is often an afterthought, with even commonly used packages having
-no documentation at all, or written in such a way that a new user has no choice
-but to study its code to understand the package.
+Last point I want to mention is *documentation*. It is generally agreed that
+documentation is Haskell's weakest point - despite having a standardized
+high-quality APIdoc tool (haddock), it is often an afterthought, with even
+commonly used packages having no documentation at all or written in such a way
+that a new user has no choice but to study its code to understand the
+package. In this work, I will strive to avoid this common flaw.
 
 ** Implementation plan
 I will use the nomenclature from the "Evolving Frameworks" paper [TODO: ref] to
 describe my my goals. [TODO: describe the general outline of that paper]
-Long-term, I am aiming to go from "Three Examples", a place to look for commonly
+Long-term, I aim to go from "Three Examples", a place to look for commonly
 repeated patterns, through a "White-Box Framework", a general
 structure/architecture of an application wrapped into a library, through a
 "Component Library", when that library will be extended with commonly duplicated
@@ -590,13 +590,12 @@ thing missing from a finished prototype.
 TODO: include the Evolving Frameworks image
 
 Building an integrated platform is not my primary goal - it is hard for a new
-and opinionated platform to succeed in the Haskell ecosystem (an not only
-there). In this thesis, I expect to do the first step only - anything beyond
-that is extra - create a few applications, fill in all the holes that aren't
-covered by existing libraries, and extract a common application skeleton, a set
-of libraries, and a set of guides or tutorials that make it is easy go from the
-skeleton to a working prototype of a PWA. Anything beyond that - a "Component
-Library" or "Pluggable Objects" - is only a bonus at this stage.
+and opinionated platform to succeed in the Haskell ecosystem. In this thesis, I
+expect to do the first step only - create a few applications, fill in all the
+missing parts in the Haskell ecosystem that aren't covered by existing
+libraries, and extract a common application skeleton, a set of libraries, and a
+set of guides or tutorials that make it is easy go from the skeleton to a
+working prototype of a PWA.
 
 The goal of this work is to make it possible to create Progressive Web
 Applications. To reiterate the description from the introduction, these are the
@@ -612,7 +611,7 @@ requirements:
 - Push notifications (consists of several related requirements)
 
 To get there, there are several features that aren't covered by any existing
-Haskell library or tool. What follows is a list of tools that are required:
+Haskell library or tool. This is a list of the required parts:
 - A full-featured browser routing library. While there are some existing
   implementations, they are either incomplete or long abandoned.
 - A wrapper around ServiceWorkers, or a template to simplify project creation.
@@ -621,27 +620,22 @@ Haskell library or tool. What follows is a list of tools that are required:
 - A way to prerender the application - either just the HTML 'shell' or all pages on the site.
 - An offline storage library for the client.
 
-There are many variations on the last point ('offline storage'), these are some of
-them:
+There are several variations of the last point with different levels of
+difficulty. Only the first variation is required, with the other ones being a
+part of follow-up work of this thesis.
 - plain storage datatype with LocalStorage, SessionStorage, and IndexedDB backends
 - a storage including a transparent cache integrated with the network layer
 - a storage with an invalidation or auto-refresh functionality, using an event
   stream from the server
 - a storage with offline-capable synchronization capabilities
 
-While my eventual goal is the last version, even just the first one would be
-sufficient for the purposes of this work.
-
-While these tools don't comprise a fully integrated 'platform' in the sense of
-Angular or Symfony, those are quite uncommon in the Haskell ecosystem. More
-common are collections of libraries that play well together, where one library
-provides the fundamental datatype - the 'architecture' of the application, and
-other libraries fill in the functionality. Of the proposed libraries, only the
+These components don't comprise a fully integrated 'platform' in the sense of
+e.g. Angular - those are quite uncommon in the Haskell ecosystem. More common
+are collections of libraries that play well together, where one library provides
+the fundamental datatype - the 'architecture' of the application - and other
+libraries fill in the functionality. Of the proposed components, only the
 routing library is an 'architectural' one in the sense that it will influence
-the shape of the application and its fundamental datatypes.
-
-These goals of course also include full documentation of their code, as well as
-a test suite and benchmarks for performance-critical code.
+the shape of the application and its fundamental data types.
 
 * Components
 TODO: Demonstrate the principles of components on 'src-snippets' code, where
