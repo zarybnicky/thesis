@@ -1,4 +1,4 @@
-% Created 2019-03-02 Sat 13:49
+% Created 2019-03-02 Sat 18:45
 % Intended LaTeX compiler: pdflatex
 \documentclass[english,odsaz]{fitthesis}
 \renewcommand\title[1]{}
@@ -26,7 +26,7 @@
 \setlength{\parskip}{0.5\bigskipamount}
 
 \chapter{Introduction}
-\label{sec:orgd732d26}
+\label{sec:org4c4acab}
 Let's imagine we want to create a new e-shop, with all the conveniences that
 customers are nowadays used to - [TODO: \ldots{}], a notification when the order is
 ready, and ideally an offline-available overview of the order for when the user
@@ -52,7 +52,7 @@ through the process of creating a PWA from prototype to production and see what
 else could be made easier and more straightforward as a follow-up to this work.
 
 \section{Related work}
-\label{sec:org32bb698}
+\label{sec:org461cd2c}
 While using Haskell in the browser is not a common choice, it is still a quickly
 growing niche. It is a relatively recent one as GHCJS, the Haskell-to-JavaScript
 compiler, has been in development since 2010 [TODO: gh repo link] but it had a
@@ -66,13 +66,13 @@ are many libraries and tools still missing, ones that developers used to other
 languages have learned to expect and require.
 
 \chapter{Technologies}
-\label{sec:orgc5f9f13}
+\label{sec:org76a9d36}
 We'll first have a more detailed look at the above-mentioned technologies, at
 what the term Progressive Web Application means and why would one want to use
 Haskell when creating browser applications.
 
 \section{Progressive Web Application}
-\label{sec:org6de7991}
+\label{sec:orgf9b1a0b}
 "Progressive Web Application" is a term that covers several relatively new
 technologies. It is the continuation of the general trend of expanding the
 capabilities of browser applications and closing the gap between them and native
@@ -106,7 +106,7 @@ Some more notable PWAs are: Instagram, Twitter [TODO: refs, see wiki], Uber,
 Flipkart, or Tinder.
 
 \section{Haskell}
-\label{sec:org1fe8799}
+\label{sec:org3fd22cc}
 \begin{minted}[]{haskell}
 type HackageAPI =
   "users" :> Get '[JSON] [User] :<|>
@@ -137,13 +137,15 @@ in which its expressive type system enables very precise control over TODO:
 expressive types, dialog with the compiler, types encoding effects, citation for
 "If it compiles, it works".
 
-Why Haskell? Strongly typed language, helps ensure correctness and prevent
-undefined behaviors - but less verbose and more expressive than Java and other
-languages a developer would imagine as 'strongly typed'. Haskell is one of the
-many languages that can be used in the browser - not directly, but by compiling
-down to JavaScript. WebAssembly is a technology that encourages this way
-of working, enabling any language to run in the browser via LLVM. (Compiling
-Haskell to WebAssembly is almost doable [TODO: ref WebGHC, Asterius].)
+Why Haskell? It is a strongly typed language, that helps ensure correctness and
+prevent undefined behaviors - but it is less verbose and more expressive than
+Java and other languages a developer would imagine as 'strongly typed'. Haskell
+is one of the many languages that can be used in the browser - not directly, but
+by compiling down to JavaScript. Another technology that enables languages to
+run in the browser is WebAssembly, an alternative assembly language and a
+runtime designed specifically for the Web. Compiling Haskell for the Web via
+WebAssembly is almost doable, there are two active projects creating a Haskell
+compiler backend - WebGHC [TODO: ref] and Asterius [TODO: ref].
 
 Compile-to-JavaScript languages aren't as rare as it may seem. While languages
 that aren't based on JavaScript itself aren't exactly common, web developers
@@ -172,7 +174,7 @@ fact the ability to run 'isomorphic code' - the same code on the client and the
 server both - is its main marketing point.
 
 \section{Nix}
-\label{sec:org2a41387}
+\label{sec:org15036ee}
 \begin{minted}[]{nix}
 { stdenv, fetchurl, perl }:
 
@@ -188,12 +190,12 @@ stdenv.mkDerivation {
 \end{minted}
 
 One technology that wasn't yet mentioned but that will support our entire build
-process - from compiling to deploying - is Nix. Nix is a package manager with
-focus on reproducibility and isolation. It is described as a purely functional
-package manager, where every package is build by a function that doesn't have
-side-effects and is immutable after being built, where Nix ensures that the
-exact version of dependencies is used even during runtime - up to \texttt{libc} [TODO:
-ref homepage]
+process - from compiling to deploying - is Nix. Nix [TODO: ref homepage] is a
+package manager with focus on reproducibility and isolation. It is described as
+a purely functional package manager, where every package is built by a function
+without side-effects, with the result being immutable. Nix also ensures that the
+exact version of dependencies is used even during runtime - all the way up to
+\texttt{libc}.
 
 Nix is a declarative build tool, similar in purpose to Make and in philosophy to
 Haskell. There are other tools built on top of Nix though, the most interesting
@@ -211,7 +213,7 @@ a user environment only consists of symbolic links to the read-only Nix store -
 that is very useful for NixOS or NixOps.
 
 \chapter{Research}
-\label{sec:org46bced6}
+\label{sec:org3b6e464}
 As this work doesn't live in a vacuum, we also need to consider commonly used
 Web frameworks and platforms and decide what features to implement in. We will
 first walk through the features that frameworks today implement, describe them
@@ -222,7 +224,7 @@ places where Haskell is lagging behind and especially the features that we will
 need to fill in in this work.
 
 \section{Features of Web frameworks}
-\label{sec:org3fd155c}
+\label{sec:org0f24458}
 The basis of a web framework is the \textbf{UI toolkit}, which defines the structure,
 architecture and paradigm of the rest of the application. I am intentionally
 using the now-uncommon term 'toolkit', as the UI frameworks we will see vary in
@@ -375,7 +377,7 @@ route and its corresponding controller, or an entire subsection of a
 website. These are less common, but some frameworks also provide them.
 
 \section{JavaScript ecosystem}
-\label{sec:orga57030c}
+\label{sec:orgf30440d}
 Moving on, we will take a quick tour of the JavaScript ecosystem and what the
 library ecosystem looks there, following the same general structure as we have
 used in the section above.
@@ -423,7 +425,7 @@ In my investigation, I haven't found a weak side to any of them - which is just
 what I expected, given that JavaScript is the native language of the Web.
 
 \section{Haskell ecosystem}
-\label{sec:org17c89fc}
+\label{sec:org28806d4}
 Going on to the Haskell ecosystem, we will also walk through it using the
 structure from the "Features" section. There is significant focus on the
 semantics of libraries in the Haskell community, e.g. writing down mathematical
@@ -578,7 +580,7 @@ that a new user has no choice but to study its code to understand the
 package. In this work, I will strive to avoid this common flaw.
 
 \section{Implementation plan}
-\label{sec:orgf5ff4ce}
+\label{sec:org80ac1a6}
 I will use the nomenclature from the "Evolving Frameworks" paper [TODO: ref] to
 describe my my goals. [TODO: describe the general outline of that paper]
 Long-term, I aim to go from "Three Examples", a place to look for commonly
@@ -646,25 +648,25 @@ routing library is an 'architectural' one in the sense that it will influence
 the shape of the application and its fundamental data types.
 
 \chapter{Components}
-\label{sec:org511bf99}
+\label{sec:org35330fd}
 TODO: Demonstrate the principles of components on 'src-snippets' code, where
 I'll show the smallest possible code that implements that functionality
 
 \section{Component A}
-\label{sec:org364862c}
+\label{sec:org0d1a386}
 \subsection{Design}
-\label{sec:org3ea3bd8}
+\label{sec:orgf53d003}
 \subsection{Implementation}
-\label{sec:org1c39a8d}
+\label{sec:orgac6752a}
 \subsection{Testing}
-\label{sec:org47b61e4}
+\label{sec:orgb5e239b}
 \subsection{Other options, possible improvements}
-\label{sec:orge9c7cc5}
+\label{sec:org0f0c78d}
 
 \chapter{Applications}
-\label{sec:org48cade4}
+\label{sec:org8326aa8}
 \section{Workflow and tools}
-\label{sec:orga5806a5}
+\label{sec:org5a50c41}
 TODO: describe the development flow of an app built using these tools
 
 \begin{itemize}
@@ -675,7 +677,7 @@ TODO: describe the development flow of an app built using these tools
 \end{itemize}
 
 \section{TodoMVC}
-\label{sec:org05be1fe}
+\label{sec:orgd2488c4}
 There is an abundance of web frameworks, and there are several projects that aim
 to give developers a side-by-side comparison of them. Out of these, the original
 and most well-known one is TodoMVC, which is aimed at 'MV* frontend
@@ -696,7 +698,7 @@ routing.
 \url{http://todomvc.com/}
 
 \section{HNPWA}
-\label{sec:orgdd8d4e9}
+\label{sec:org7b32124}
 HNPWA is a client for Hacker News, a technological news site. Unlike TodoMVC,
 HNPWA does not provide a rigid specification and consists only of a rough
 guideline of what to implement. The task is to create a Progressive Web
@@ -707,7 +709,7 @@ server-side rendering.
 \url{https://hnpwa.com/}
 
 \section{RealWorld}
-\label{sec:org3c092be}
+\label{sec:org5221924}
 RealWorld is the most complex of the comparison projects. It is a clone of
 Medium, an online publishing platform, so it requires everything a "real world"
 application would. The task is split into a backend, defined by an API
@@ -720,7 +722,7 @@ ability to post articles and comments, and to follow users and favorite articles
 \url{https://github.com/gothinkster/realworld}
 
 \chapter{Conclusion}
-\label{sec:orgd20095a}
+\label{sec:org9729db8}
 TODO: return to the comparison with JS, PHP, \ldots{} frameworks
 
 TODO: describe possible follow-up work, what I'll be working on - define
@@ -755,10 +757,10 @@ the just completed projects. \cite{Pravidla}
 \iftwoside\cleardoublepage\fi
 
 \chapter{Contents of the attached data storage}
-\label{sec:orgfc971e4}
+\label{sec:orga724515}
 TODO: fill in
 
 \chapter{Poster}
-\label{sec:orgf5e836a}
+\label{sec:orgc5f7b5f}
 TODO: fill in
 \end{document}

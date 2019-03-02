@@ -125,13 +125,15 @@ in which its expressive type system enables very precise control over TODO:
 expressive types, dialog with the compiler, types encoding effects, citation for
 "If it compiles, it works".
 
-Why Haskell? Strongly typed language, helps ensure correctness and prevent
-undefined behaviors - but less verbose and more expressive than Java and other
-languages a developer would imagine as 'strongly typed'. Haskell is one of the
-many languages that can be used in the browser - not directly, but by compiling
-down to JavaScript. WebAssembly is a technology that encourages this way
-of working, enabling any language to run in the browser via LLVM. (Compiling
-Haskell to WebAssembly is almost doable [TODO: ref WebGHC, Asterius].)
+Why Haskell? It is a strongly typed language, that helps ensure correctness and
+prevent undefined behaviors - but it is less verbose and more expressive than
+Java and other languages a developer would imagine as 'strongly typed'. Haskell
+is one of the many languages that can be used in the browser - not directly, but
+by compiling down to JavaScript. Another technology that enables languages to
+run in the browser is WebAssembly, an alternative assembly language and a
+runtime designed specifically for the Web. Compiling Haskell for the Web via
+WebAssembly is almost doable, there are two active projects creating a Haskell
+compiler backend - WebGHC [TODO: ref] and Asterius [TODO: ref].
 
 Compile-to-JavaScript languages aren't as rare as it may seem. While languages
 that aren't based on JavaScript itself aren't exactly common, web developers
@@ -175,12 +177,12 @@ stdenv.mkDerivation {
 #+END_SRC
 
 One technology that wasn't yet mentioned but that will support our entire build
-process - from compiling to deploying - is Nix. Nix is a package manager with
-focus on reproducibility and isolation. It is described as a purely functional
-package manager, where every package is build by a function that doesn't have
-side-effects and is immutable after being built, where Nix ensures that the
-exact version of dependencies is used even during runtime - up to ~libc~ [TODO:
-ref homepage]
+process - from compiling to deploying - is Nix. Nix [TODO: ref homepage] is a
+package manager with focus on reproducibility and isolation. It is described as
+a purely functional package manager, where every package is built by a function
+without side-effects, with the result being immutable. Nix also ensures that the
+exact version of dependencies is used even during runtime - all the way up to
+~libc~.
 
 Nix is a declarative build tool, similar in purpose to Make and in philosophy to
 Haskell. There are other tools built on top of Nix though, the most interesting
