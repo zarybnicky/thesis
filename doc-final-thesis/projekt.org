@@ -30,8 +30,8 @@ notifications. But [TODO: research about mobile engagement] and downloading a
 mobile application means another dozen megabytes.
 
 That's what the new trend of Progressive Web Applications (PWAs) is trying to
-solve. Fast - no need to wait for page reloads, Reliable - service workers help
-overcome problems with unreliable internet - both for page load (by caching the
+solve. Fast - no need to wait for page reloads - and reliable - service workers help
+overcome problems with unreliable internet, both for page load (by caching the
 app itself, and in-app caching of app-specific data) and for background sync of
 user-modified data.
 
@@ -47,7 +47,7 @@ else could be made easier and more straightforward as a follow-up to this work.
 
 ** Related work
 While using Haskell in the browser is not a common choice, it is still a quickly
-growing niche. it is a relatively recent one as GHCJS, the Haskell-to-JavaScript
+growing niche. It is a relatively recent one as GHCJS, the Haskell-to-JavaScript
 compiler, has been in development since 2010 [TODO: gh repo link] but it had a
 production-ready version only in 2013 [luite's blog]. It is not the target of
 academic work, but there are several commercially sponsored projects. To name a
@@ -95,6 +95,23 @@ Some more notable PWAs are: Instagram, Twitter [TODO: refs, see wiki], Uber,
 Flipkart, or Tinder.
 
 ** Haskell
+#+BEGIN_SRC haskell :exports code
+  type HackageAPI =
+    "users" :> Get '[JSON] [User] :<|>
+    "user" :> Capture "login" Login :> Get '[JSON] User :<|>
+    "packages" :> Get '[JSON] [Package]
+
+  getUsers :: Handler [User]
+  getUser :: Login -> Handler User
+  getPackages :: Handler [Package]
+
+  server :: Server HackageApi
+  server = getUsers :<|> getUser :<|> getPackages
+
+  getUsers :<|> getUser :<|> getPackages =
+    client @HackageApi "http://hackage.haskell.org"
+#+END_SRC
+
 The programming language Haskell is a rather old one, despite spreading into the
 industry only recently, having been around since 1990 [TODO: reference]. It is a
 language that started out as a basis for research into the design of functional
@@ -142,24 +159,21 @@ language. This is the basic idea of the framework Meteor [TODO: ref], and in
 fact the ability to run 'isomorphic code' - the same code on the client and the
 server both - is its main marketing point.
 
-#+BEGIN_SRC haskell :exports code
-  type HackageAPI =
-    "users" :> Get '[JSON] [User] :<|>
-    "user" :> Capture "login" Login :> Get '[JSON] User :<|>
-    "packages" :> Get '[JSON] [Package]
+** Nix
+#+BEGIN_SRC nix :exports code
+{ stdenv, fetchurl, perl }:
 
-  getUsers :: Handler [User]
-  getUser :: Login -> Handler User
-  getPackages :: Handler [Package]
-
-  server :: Server HackageApi
-  server = getUsers :<|> getUser :<|> getPackages
-
-  getUsers :<|> getUser :<|> getPackages =
-    client @HackageApi "http://hackage.haskell.org"
+stdenv.mkDerivation {
+  name = "hello-2.1.1";
+  builder = ./builder.sh;
+  src = fetchurl {
+    url = ftp://ftp.nluug.nl/pub/gnu/hello/hello-2.1.1.tar.gz;
+    sha256 = "1md7jsfd8pa45z73bz1kszpp01yw6x5ljkjk2hx7wl800any6465";
+  };
+  inherit perl;
+}
 #+END_SRC
 
-** Nix
 One technology that wasn't yet mentioned but that will support our entire build
 process - from compiling to deploying - is Nix. Nix is a package manager with
 focus on reproducibility and isolation. It is described as a purely functional
@@ -183,21 +197,7 @@ the same machine. Adding atomic deployments and rollbacks is then quite easy, as
 a user environment only consists of symbolic links to the read-only Nix store -
 that is very useful for NixOS or NixOps.
 
-#+BEGIN_SRC nix :exports code
-{ stdenv, fetchurl, perl }:
-
-stdenv.mkDerivation {
-  name = "hello-2.1.1";
-  builder = ./builder.sh;
-  src = fetchurl {
-    url = ftp://ftp.nluug.nl/pub/gnu/hello/hello-2.1.1.tar.gz;
-    sha256 = "1md7jsfd8pa45z73bz1kszpp01yw6x5ljkjk2hx7wl800any6465";
-  };
-  inherit perl;
-}
-#+END_SRC
-
-#+BEGIN_SRC nix :exports code
+#+BEGIN_SRC nix :exports none
   {
     network.description = "Web server";
 
@@ -215,13 +215,13 @@ stdenv.mkDerivation {
 
 * Research
 As this work doesn't live in a vacuum, we also need to consider commonly used
-Web frameworks and platforms and decide what features to we need to implement in
-this work. We will first walk through the features that frameworks today
-implement, describe them and define the relevant terms. Afterwards, we will have
-a look at the ecosystems of JavaScript -- today almost the only option for
-writing frontend applications -- and Haskell, my language of choice, and try to
-find the places where Haskell is lagging behind and especially the features that
-we will need to fill in in this work.
+Web frameworks and platforms and decide what features to implement in. We will
+first walk through the features that frameworks today implement, describe them
+and define the relevant terms. Afterwards, we will have a brief look at the
+specifics of the JavaScript ecosystem - the most common language in Web
+development - and the of Haskell, my language of choice, and try to find the
+places where Haskell is lagging behind and especially the features that we will
+need to fill in in this work.
 
 ** Features of Web frameworks
 The basis of a web framework is the *UI toolkit*, which defines the structure,
@@ -351,7 +351,7 @@ the burden of set up is bigger - they also provide utility libraries to ease the
 initial set up. Some frameworks also use uncommon types of tests like 'marble
 tests' used in functional reactive programming systems.
 
-*Editor integration* is also important in some ecosystems, which includes common
+*Editor integration* Wis also important in some ecosystems, which includes common
 IDE features like auto-completion or refactoring tools. The situation here is
 quite good lately, with the new Language Server Protocol (LSP) playing a big
 role in enabling editors to support a wide variety of languages. There are some
@@ -704,7 +704,7 @@ TODO: return to the comparison with JS, PHP, ... frameworks
 TODO: describe possible follow-up work, what I'll be working on - define
   specific topics and make concrete examples
 
-The final chapter includes an evaluation of the achieved results with a special
+-- The final chapter includes an evaluation of the achieved results with a special
 emphasis on the student's own contribution. A compulsory assessment of the
 project's development will also be required, the student will present ideas
 based on the experience with the project and will also show the connections to
