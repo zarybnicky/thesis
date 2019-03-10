@@ -1,4 +1,4 @@
-% Created 2019-03-09 Sat 21:54
+% Created 2019-03-10 Sun 10:34
 % Intended LaTeX compiler: pdflatex
 \documentclass[english,odsaz]{fitthesis}
 \renewcommand\title[1]{}
@@ -26,7 +26,7 @@
 \setlength{\parskip}{0.5\bigskipamount}
 
 \chapter{Introduction}
-\label{sec:orga37ebcc}
+\label{sec:org976b80d}
 Let's imagine we want to create a new e-shop, with all the conveniences that
 customers are nowadays used to - [TODO: \ldots{}], a notification when the order is
 ready, and ideally an offline-available overview of the order for when the user
@@ -35,10 +35,10 @@ we want to show something offline, we need a mobile application, the same for
 notifications. But [TODO: research about mobile engagement] and downloading a
 mobile application means another dozen megabytes.
 
-That's what the new trend of Progressive Web Applications (PWAs) is trying to
+That is what the new trend of Progressive Web Applications (PWAs) is trying to
 solve. Fast - no need to wait for page reloads - and reliable - service workers help
-overcome problems with unreliable internet, both for page load (by caching the
-app itself, and in-app caching of app-specific data) and for background sync of
+overcome problems with unreliable internet, both for page load by caching the
+app itself and in-app caching of app-specific data, and for background sync of
 user-modified data.
 
 My language of choice is Haskell though, for both frontend and backend
@@ -46,34 +46,35 @@ development, and while writing Haskell applications for the browser is possible,
 creating a Progressive Web Application requires more than just the ability to
 manipulate the DOM. That is what this work is about - filling in the gaps and
 creating all the prerequisites for writing Progressive Web Applications in
-Haskell. We will start by identifying what is exactly is lacking in the Haskell
-ecosystem and design and implement those missing pieces. Afterwards, we'll walk
-through the process of creating a PWA from prototype to production and see what
-else could be made easier and more straightforward as a follow-up to this work.
+Haskell. We will start by identifying exactly what is lacking in the Haskell
+ecosystem, and designing and implementing those missing pieces. Afterwards, we
+will walk through the process of creating a PWA from prototype to production and
+see what else could be made easier and more straightforward as a follow-up to
+this work.
 
 \section{Related work}
-\label{sec:org9157415}
+\label{sec:org6a1b5ec}
 While using Haskell in the browser is not a common choice, it is still a quickly
 growing niche. It is a relatively recent one as GHCJS, the Haskell-to-JavaScript
 compiler, has been in development since 2010 \cite{ghcjs} but it had a
-production-ready version only in 2013 [luite's blog]. It is not the target of
+production-ready version only in 2013 [TODO: Luite's blog]. It is not the target of
 academic work, but there are several commercially sponsored projects. To name a
 few, Reflex and Obelisk from Obsidian Systems \cite{obsidian}, Asterius from Tweag,
 and many learning materials from QFPL \cite{qfpl}.
 
-While it's a quickly growing area, it's still not an established one, and there
-are many libraries and tools still missing, ones that developers used to other
-languages have learned to expect and require.
+TODO: While it is a quickly growing area, it is still not an established one,
+and there are many libraries and tools still missing, ones that developers used
+to other languages have learned to expect and require.
 
 \chapter{Technologies}
-\label{sec:org7c8fa64}
-We'll first have a more detailed look at the above-mentioned technologies, at
+\label{sec:orgbd63bbb}
+We will first have a more detailed look at the above-mentioned technologies, at
 what the term Progressive Web Application means and why would one want to use
 Haskell when creating browser applications.
 
 \section{Progressive Web Application}
-\label{sec:orge78a7aa}
-"Progressive Web Application" is a term that covers several relatively new
+\label{sec:org3d8a25f}
+'Progressive Web Application' is a term that covers several relatively new
 technologies. It is the continuation of the general trend of expanding the
 capabilities of browser applications and closing the gap between them and native
 mobile applications. While many of these technologies apply also on desktop, the
@@ -83,7 +84,7 @@ The technologies are:
 \begin{itemize}
 \item Web App Manifest - a specification for the centralized location of application
 metadata - its name, icons, display mode, \ldots{}
-\item Service Workers - "a scriptable network proxy" \cite{mdn_svcwrk}. The
+\item Service Workers - 'a scriptable network proxy' \cite{mdn_svcwrk}. The
 technology that takes care of offline-availability, push notifications, and
 background synchronization.
 \item IndexedDB - a storage location that is accessible from the browser as well as
@@ -105,8 +106,9 @@ Some more notable PWAs are: Twitter \cite{twitter}, Uber \cite{uber}, or Flipkar
 \cite{flipkart}.
 
 \section{Haskell}
-\label{sec:org9c0e83e}
-\begin{minted}[]{haskell}
+\label{sec:org64a45fb}
+\begin{listing}[htbp]
+\begin{minted}[,frame=single]{haskell}
 type HackageAPI =
   "users" :> Get '[JSON] [User] :<|>
   "user" :> Capture "login" Login :> Get '[JSON] User :<|>
@@ -122,19 +124,21 @@ server = getUsers :<|> getUser :<|> getPackages
 getUsers :<|> getUser :<|> getPackages =
   client @HackageApi "http://hackage.haskell.org"
 \end{minted}
+\caption{An example of a web server in Haskell}
+\end{listing}
 
 The programming language Haskell is a rather old one, despite spreading into the
 industry only recently, having been around since 1990 \cite{haskell_history}. It
 is a language that started out as a basis for research into the design of
 functional languages. It has served as such, and in fact it still is the target
-of active research - some more prominent projects are "Dependent Haskell"
-\cite{eisenberg2016dependent} and "Linear Haskell" \cite{bernardy2017linear}.
+of active research - some more prominent projects are 'Dependent Haskell'
+\cite{eisenberg2016dependent} and 'Linear Haskell' \cite{bernardy2017linear}.
 
-Haskell is described as a "statically typed, purely functional programming
-language with type inference and lazy evaluation" \cite{jones2003haskell}. It is a language
-in which its expressive type system enables very precise control over TODO:
+Haskell is described as a ``statically typed, purely functional programming
+language with type inference and lazy evaluation'' \cite{jones2003haskell}. It is a
+language in which its expressive type system enables precise control over TODO:
 expressive types, dialog with the compiler, types encoding effects, citation for
-"If it compiles, it works".
+``If it compiles, it works''.
 
 Why Haskell? It is a strongly typed language, that helps ensure correctness and
 prevent undefined behaviors - but it is less verbose and more expressive than
@@ -146,12 +150,12 @@ runtime designed specifically for the Web. Compiling Haskell for the Web via
 WebAssembly is almost doable, there are two active projects creating a Haskell
 compiler backend - WebGHC \cite{webghc} and Asterius \cite{asterius}.
 
-Compile-to-JavaScript languages aren't as rare as it may seem. While languages
-that aren't based on JavaScript itself aren't exactly common, web developers
-have been using JavaScript compilers for a long time - CoffeeScript is rather
-popular language announced in 2010 \cite{coffeescript}, and developers wanting to use
-new ECMAScript 6 or 7 features (now supported in most browsers) also had no
-choice but to use compilers \cite{babel}.
+Compile-to-JavaScript languages are not as rare as it may seem. While languages
+not based on JavaScript itself are not exactly common, web developers have been
+using JavaScript compilers for a long time - CoffeeScript is rather popular
+language announced in 2010 \cite{coffeescript}, and developers wanting to use new
+ECMAScript 6 or 7 features (now supported in most browsers) also had no choice
+but to use compilers \cite{babel}.
 
 It is a language that enables its users to write reliable software - it
 eliminates entire classes of programming errors [TODO: ref, enumerate]. The
@@ -174,8 +178,9 @@ fact the ability to run 'isomorphic code' - the same code on the client and the
 server both - is its main marketing point.
 
 \section{Nix}
-\label{sec:org75fbbde}
-\begin{minted}[]{nix}
+\label{sec:orgf49c368}
+\begin{listing}[htbp]
+\begin{minted}[,frame=single]{nix}
 { stdenv, fetchurl, perl }:
 
 stdenv.mkDerivation {
@@ -188,8 +193,10 @@ stdenv.mkDerivation {
   inherit perl;
 }
 \end{minted}
+\caption{An example Nix derivation of GNU hello}
+\end{listing}
 
-One technology that wasn't yet mentioned but that will support our entire build
+One technology that was not yet mentioned but that will support our entire build
 process - from compiling to deploying - is Nix. Nix \cite{dolstra2006purely} is a
 package manager with focus on reproducibility and isolation. It is described as
 a purely functional package manager, where every package is built by a function
@@ -200,9 +207,9 @@ exact version of dependencies is used even during runtime - all the way up to
 Nix is a declarative build tool, similar in purpose to Make and in philosophy to
 Haskell. There are other tools built on top of Nix though, the most interesting
 being NixOS, a declarative operating system, and NixOps, a cloud deployment tool
-\cite{dolstra2008nixos}. Nix shines at cross-compilation, which is the main I'll
-use it in this thesis - compiling to JavaScript or Android/iOS is trivial after
-the initial setup.
+\cite{dolstra2008nixos}. Nix shines at cross-compilation, which is the main we
+will use it in this work - compiling to JavaScript or Android/iOS is trivial
+after the initial setup.
 
 Nix is another rather old technology actively developed since 2004 after Eelco
 Dolstra developed this idea in his academic work \cite{dolstra2006purely}. One
@@ -210,11 +217,11 @@ package consists of a closure of all of its runtime dependencies, so even
 packages using different versions of dynamically linked libraries or even libc
 can coexist on the same machine. Adding atomic deployments and rollbacks is then
 quite easy, as a user environment only consists of symbolic links to the
-read-only Nix store - that is very useful for NixOS or NixOps.
+read-only Nix store - that is useful for NixOS or NixOps.
 
 \chapter{Research}
-\label{sec:org906c3d3}
-As this work doesn't live in a vacuum, we also need to consider commonly used
+\label{sec:orge1de391}
+As this work does not live in a vacuum, we also need to consider commonly used
 Web frameworks and platforms and decide what features to implement in. We will
 first walk through the features that frameworks today implement, describe them
 and define the relevant terms. Afterwards, we will have a brief look at the
@@ -224,15 +231,14 @@ places where Haskell is lagging behind and especially the features that we will
 need to fill in in this work.
 
 \section{Features of Web frameworks}
-\label{sec:orgfc5ac81}
+\label{sec:org1a00c5c}
 The basis of a web framework is the \textbf{UI toolkit}, which defines the structure,
 architecture and paradigm of the rest of the application. I am intentionally
 using the now-uncommon term 'toolkit', as the UI frameworks we will see vary in
-their scope - e.g. React is just a library with a very small API, whereas
-Angular provides a quite opinionated platform, rather than a
-framework. Individual frameworks are very disparate, with large differences in
-the size of their community, maturity, developer friendliness and the breadth of
-features or available libraries.
+their scope - e.g. React is just a library with a small API, whereas Angular
+provides a quite [TODO: reword] opinionated platform. Individual frameworks are
+very disparate, with large differences in the size of their community, maturity,
+developer friendliness and the breadth of features or available libraries.
 
 Frameworks usually have one defining feature they are built around (virtual DOM
 for React or event streams for Angular), but there are several features that a
@@ -263,7 +269,7 @@ A component where frameworks differ a lot is a \textbf{forms} system. There are 
 layers of abstraction at which a framework can decide to implement forms,
 starting at raw DOM manipulation, going on to data containers with validation
 but manual rendering, all the way up to form builders using domain-specific
-languages. The topic of "forms" includes rendering a form and its data,
+languages. The topic of 'forms' includes rendering a form and its data,
 accepting data from the user and validating it, and sometimes even submitting it
 to an API.
 
@@ -303,16 +309,16 @@ cached, so loading will be faster. One of the requirements of a PWA is using the
 Service Worker for instantaneous loading after the first load.
 
 There are two patterns of preparing the HTML that is shown while the rest of the
-application is loading - so called \textbf{prerendering}. One is called "app shell",
+application is loading - so called \textbf{prerendering}. One is called 'app shell',
 which is a simple static HTML file that contains the basic structure of the
-application's layout. The other is "server-side rendering", and it is a somewhat
+application's layout. The other is 'server-side rendering', and it is a somewhat
 more advanced technique where the entire contents of the requested URI is
 rendered on the server including the data of the first page, and the browser
-part of the application takes over only afterwards, but doesn't need to fetch
-anymore data. There is another variant of "server-side rendering" called the
-"JAM stack" pattern \cite{jamstack}, where after application state changes, the
+part of the application takes over only afterwards, but does not need to fetch
+any more data. There is another variant of 'server-side rendering' called the
+'JAM stack' pattern \cite{jamstack}, where after application state changes, the
 HTML of the entire application, of all application URLs is rendered all at once
-and saved so that the server doesn't need to render the HTML for every
+and saved so that the server does not need to render the HTML for every
 request. These techniques are usually part of a framework's \textbf{supporting tools},
 about which we will talk now.
 
@@ -331,7 +337,7 @@ away.
 \textbf{Debugging tools} are the next area. After building an application, trying it out,
 and finding an error, these tools help in finding the error. There are generic
 language-specific tools - a stepping debugger is a typical example - and there
-are also framework-specific tool, like an explorer of the component hierarchy
+are also framework-specific tools, like an explorer of the component hierarchy
 (React) or a time-traveling debugger (Redux). In the web world, all modern
 browsers provide basic debugging tools inside the 'DevTools' - a stepping
 debugger and a profiler. Some frameworks build on that and provide an extension
@@ -342,7 +348,7 @@ When building or maintaining a large application with several developers, it is
 necessary to ensure good practices in all steps of the development
 process. There are two general categories in \textbf{quality assurance} tools - testing
 (dynamic analysis) tools and static analysis tools. In the commonly used
-variants, tests are used either an aid while writing code (test-driven
+variants, tests are used either as an aid while writing code (test-driven
 development), or to prevent regressions in functionality (continuous integration
 using unit tests and end-to-end tests). Static analysis tools are, in the
 general practice, used to ensure a consistent code style and prevent some
@@ -352,32 +358,34 @@ the burden of set up is bigger - they also provide utility libraries to ease the
 initial set up. Some frameworks also use uncommon types of tests like 'marble
 tests' used in functional reactive programming systems.
 
-\textbf{Editor integration} Wis also important in some ecosystems, which includes common
-IDE features like auto-completion or refactoring tools. The situation here is
-quite good lately, with the new Language Server Protocol (LSP \cite{lsp}) playing a big
+\textbf{Editor integration} is also important in some ecosystems, which includes common
+IDE features like auto-completion or refactoring tools. [TODO: rephrase] The situation here is
+quite good lately, with the new Language Server Protocol \cite{lsp} playing a big
 role in enabling editors to support a wide variety of languages. There are some
-parts of editor support that can be framework-specific - supporting an embedded
-DSL, integrating framework-specific debugging tools, \ldots{}
+parts of editor support that can be framework-specific like supporting an embedded
+DSL, or integrating framework-specific debugging tools.
 
 While we were talking about Web frameworks so far, some of them support not only
 the browser runtime environment but can be packaged as a \textbf{mobile app} for Android
-or iOS, or a \textbf{native desktop application} the many desktop operating systems. For
-mobile support, frameworks either provide wrappers around Apache Cordova, but
-some go further and support native mobile interfaces (React Native). For desktop
-support it isn't Cordova but Electron which is the basis here. The main benefit
-of packaging an application specifically for a platform is performance, as they
-are usually faster to load and to use. There are other benefits, like access to
+or iOS, or as a \textbf{native desktop application} for the many desktop operating
+systems. For mobile support, frameworks often provide wrappers around Apache
+Cordova, but some go further and support native mobile interfaces (React
+Native). For desktop support the situation is similar, it is just not Cordova
+but Electron that is used as a base. The main benefit of packaging an
+application specifically for a platform is performance, as they are usually
+faster to load and to use. There are other benefits, like access to
 device-specific APIs or branding.
 
-The last point in this section is \textbf{code generators}. of which there are two
-variants: project skeleton generators, which are provided in a large majority of
-frameworks and which include all files for a project to compile and run. Then
-there are component generators, which may include generating a template, a URL
-route and its corresponding controller, or an entire subsection of a
-website. These are less common, but some frameworks also provide them.
+[TODO: rephrase] The last point in this section is \textbf{code generators}. of which
+there are two variants: project skeleton generators, which are provided in a
+large majority of frameworks and which include all files for a project to
+compile and run. Then there are component generators, which may include
+generating a template, a URL route and its corresponding controller, or an
+entire subsection of a website. These are less common, but some frameworks also
+provide them.
 
 \section{JavaScript ecosystem}
-\label{sec:org1e5e22b}
+\label{sec:org43a62a0}
 Moving on, we will take a quick tour of the JavaScript ecosystem and what the
 library ecosystem looks there, following the same general structure as we have
 used in the section above.
@@ -401,10 +409,10 @@ The most common complaint about the JavaScript ecosystem in general is that it
 is a 'jungle', with dozens or hundreds of small libraries doing the same thing,
 most however incomplete or unmaintained, with no good way to decide between
 them. Frameworks avoid this by having a recommended set of libraries for common
-use cases, but that doesn't help with another complaint called the 'JavaScript
+use cases, but that does not help with another complaint called the 'JavaScript
 fatigue', where libraries come and go each year, where the common belief is that
-you're missing out on opportunities if you're not learning at least one new
-framework per year.
+if not learning at least one new framework per year, you are missing out on
+opportunities.
 
 As for the individual frameworks mentioned above: Angular is an integrated
 framework that covers many common use cases in the basic platform. To some
@@ -420,44 +428,47 @@ build tools that works together well.
 
 For many of the topics mentioned in the previous section - routing, forms, build
 tools, mobile and desktop applications - it is true that they are built into
-Angular, and that there are many available libraries for React and Vue.
-In my investigation, I haven't found a weak side to any of them - which is just
-what I expected, given that JavaScript is the native language of the Web.
+Angular, and that there are many available libraries for React and Vue. In my
+investigation, I have not found a weak side to any of them - which is just what
+I expected, given that JavaScript is the native language of the Web.
+
+[TODO: many]
+[TODO: very]
 
 \section{Haskell ecosystem}
-\label{sec:org17058ab}
+\label{sec:orgf4db2d0}
 Going on to the Haskell ecosystem, we will also walk through it using the
-structure from the "Features" section. There is significant focus on the
+structure from the 'Features' section. There is significant focus on the
 semantics of libraries in the Haskell community, e.g. writing down mathematical
 laws for the foundational types of a library and using them to prove correctness
 of the code, so UI libraries have mostly used Functional Reactive Programming
 (FRP) or its derivatives like 'the Elm architecture' \cite{loder2018web} as their
-basis, as traditional event-based imperative programming does not really fit
-those criteria.
+basis, as traditional imperative event-based programming does not fit those
+criteria well.
 
-There are five production-ready UI toolkits for the Web that I have found. Out
-of these five, React-flux and Transient are unmaintained, and Reflex, Miso, and
+There are five production-ready UI toolkits for the Web that I have found. Of
+these five, React-flux and Transient are unmaintained, and Reflex, Miso, and
 Concur are actively developed and ready for production use. Each one uses a
 conceptually different approach to the problem of browser user interfaces, and
 they differ in their maturity and the size of their community as well.
 
-\textbf{Reflex} \cite{reflex} (and Reflex-DOM \cite{reflex-dom}, its DOM bindings) seem like
-the most actively maintained and developed ones. Reflex is also sponsored by
-Obsidian Systems \cite{obsidian} and the most popular one in the Haskell
-community, so its future seems promising. Reflex follows the traditional FRP
-with events and behaviors, adding 'dynamics' to the mix, and building a rich
-combinator library on top of them.
+\textbf{Reflex} \cite{reflex} (and Reflex-DOM \cite{reflex-dom}, its DOM bindings) looks like
+the most actively maintained and developed one. Reflex is also sponsored by
+Obsidian Systems \cite{obsidian} and is the most popular frontend framework in the
+Haskell community, so its future seems promising. Reflex follows the traditional
+FRP approach with events and behaviors (adding 'dynamics'), and
+building a rich combinator library on top of them.
 
-\textbf{Miso} \cite{miso} was built as a re-implementation of the 'Elm architecture' in
+[TODO: reword] \textbf{Miso} \cite{miso} was built as a re-implementation of the 'Elm architecture' in
 Haskell. It uses a very strict form of uni-directional dataflow with a central
-data store at the one side, and the view as a function from the state to a view
+data store on one side, and the view as a function from the state to a view
 on the other, passing well-defined events from the view to the store.
 
 \textbf{Concur} \cite{concur} tries to explore a different paradigm, which tries to combine
-'the best of parts' of the previous two approaches. So far it has a very small
+'the best of' the previous two approaches. So far it has a very small
 range of features, focusing on exploring on how this paradigm fits into browser,
 desktop or terminal applications. It is a technology I intend to explore in the
-future when it's more mature, but that doesn't seem viable for a large-scale
+future when it is more mature, but that does not seem viable for a large-scale
 application, at least compared to its competitors.
 
 TODO: examples of Reflex, Miso, Concur
@@ -472,12 +483,12 @@ the unmaintained frameworks did to use React as its backend (react-flux).
 
 \textbf{State management} is where the frameworks differ the most. Miso follows the Elm
 architecture strictly with a central data store that can be only changed by
-messages from the view, Whereas Reflex and Concur are more generic, allowing for
-both centralized and component-local state. A common complaint in Reflex is that
-there is no recommended architecture to the application - it errs on the other
-side of the flexibility vs. best practices spectrum.
+messages from the view, whereas Reflex and Concur are more flexible, allowing
+both centralized and component-local state. A common complaint regarding Reflex
+is that there is no recommended application architecture - it errs on the
+other side of the flexibility vs. best practices spectrum.
 
-As for \textbf{routing}, Miso has routing built into its base library. In Reflex, there
+[TODO: reword] As for \textbf{routing}, Miso has routing built into its base library. In Reflex, there
 are several attempts at a routing library, but not a universally accepted
 solution. Concur with its small ecosystem does not have routing at all, it would
 be necessary to implement form scratch for a production-ready application.
@@ -490,8 +501,8 @@ have any publicly available UI component libraries (or at least none that I have
 been able to find).
 
 \textbf{Accessibility} as a whole has not been a focus of Web development in Haskell. It
-is possible to reuse JavaScript accessibility testing tools however, but I
-haven't seen any sort of automated testing done on any of the publicly available
+is possible to reuse JavaScript accessibility testing tools however, but I have
+not seen any sort of automated testing done on any of the publicly available
 Haskell applications. The only area with continued developer focus is \textbf{loading
 speed}, as the size of build artifacts was a problem for a long time. That has
 been ameliorated to the level of a common JavaScript application however, so
@@ -499,46 +510,50 @@ that is not a critical concern. \textbf{Prerendering} is also supported by Miso 
 Reflex, which helps speed up load times as well.
 
 Moving on to the topic of \textbf{build tools}: there are three main options in Haskell -
-Cabal v2 \cite{cabal}, Stack \cite{stack}, and Nix. There are also
-other options - Snack \cite{snack}, aiming for the best of these three but not
-yet ready for production use, or Mafia \cite{mafia}, which is not too popular in
-the community at large. Cabal is the original Haskell build tool which gained a
-bad reputation for some of its design decisions (the so-called 'Cabal hell'),
-but most of them were fixed in 'Cabal v2' which puts it on par with its main
-competitor, Stack. Stack tried to bring Haskell closer to other mainstream
-programming language with several new features like automatic download of the
+Cabal v2 \cite{cabal}, Stack \cite{stack}, and Nix. There are also other options -
+Snack \cite{snack}, aiming for the best of these three but not yet ready for
+production use, or Mafia \cite{mafia}, which is not too popular in the community
+at large. Cabal is the original Haskell build tool which gained a bad reputation
+for some of its design decisions (the so-called 'Cabal hell'), but most of them
+were fixed in 'Cabal v2' which puts it on par with its main competitor,
+Stack. Stack tried to bring Haskell closer to other mainstream programming
+language by introducing several new features like automatic download of the
 selected compiler or a curated subset of the main Haskell package repository,
-Stackage. Nix is a not a Haskell-specific build tool but rather a
-general-purpose one, but it has very good Haskell support and cross-compilation
-capabilities, which is the reason it is especially used for frontend Haskell.
+Stackage. It succeeded in that, becoming the tool of choice for a large part of
+the Haskell community in the process. Nix, as mentioned in the previous section,
+is a not a Haskell-specific build tool, rather a general-purpose one, but it
+has very good Haskell support and cross-compilation capabilities, which is the
+reason it is especially used for frontend Haskell.
 
-Glasgow Haskell Compiler (GHC) is the main Haskell \textbf{compiler} used for native
-compilation. Compilation to JavaScript, as required for frontend development, is
-supported by a separate compiler, GHCJS, which uses GHC as a library. Setting up
-a GHCJS development environment with Cabal is not a trivial process and using
-Stack limits the developer to old GHC versions, so it is Nix that is usually
-recommended. When set up correctly, Nix offers almost a cross-platform one-click
-setup, downloading the compiler and all dependencies from a binary cache or
-compiling them if unavailable. Reflex especially, in the reflex-platform
-\cite{reflex-platform} project uses the cross-compilation capabilities of Nix to
-allow applications to compile for Android, iOS, desktop, or the web
-simultaneously.
+Glasgow Haskell Compiler (GHC) is the main Haskell \textbf{compiler} used for the
+creation of native binaries. Compilation to JavaScript, as required for frontend
+development, is supported by a separate compiler, GHCJS, which uses GHC as a
+library. Setting up a GHCJS development environment with Cabal is not a trivial
+process and using Stack limits the developer to old GHC versions, so it is Nix
+that is usually recommended. When set up correctly, Nix offers almost a
+one-click setup, downloading the compiler and all dependencies from a binary
+cache or compiling them if unavailable. Reflex especially, in the
+reflex-platform \cite{reflex-platform} project, uses the cross-compilation
+capabilities of Nix to allow applications to compile for Android, iOS, desktop,
+or the web simultaneously.
 
-The main problem of GHCJS has been speed and the size of the compiled
+The main problem of GHCJS has been speed and the size of the produced
 JavaScript. The latter has been gradually improving and is now mostly on par
-with modern JavaScript framework. The former though is harder to improve and
+with modern JavaScript framework, the former is harder to improve though, and
 GHCJS applications are still within a factor of 3 of native JavaScript ones
 \cite{nanda_bench}. However, this should be improved soon by compiling to
-WebAssembly instead of JavaScript. There are two projects working on this in
-parallel - Asterius \cite{asterius}, and WebGHC \cite{webghc}. So far they are in
-alpha, but I expect them to be production-ready by the end of 2019.
+WebAssembly instead of JavaScript. There are two projects trying to create a
+Haskell-to-WebAssembly compiler in parallel - Asterius \cite{asterius}, and WebGHC
+\cite{webghc}. So far they are in alpha, but I expect them to be production-ready
+by the end of 2019.
 
 Moving on to the topic of \textbf{debugging tools}, this is where Haskell on the frontend
 is lacking the most. While it is possible to use the browser's built-in DevTools
 and their debugger and profiler, the compiled output of GHCJS does not
 correspond to the original Haskell code very much, which makes using the
-debugger quite hard. There are no further debugging tools. In my experience
-though, I didn't ever feel the need to use more than tracing to the console.
+debugger quite hard. There are no other debugging tools, though in my experience
+I did not ever feel the need to use anything else than writing debugging output
+to the console.
 
 In contrast, there are many \textbf{quality assurance} tools available for Haskell in
 general, of which almost all are available for use in frontend
@@ -553,7 +568,7 @@ well-known example. For end-to-end testing in the browser, there are libraries
 that integrate with Selenium.
 
 Haskell has a quite bad reputation for the lack of \textbf{editor integration}. The
-situation is better with the recent Language Server Protocol (LSP) project,
+situation is better with the recent Language Server Protocol project,
 where haskell-ide-engine (HIE), Haskell's language server, enables users to
 write Haskell in contemporary editors like Atom easily. HIE supports
 type-checking, linting and formatting, and also common IDE features like
@@ -575,7 +590,7 @@ repository containing the basics, edit project-specific details, and use that as
 a base for a new project. I have not found any attempts at component generation
 in Haskell.
 
-Last point I want to mention is \textbf{documentation}. It is generally agreed that
+The last point I want to mention is \textbf{documentation}. It is generally agreed that
 documentation is Haskell's weakest point - despite having a standardized
 high-quality APIdoc tool (haddock), it is often an afterthought, with even
 commonly used packages having no documentation at all or written in such a way
@@ -583,14 +598,14 @@ that a new user has no choice but to study its code to understand the
 package. In this work, I will strive to avoid this common flaw.
 
 \section{Implementation plan}
-\label{sec:orgc7c9975}
-I will use the nomenclature from the "Evolving Frameworks" paper
-\cite{roberts1996evolving} to describe my my goals. [TODO: describe the general
-outline of that paper] Long-term, I aim to go from "Three Examples", a place to
-look for commonly repeated patterns, through a "White-Box Framework", a general
+\label{sec:org1fad0c4}
+[TODO: reword] I will use the nomenclature from the paper ``Evolving Frameworks''
+\cite{roberts1996evolving} to describe my goals. [TODO: describe the general
+outline of that paper] Long-term, I aim to go from ``Three Examples'', a place to
+look for commonly repeated patterns, through a ``White-Box Framework'', a general
 structure/architecture of an application wrapped into a library, through a
-"Component Library", when that library will be extended with commonly duplicated
-functionality, all the way to "Pluggable Objects", where the framework provides
+``Component Library'', when that library will be extended with commonly duplicated
+functionality, all the way to ``Pluggable Objects'', where the framework provides
 most of the commonly used functionality so that application logic is the only
 thing missing from a finished prototype.
 
@@ -599,7 +614,7 @@ TODO: include the Evolving Frameworks image
 Building an integrated platform is not my primary goal - it is hard for a new
 and opinionated platform to succeed in the Haskell ecosystem. In this thesis, I
 expect to do the first step only - create a few applications, fill in all the
-missing parts in the Haskell ecosystem that aren't covered by existing
+missing parts in the Haskell ecosystem that are not covered by existing
 libraries, and extract a common application skeleton, a set of libraries, and a
 set of guides or tutorials that make it is easy go from the skeleton to a
 working prototype of a PWA.
@@ -611,15 +626,15 @@ requirements:
 \item Pages are responsive on tablets \& mobile devices
 \item All app URLs load while offline
 \item Metadata provided for Add to Home screen
-\item Page transitions don't feel like they block on the network
+\item Page transitions do not feel like they block on the network
 \item Each page has a URL
 \item Pages use the History API
 \item Site uses cache-first networking
-\item Site appropriately informs the user when they're offline
+\item Site appropriately informs the user when they are offline
 \item Push notifications (consists of several related requirements)
 \end{itemize}
 
-To get there, there are several features that aren't covered by any existing
+To get there, there are several features that are not covered by any existing
 Haskell library or tool. This is a list of the required parts:
 \begin{itemize}
 \item A full-featured browser routing library. While there are some existing
@@ -627,7 +642,7 @@ implementations, they are either incomplete or long abandoned.
 \item A wrapper around ServiceWorkers, or a template to simplify project creation.
 \item A push notifications library. This will need to be both a server-side library,
 for creating them, and a client-side consumer, to parse them.
-\item A way to prerender the application - either just the HTML 'shell' or all pages on the site.
+\item A way to prerender the application - either just the HTML ``app shell'' or all pages on the site.
 \item An offline storage library for the client.
 \end{itemize}
 
@@ -642,34 +657,34 @@ stream from the server
 \item a storage with offline-capable synchronization capabilities
 \end{itemize}
 
-These components don't comprise a fully integrated 'platform' in the sense of
+These components do not comprise a fully integrated ``platform'' in the sense of
 e.g. Angular - those are quite uncommon in the Haskell ecosystem. More common
 are collections of libraries that play well together, where one library provides
-the fundamental datatype - the 'architecture' of the application - and other
+the fundamental datatype - the ``architecture'' of the application - and other
 libraries fill in the functionality. Of the proposed components, only the
-routing library is an 'architectural' one in the sense that it will influence
+routing library is an ``architectural'' one in the sense that it will influence
 the shape of the application and its fundamental data types.
 
 \chapter{Components}
-\label{sec:orgc985f06}
+\label{sec:org17cd252}
 TODO: Demonstrate the principles of components on 'src-snippets' code, where
-I'll show the smallest possible code that implements that functionality
+I will show the smallest possible code that implements that functionality
 
 \section{Component A}
-\label{sec:org322e858}
+\label{sec:orgac277a3}
 \subsection{Design}
-\label{sec:org76c77a5}
+\label{sec:org0cae949}
 \subsection{Implementation}
-\label{sec:org4dc70b4}
+\label{sec:org2a32efc}
 \subsection{Testing}
-\label{sec:org3fa4cdb}
+\label{sec:orgfbf0de7}
 \subsection{Other options, possible improvements}
-\label{sec:org8657a3d}
+\label{sec:orgc62f4c2}
 
 \chapter{Applications}
-\label{sec:orgd0b43a6}
+\label{sec:org1d18f95}
 \section{Workflow and tools}
-\label{sec:orge5e4289}
+\label{sec:org92233e8}
 TODO: describe the development flow of an app built using these tools
 
 \begin{itemize}
@@ -680,14 +695,14 @@ TODO: describe the development flow of an app built using these tools
 \end{itemize}
 
 \section{TodoMVC}
-\label{sec:orgd76c4f0}
+\label{sec:org0b0083e}
 There is an abundance of web frameworks, and there are several projects that aim
 to give developers a side-by-side comparison of them. Out of these, the original
-and most well-known one is TodoMVC \cite{todomvc}, which is aimed at 'MV* frontend
-frameworks'. There are currently 64 implementations of their specification -
+and most well-known one is TodoMVC \cite{todomvc}, which is aimed at ``MV* frontend
+frameworks''. There are currently 64 implementations of their specification -
 some of them are variants of the same framework though. There are a few others -
 HNPWA is aimed at Progressive Web Applications and it is a tad smaller, with 42
-implementations. The last comparison project that I've selected is
+implementations. The last comparison project selected for this work is
 RealWorld. This one has both a frontend and a backend part and there is also a
 small number of full-stack frameworks. It offers a quite thorough comparison,
 with 18 frontends, 34 backends, and 3 full-stack implementations.
@@ -699,7 +714,7 @@ forms and validation, state management (in-memory and in LocalStorage), and
 routing.
 
 \section{HNPWA}
-\label{sec:org2ab6f6e}
+\label{sec:org6eae236}
 HNPWA \cite{hnpwa} is a client for Hacker News, a technological news site. Unlike TodoMVC,
 HNPWA does not provide a rigid specification and consists only of a rough
 guideline of what to implement. The task is to create a Progressive Web
@@ -708,9 +723,9 @@ well optimized (to achieve score 90 in the Lighthouse tool) with optional
 server-side rendering.
 
 \section{RealWorld}
-\label{sec:org1374089}
+\label{sec:orgf81b37c}
 RealWorld \cite{realworld} is the most complex of the comparison projects. It is a clone of
-Medium, an online publishing platform, so it requires everything a "real world"
+Medium, an online publishing platform, so it requires everything a ``real world''
 application would. The task is split into a backend, defined by an API
 specification, and a frontend, defined by an HTML structure.
 
@@ -719,11 +734,11 @@ There is a number of features the application needs to support, namely: JWT
 ability to post articles and comments, and to follow users and favorite articles.
 
 \chapter{Conclusion}
-\label{sec:org98533c2}
+\label{sec:org9d1c383}
 TODO: return to the comparison with JS, PHP, \ldots{} frameworks
 
-TODO: describe possible follow-up work, what I'll be working on - define
-  specific topics and make concrete examples
+TODO: describe possible follow-up work, what I will be working on - define
+specific topics and make concrete examples
 
 -- The final chapter includes an evaluation of the achieved results with a special
 emphasis on the student's own contribution. A compulsory assessment of the
@@ -754,10 +769,10 @@ the just completed projects. \cite{Pravidla}
 \iftwoside\cleardoublepage\fi
 
 \chapter{Contents of the attached data storage}
-\label{sec:org77a91be}
+\label{sec:org3596cee}
 TODO: fill in
 
 \chapter{Poster}
-\label{sec:org4653727}
+\label{sec:org2b3952e}
 TODO: fill in
 \end{document}
