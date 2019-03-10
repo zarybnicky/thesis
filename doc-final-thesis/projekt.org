@@ -29,10 +29,10 @@ we want to show something offline, we need a mobile application, the same for
 notifications. But [TODO: research about mobile engagement] and downloading a
 mobile application means another dozen megabytes.
 
-That's what the new trend of Progressive Web Applications (PWAs) is trying to
+That is what the new trend of Progressive Web Applications (PWAs) is trying to
 solve. Fast - no need to wait for page reloads - and reliable - service workers help
-overcome problems with unreliable internet, both for page load (by caching the
-app itself, and in-app caching of app-specific data) and for background sync of
+overcome problems with unreliable internet, both for page load by caching the
+app itself and in-app caching of app-specific data, and for background sync of
 user-modified data.
 
 My language of choice is Haskell though, for both frontend and backend
@@ -40,26 +40,27 @@ development, and while writing Haskell applications for the browser is possible,
 creating a Progressive Web Application requires more than just the ability to
 manipulate the DOM. That is what this work is about - filling in the gaps and
 creating all the prerequisites for writing Progressive Web Applications in
-Haskell. We will start by identifying what is exactly is lacking in the Haskell
-ecosystem and design and implement those missing pieces. Afterwards, we'll walk
-through the process of creating a PWA from prototype to production and see what
-else could be made easier and more straightforward as a follow-up to this work.
+Haskell. We will start by identifying exactly what is lacking in the Haskell
+ecosystem, and designing and implementing those missing pieces. Afterwards, we
+will walk through the process of creating a PWA from prototype to production and
+see what else could be made easier and more straightforward as a follow-up to
+this work.
 
 ** Related work
 While using Haskell in the browser is not a common choice, it is still a quickly
 growing niche. It is a relatively recent one as GHCJS, the Haskell-to-JavaScript
 compiler, has been in development since 2010 cite:ghcjs but it had a
-production-ready version only in 2013 [luite's blog]. It is not the target of
+production-ready version only in 2013 [TODO: Luite's blog]. It is not the target of
 academic work, but there are several commercially sponsored projects. To name a
 few, Reflex and Obelisk from Obsidian Systems cite:obsidian, Asterius from Tweag,
 and many learning materials from QFPL cite:qfpl.
 
-While it's a quickly growing area, it's still not an established one, and there
-are many libraries and tools still missing, ones that developers used to other
-languages have learned to expect and require.
+TODO: While it is a quickly growing area, it is still not an established one,
+and there are many libraries and tools still missing, ones that developers used
+to other languages have learned to expect and require.
 
 * Technologies
-We'll first have a more detailed look at the above-mentioned technologies, at
+We will first have a more detailed look at the above-mentioned technologies, at
 what the term Progressive Web Application means and why would one want to use
 Haskell when creating browser applications.
 
@@ -134,12 +135,12 @@ runtime designed specifically for the Web. Compiling Haskell for the Web via
 WebAssembly is almost doable, there are two active projects creating a Haskell
 compiler backend - WebGHC cite:webghc and Asterius cite:asterius.
 
-Compile-to-JavaScript languages aren't as rare as it may seem. While languages
-that aren't based on JavaScript itself aren't exactly common, web developers
-have been using JavaScript compilers for a long time - CoffeeScript is rather
-popular language announced in 2010 cite:coffeescript, and developers wanting to use
-new ECMAScript 6 or 7 features (now supported in most browsers) also had no
-choice but to use compilers cite:babel.
+Compile-to-JavaScript languages are not as rare as it may seem. While languages
+not based on JavaScript itself are not exactly common, web developers have been
+using JavaScript compilers for a long time - CoffeeScript is rather popular
+language announced in 2010 cite:coffeescript, and developers wanting to use new
+ECMAScript 6 or 7 features (now supported in most browsers) also had no choice
+but to use compilers cite:babel.
 
 It is a language that enables its users to write reliable software - it
 eliminates entire classes of programming errors [TODO: ref, enumerate]. The
@@ -176,7 +177,7 @@ stdenv.mkDerivation {
 }
 #+END_SRC
 
-One technology that wasn't yet mentioned but that will support our entire build
+One technology that was not yet mentioned but that will support our entire build
 process - from compiling to deploying - is Nix. Nix cite:dolstra2006purely is a
 package manager with focus on reproducibility and isolation. It is described as
 a purely functional package manager, where every package is built by a function
@@ -187,9 +188,9 @@ exact version of dependencies is used even during runtime - all the way up to
 Nix is a declarative build tool, similar in purpose to Make and in philosophy to
 Haskell. There are other tools built on top of Nix though, the most interesting
 being NixOS, a declarative operating system, and NixOps, a cloud deployment tool
-cite:dolstra2008nixos. Nix shines at cross-compilation, which is the main I'll
-use it in this thesis - compiling to JavaScript or Android/iOS is trivial after
-the initial setup.
+cite:dolstra2008nixos. Nix shines at cross-compilation, which is the main we
+will use it in this work - compiling to JavaScript or Android/iOS is trivial
+after the initial setup.
 
 Nix is another rather old technology actively developed since 2004 after Eelco
 Dolstra developed this idea in his academic work cite:dolstra2006purely. One
@@ -216,7 +217,7 @@ read-only Nix store - that is very useful for NixOS or NixOps.
 #+END_SRC
 
 * Research
-As this work doesn't live in a vacuum, we also need to consider commonly used
+As this work does not live in a vacuum, we also need to consider commonly used
 Web frameworks and platforms and decide what features to implement in. We will
 first walk through the features that frameworks today implement, describe them
 and define the relevant terms. Afterwards, we will have a brief look at the
@@ -309,11 +310,11 @@ which is a simple static HTML file that contains the basic structure of the
 application's layout. The other is "server-side rendering", and it is a somewhat
 more advanced technique where the entire contents of the requested URI is
 rendered on the server including the data of the first page, and the browser
-part of the application takes over only afterwards, but doesn't need to fetch
+part of the application takes over only afterwards, but does not need to fetch
 anymore data. There is another variant of "server-side rendering" called the
 "JAM stack" pattern cite:jamstack, where after application state changes, the
 HTML of the entire application, of all application URLs is rendered all at once
-and saved so that the server doesn't need to render the HTML for every
+and saved so that the server does not need to render the HTML for every
 request. These techniques are usually part of a framework's *supporting tools*,
 about which we will talk now.
 
@@ -403,8 +404,8 @@ most however incomplete or unmaintained, with no good way to decide between
 them. Frameworks avoid this by having a recommended set of libraries for common
 use cases, but that doesn't help with another complaint called the 'JavaScript
 fatigue', where libraries come and go each year, where the common belief is that
-you're missing out on opportunities if you're not learning at least one new
-framework per year.
+if not learning at least one new framework per year, you are missing out on
+opportunities.
 
 As for the individual frameworks mentioned above: Angular is an integrated
 framework that covers many common use cases in the basic platform. To some
@@ -420,9 +421,9 @@ build tools that works together well.
 
 For many of the topics mentioned in the previous section - routing, forms, build
 tools, mobile and desktop applications - it is true that they are built into
-Angular, and that there are many available libraries for React and Vue.
-In my investigation, I haven't found a weak side to any of them - which is just
-what I expected, given that JavaScript is the native language of the Web.
+Angular, and that there are many available libraries for React and Vue.  In my
+investigation, I have not found a weak side to any of them - which is just what
+I expected, given that JavaScript is the native language of the Web.
 
 ** Haskell ecosystem
 Going on to the Haskell ecosystem, we will also walk through it using the
@@ -456,7 +457,7 @@ on the other, passing well-defined events from the view to the store.
 'the best of parts' of the previous two approaches. So far it has a very small
 range of features, focusing on exploring on how this paradigm fits into browser,
 desktop or terminal applications. It is a technology I intend to explore in the
-future when it's more mature, but that doesn't seem viable for a large-scale
+future when it is more mature, but that does not seem viable for a large-scale
 application, at least compared to its competitors.
 
 TODO: examples of Reflex, Miso, Concur
@@ -489,8 +490,8 @@ have any publicly available UI component libraries (or at least none that I have
 been able to find).
 
 *Accessibility* as a whole has not been a focus of Web development in Haskell. It
-is possible to reuse JavaScript accessibility testing tools however, but I
-haven't seen any sort of automated testing done on any of the publicly available
+is possible to reuse JavaScript accessibility testing tools however, but I have
+not seen any sort of automated testing done on any of the publicly available
 Haskell applications. The only area with continued developer focus is *loading
 speed*, as the size of build artifacts was a problem for a long time. That has
 been ameliorated to the level of a common JavaScript application however, so
@@ -537,7 +538,7 @@ is lacking the most. While it is possible to use the browser's built-in DevTools
 and their debugger and profiler, the compiled output of GHCJS does not
 correspond to the original Haskell code very much, which makes using the
 debugger quite hard. There are no further debugging tools. In my experience
-though, I didn't ever feel the need to use more than tracing to the console.
+though, I did not ever feel the need to use more than tracing to the console.
 
 In contrast, there are many *quality assurance* tools available for Haskell in
 general, of which almost all are available for use in frontend
@@ -597,7 +598,7 @@ TODO: include the Evolving Frameworks image
 Building an integrated platform is not my primary goal - it is hard for a new
 and opinionated platform to succeed in the Haskell ecosystem. In this thesis, I
 expect to do the first step only - create a few applications, fill in all the
-missing parts in the Haskell ecosystem that aren't covered by existing
+missing parts in the Haskell ecosystem that are not covered by existing
 libraries, and extract a common application skeleton, a set of libraries, and a
 set of guides or tutorials that make it is easy go from the skeleton to a
 working prototype of a PWA.
@@ -608,21 +609,21 @@ requirements:
 - Pages are responsive on tablets & mobile devices
 - All app URLs load while offline
 - Metadata provided for Add to Home screen
-- Page transitions don't feel like they block on the network
+- Page transitions do not feel like they block on the network
 - Each page has a URL
 - Pages use the History API
 - Site uses cache-first networking
-- Site appropriately informs the user when they're offline
+- Site appropriately informs the user when they are offline
 - Push notifications (consists of several related requirements)
 
-To get there, there are several features that aren't covered by any existing
+To get there, there are several features that are not covered by any existing
 Haskell library or tool. This is a list of the required parts:
 - A full-featured browser routing library. While there are some existing
   implementations, they are either incomplete or long abandoned.
 - A wrapper around ServiceWorkers, or a template to simplify project creation.
 - A push notifications library. This will need to be both a server-side library,
   for creating them, and a client-side consumer, to parse them.
-- A way to prerender the application - either just the HTML 'shell' or all pages on the site.
+- A way to prerender the application - either just the HTML 'app shell' or all pages on the site.
 - An offline storage library for the client.
 
 There are several variations of the last point with different levels of
@@ -634,7 +635,7 @@ part of follow-up work of this thesis.
   stream from the server
 - a storage with offline-capable synchronization capabilities
 
-These components don't comprise a fully integrated 'platform' in the sense of
+These components do not comprise a fully integrated 'platform' in the sense of
 e.g. Angular - those are quite uncommon in the Haskell ecosystem. More common
 are collections of libraries that play well together, where one library provides
 the fundamental datatype - the 'architecture' of the application - and other
@@ -644,7 +645,7 @@ the shape of the application and its fundamental data types.
 
 * Components
 TODO: Demonstrate the principles of components on 'src-snippets' code, where
-I'll show the smallest possible code that implements that functionality
+I will show the smallest possible code that implements that functionality
 
 ** Component A
 *** Design
@@ -668,7 +669,7 @@ and most well-known one is TodoMVC cite:todomvc, which is aimed at 'MV* frontend
 frameworks'. There are currently 64 implementations of their specification -
 some of them are variants of the same framework though. There are a few others -
 HNPWA is aimed at Progressive Web Applications and it is a tad smaller, with 42
-implementations. The last comparison project that I've selected is
+implementations. The last comparison project selected for this work is
 RealWorld. This one has both a frontend and a backend part and there is also a
 small number of full-stack frameworks. It offers a quite thorough comparison,
 with 18 frontends, 34 backends, and 3 full-stack implementations.
@@ -700,8 +701,8 @@ ability to post articles and comments, and to follow users and favorite articles
 * Conclusion
 TODO: return to the comparison with JS, PHP, ... frameworks
 
-TODO: describe possible follow-up work, what I'll be working on - define
-  specific topics and make concrete examples
+TODO: describe possible follow-up work, what I will be working on - define
+specific topics and make concrete examples
 
 -- The final chapter includes an evaluation of the achieved results with a special
 emphasis on the student's own contribution. A compulsory assessment of the
