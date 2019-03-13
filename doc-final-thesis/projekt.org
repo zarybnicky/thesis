@@ -153,10 +153,9 @@ conceptual errors.
 While Haskell is not a language commonly associated with frontend development,
 it is one of the many languages with the ability to use JavaScript as the
 compilation target, instead of plain assembly or LLVM. In fact, such languages
-have now become quite common in frontend development [TODO: ref], as is
-exemplified by the rapid rise of TypeScript, a superset of ECMAScript 6
-cite:typescript, or Elm, a framework with its own language based on Haskell
-cite:czaplicki2012elm.
+have now become quite common in frontend development, as is exemplified by the
+rapid rise of TypeScript, a superset of ECMAScript 6 cite:typescript, or Elm, a
+framework with its own language based on Haskell cite:czaplicki2012elm.
 
 Of the many reasons for selecting a language other than JavaScript for frontend
 development, one of the more notable ones is the ability to share code between
@@ -239,10 +238,9 @@ The basis of a web framework is the *UI toolkit*, which defines the structure,
 architecture and paradigm of the rest of the application. I am intentionally
 using the now-uncommon term 'toolkit', as the UI frameworks we will see vary in
 their scope - e.g. React is just a library with a small API, whereas Angular
-provides a quite [TODO: reword] opinionated platform. Individual frameworks are
-quite disparate, with large differences in the size of their community,
-maturity, developer friendliness and the breadth of features or available
-libraries.
+provides a quite opinionated platform. Individual frameworks are quite
+disparate, with large differences in the size of their community, maturity,
+developer friendliness and the breadth of features or available libraries.
 
 Frameworks usually have one defining feature they are built around (virtual DOM
 for React or event streams for Angular), but there are many other concerns that
@@ -298,11 +296,11 @@ checklists, with the exception of some specialized components like keyboard
 focus managers. There are however tools like aXe-core that check how accessible
 a finished framework is, and these can be integrated into the build process.
 
-[TODO: reword] Supporting *internationalization* in a framework is easier - not to implement, but
-simple to package as a library. At the most basic level, it means simple string
-translations, perhaps with pluralization and word order. Going further, it may
-also mean supporting RTL scripts, different date/time formats, currency, or time
-zones.
+*Internationalization* is somewhat easier to support in a framework, as it does
+include so many cross-cutting concerns. At the most basic level, it means simple
+string translations, perhaps with pluralization and word order. Going further,
+it may also mean supporting RTL scripts, different date/time formats, currency,
+or time zones.
 
 As for *load times*, there are many techniques frameworks use to speed up the
 initial load of an application. We can talk about the first load, which can be
@@ -363,12 +361,14 @@ the burden of set up is bigger - they also provide utility libraries to ease the
 initial set up. Some frameworks also use uncommon types of tests like 'marble
 tests' used in functional reactive programming systems.
 
-*Editor integration* is also important in some ecosystems, which includes common
-IDE features like auto-completion or refactoring tools. [TODO: rephrase] The situation here is
-quite good lately, with the new Language Server Protocol cite:lsp playing a big
-role in enabling editors to support a wide variety of languages. There are some
-parts of editor support that can be framework-specific like supporting an embedded
-DSL, or integrating framework-specific debugging tools.
+*Editor integration* is also important in some ecosystems. This includes common
+features of Integrated Development Environments like auto-completion or
+refactoring tools. Recently the Language Server Protocol (LSP) cite:lsp project
+played a big role in allowing editors to support a wide variety of languages by
+implementing just an LSP client and being able to communicate with any
+language-specific language server. There are some parts of editor support that
+can be framework-specific like supporting an embedded domain-specific language
+or integrating framework-specific debugging tools.
 
 While we were talking about Web frameworks so far, some of them support not only
 running inside the browser but also being packaged as a *mobile app* for Android
@@ -383,13 +383,12 @@ just running it inside a browser are performance (they are usually faster to
 load and to use), access to device-specific capabilities (direct access to the
 file system), or branding.
 
-[TODO: rephrase] The last point in this section is *code generators*. of which
-there are two variants: project skeleton generators, which are provided in a
-large majority of frameworks and which include all files for a project to
-compile and run. Then there are component generators, which may include
-generating a template, a URL route and its corresponding controller, or an
-entire subsection of a website. These are less common but some frameworks also
-provide them.
+The last point in this section is *code generators*. of which there are two
+variants: project skeleton generators, which create all files necessary for a
+project to compile and run, and which are provided in a large majority of
+frameworks. Then there are component generators, which may include generating a
+template, a URL route and its corresponding controller, or an entire subsection
+of a website. These are less common but some frameworks also provide them.
 
 ** JavaScript ecosystem
 Moving on, we will take a quick tour of the JavaScript ecosystem and what the
@@ -461,10 +460,45 @@ Haskell community, so its future seems promising. Reflex follows the traditional
 FRP approach with events and behaviors (adding 'dynamics'), and
 building a rich combinator library on top of them.
 
-[TODO: reword] *Miso* cite:miso was built as a re-implementation of the 'Elm
-architecture' in Haskell. It uses a strict form of uni-directional dataflow with
-a central data store on one side, and the view as a function from the state to a
-view on the other, passing well-defined events from the view to the store.
+#+CAPTION: An example of Reflex code (a counter)
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell
+  main :: IO ()
+  main = mainWidget $ display =<< count =<< button "Click me"
+#+END_SRC
+
+*Miso* cite:miso is a re-implementation of the 'Elm architecture' in Haskell,
+which means that is uses strictly uni-directional data-flow with a central data
+store on the one side, and the view as a pure function that takes the state and
+creates a view on the other, where the view can change the state using strictly
+defined events. The ecosystem of Miso is not as well developed as Reflex's, and
+the overall architecture is very limiting - which I consider a large
+disadvantage.
+
+#+CAPTION: An example of Miso code (a counter)
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell
+  type Model = Int
+
+  data Action = AddOne
+    deriving Eq
+
+  main :: IO ()
+  main = JSaddle.run 8080 $ startApp App {..}
+    where
+      initialAction = AddOne
+      model  = 0
+      subs   = []
+      events = defaultEvents
+      mountPoint = Nothing
+
+      update AddOne m = noEff (m + 1)
+
+      view x = div_ []
+        [ text (ms x)
+        , button_ [ onClick AddOne ] [ text "Click Me" ]
+        ]
+#+END_SRC
 
 *Concur* cite:concur tries to explore a different paradigm by combining 'the best
 of' the previous two approaches. The developers have so far been focusing on
@@ -473,7 +507,20 @@ so it has a quite small range of features. It is a technology I intend to explor
 in the future when it is more mature, which however does not seem suitable for a
 large application so far, at least compared to its competitors.
 
-TODO: examples of Reflex, Miso, Concur
+#+CAPTION: An example of Concur code (a counter)
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell
+  main :: IO ()
+  main = do
+    initConcur
+    void $ runWidgetInBody $ void $ flip execStateT (0 :: Int) $
+      forever $ increment1 <|> displayCount
+    where
+      increment1 = lift (el_ E.div [] $ button "Click Me") >> modify (+10)
+      displayCount = do
+        count <- get
+        lift $ el_ E.div [] $ text $ show count ++ " clicks"
+#+END_SRC
 
 In all of these frameworks, *templating* is a feature that has been side-stepped
 by creating a domain-specific language for HTML mixed with control flow. There
