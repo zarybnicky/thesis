@@ -138,7 +138,7 @@ language and a runtime designed specifically for the Web. Compiling Haskell for
 the Web via WebAssembly is almost doable, there are two active projects creating
 a Haskell compiler backend - WebGHC cite:webghc and Asterius cite:asterius.
 
-Compile-to-JavaScript languages are not as rare as it may soundg. While languages
+Compile-to-JavaScript languages are not as rare as it may sound. While languages
 not based on JavaScript itself are not exactly common, web developers have been
 using JavaScript compilers for a long time - CoffeeScript is rather popular
 language announced in 2010 cite:coffeescript, and developers wanting to use new
@@ -603,29 +603,45 @@ written in such a way that a new user has no choice but to study its code to
 understand the package. In this work, I will strive to avoid this common flaw.
 
 ** Implementation plan
-[TODO: reword] I will use the nomenclature from the paper "Evolving Frameworks"
-cite:roberts1996evolving to describe my goals. [TODO: describe the general
-outline of that paper] Long-term, I aim to go from "Three Examples", a place to
-look for commonly repeated patterns, through a "White-Box Framework", a general
-structure/architecture of an application wrapped into a library, through a
-"Component Library", when that library will be extended with commonly duplicated
-functionality, all the way to "Pluggable Objects", where the framework provides
-most of the commonly used functionality so that application logic is the only
-thing missing from a finished prototype.
+In this section, I will use the terminology used in the paper "Evolving Frameworks"
+cite:roberts1996evolving to describe the work performed in the rest of this work
+and follow-up work as well. The paper describes common stages that frameworks
+take as they develop. While is uses terminology from object-oriented frameworks,
+most of the concepts apply just as well In Haskell.
 
-TODO: include the Evolving Frameworks image
+#+CAPTION: The timeline of patterns as described in Evolving Patterns
+[[./obrazky-figures/evolving-frameworks.jpg]]
 
-Building an integrated platform is not my primary goal - it is hard for a new
-and opinionated platform to succeed in the Haskell ecosystem. In this thesis, I
-expect to do the first step only - create a few applications, fill in all the
-missing parts in the Haskell ecosystem that are not covered by existing
-libraries, and extract a common application skeleton, a set of libraries, and a
-set of guides or tutorials that make it is easy go from the skeleton to a
-working prototype of a PWA.
+To briefly describe the terms and how they relate to this work:
+- *"Three Examples"* are three applications from which the framework will
+  draw common themes and architecture, so that it fulfills real-world needs. This
+  is what we will go through in the next section, where we take three existing
+  application specifications and build a Haskell version of it.
+- In a *"White Box Framework"*, the architecture is extracted into a separate
+  library and expanded or re-implemented in further applications. The author
+  emphasizes 'programming-by-difference', where the programmer extends library
+  code and later factors out commonly repeated patterns into the library. In
+  this work, this is the approach taken after implementing the "Three Examples"
+  to create the basics of the shared libraries.
+- The next patterns, "*Component Library*", "*Hot Spots*", and
+  "*Pluggable/Fine-grained Objects*" are all an extension of the above, focusing
+  on extracting concrete components and restructuring the architecture to
+  improve developer experience in specific ways. This level, nor the further
+  ones are not implemented in this work.
+- Skipping a "*Visual Builder*", which is not a common pattern in Web frameworks,
+  there are some basic "*Language Tools*" implemented as a part of creating the
+  libraries, namely a debugging console for watching specific values and an
+  inspector of the application storage. [TODO: specify after implementing]
 
-The goal of this work is to make it possible to create Progressive Web
-Applications. To reiterate the description from the introduction, these are the
-requirements:
+Not mentioned as a part of the patterns but also an essential part of framework
+development is thorough documentation and guides, as well as test coverage of
+library code, which is also done as a part of the work on libraries in the
+latter parts of this work.
+
+The above is a quite general description, so we will now enumerate the specifics of the
+implementation plan, starting with a reiteration of the requirements of a PWA
+from the introduction, which is the end goal of this work.
+
 - Pages are responsive on tablets & mobile devices
 - All app URLs load while offline
 - Metadata provided for Add to Home screen
@@ -636,32 +652,31 @@ requirements:
 - Site appropriately informs the user when they are offline
 - Push notifications (consists of several related requirements)
 
-To get there, there are several features that are not covered by any existing
-Haskell library or tool. This is a list of the required parts:
+There are, however, several components missing in the Haskell ecosystem that
+need to be created from scratch:
 - A full-featured browser routing library. While there are some existing
   implementations, they are either incomplete or long abandoned.
 - A wrapper around ServiceWorkers, or a template to simplify project creation.
 - A push notifications library. This will need to be both a server-side library,
   for creating them, and a client-side consumer, to parse them.
-- A way to prerender the application - either just the HTML "app shell" or all pages on the site.
-- An offline storage library for the client.
+- A way to prerender the application - either just the HTML "app shell" or all
+  pages on the site.
+- An offline storage library for the client. Here are several possible variants,
+  in the order of difficulty:
+  - plain storage datatype with LocalStorage, SessionStorage, and IndexedDB backends
+  - a storage including a transparent cache integrated with the network layer
+  - a storage with an invalidation or auto-refresh functionality, using an event
+    stream from the server
+  - a storage with offline-capable synchronization capabilities
 
-There are several variations of the last point with different levels of
-difficulty. Only the first variation is required, with the other ones being a
-part of follow-up work of this thesis.
-- plain storage datatype with LocalStorage, SessionStorage, and IndexedDB backends
-- a storage including a transparent cache integrated with the network layer
-- a storage with an invalidation or auto-refresh functionality, using an event
-  stream from the server
-- a storage with offline-capable synchronization capabilities
-
-These components do not comprise a fully integrated "platform" in the sense of
-e.g. Angular - those are quite uncommon in the Haskell ecosystem. More common
-are collections of libraries that play well together, where one library provides
-the fundamental datatype - the "architecture" of the application - and other
-libraries fill in the functionality. Of the proposed components, only the
-routing library is an "architectural" one in the sense that it will influence
-the shape of the application and its fundamental data types.
+These components do not comprise a fully integrated framework in the sense of
+e.g. Angular, such frameworks are quite uncommon in the Haskell ecosystem. More
+common are collections of libraries that play well together, where one library
+provides the fundamental datatype - the "architecture" of the application - and
+other libraries fill in the functionality, which is what we will work on. Of the
+proposed components, only the routing library is an "architectural" one in the
+sense that it will influence the shape of the application and its fundamental
+data types.
 
 * Components
 TODO: Demonstrate the principles of components on 'src-snippets' code, where
