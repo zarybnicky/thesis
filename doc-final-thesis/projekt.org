@@ -10,68 +10,90 @@
 # %\graphicspath{{obrazky-figures/}{./obrazky-figures/}}
 #+LaTeX_HEADER: \input{metadata}
 #+LATEX_HEADER: \usepackage{minted}
-#+LaTeX_HEADER: \usepackage[figure,table]{totalcount}
+#+LaTeX_HEADER: \usepackage[figure,table,listing]{totalcount}
 #+BEGIN_EXPORT latex
 \maketitle
 \setlength{\parskip}{0pt}
 {\hypersetup{hidelinks}\tableofcontents}
 \iftotalfigures\listoffigures\fi
 \iftotaltables\listoftables\fi
+\iftotallistings\listoflistings\fi
 \iftwoside\cleardoublepage\fi
 \setlength{\parskip}{0.5\bigskipamount}
 #+END_EXPORT
 
 * Introduction
-[TODO: reword Intro&Tech - more flowing language]
+Imagine you are building an application for an event your company is
+organizing. There will not be reliable internet connection in the area of the
+event, so it needs to work offline. You are on a tight budget, so implementing
+one version for each platform is not feasible, but it needs to work reliably
+across all mobile platforms and ideally in the browser as well. What's the
+easiest way to accomplish that?
 
-Let's imagine we want to create a new e-shop, with all the conveniences that
-customers are nowadays used to - [TODO: ...], a notification when the order is
-ready, and ideally an offline-available overview of the order for when the user
-is picking it up. What would be the easiest way to implement such a service? If
-we want to show something offline, we need a mobile application, the same for
-notifications. But [TODO: research about mobile engagement] and downloading a
-mobile application means another dozen megabytes.
+This situation is exactly where a rather new concept of a 'Progressive Web
+Application' (PWA) is the best solution. Generally said, a PWA is website
+capable of running offline, using mobile notifications, or synchronizing data in
+the background - things previously specific to native mobile applications.
 
-This is what the new trend of Progressive Web Applications (PWAs) is trying to
-solve. Fast - no need to wait for page reloads - and reliable - service workers help
-overcome problems with unreliable internet, both for page load by caching the
-app itself and in-app caching of app-specific data, and for background sync of
-user-modified data.
+Now additionally consider that the application server is written in Haskell, a
+statically typed, purely functional programming language. We want to reuse the
+business logic already written there to avoid duplicating code, so we search for
+a way to write a Web application in Haskell. We find a find many resources and a
+quickly growing community but while creating the application, we soon step into
+the unknown. A medium-scale application needs a large number of capabilities,
+but the ecosystem of frontend Haskell is not yet big enough to support many of
+them - most libraries in the area are either exploratory, or one-off projects.
 
-My language of choice is Haskell though, for both frontend and backend
-development, and while writing Haskell applications for the browser is possible,
-creating a Progressive Web Application requires more than just the ability to
-manipulate the DOM. That is what this work is about - filling in the gaps and
-creating all the prerequisites for writing Progressive Web Applications in
-Haskell. We will start by identifying exactly what is lacking in the Haskell
-ecosystem, and designing and implementing those missing pieces. Afterwards, we
-will walk through the process of creating a PWA from prototype to production and
-see what else could be made easier and more straightforward as a follow-up to
-this work.
+In this work, we will try to fill in many such gaps for Haskell developers of
+frontend applications, with a specific focus on Progressive Web Applications. We
+will first go through what specifically is missing in the Haskell ecosystem
+(Section 2) and implement the missing pieces by hand in three separate
+applications (Section 3). From those applications, we will then design and
+extract a set of reusable components (Section 4), and then look [TODO: fill in
+after the practicals, guidelines or recommendations].
 
 ** Related work
-While using Haskell in the browser is not a common choice, the adoption is
-steadily growing. Any work in this area is relatively recent though, as the
-Haskell-to-JavaScript compiler, GHCJS, has only been in development since 2010
-cite:ghcjs, with a production-ready version in 2013 cite:ghcjs-luite. Academic
-work on GHCJS or related projects is sparse, but there are several commercially
-sponsored projects - to name a few, Reflex and Obelisk from Obsidian Systems
-cite:obsidian, Asterius from Tweag, and many learning materials from QFPL
-cite:qfpl.
+The volume of work in area of frontend Haskell is not large, as the
+Haskell-to-JavaScript compiler, GHCJS, is only available since 2013, also due to
+the fact that Haskell in general is only recently being accepted as a mainstream
+language. Academic work in this area is sparse, but there are several mature
+projects - mainly commercially sponsored ones - under active development. Reflex
+and Obelisk are a UI framework and a deployment tool respectively, from Obsidian
+Systems cite:obsidian. Tweag cite:tweag is working on a Haskell-to-WebAssembly
+compiler, Asterius, and QFPL cite:qfpl has created many learning materials for
+frontend Haskell.
 
 * Technologies
-We will first have a more detailed look at the above-mentioned technologies, at
+We will first have a more detailed look at the technologies mentioned above - at
 what the term Progressive Web Application means and why would one want to use
-Haskell when creating browser applications.
+Haskell for creating browser applications.
 
 ** Progressive Web Application
-'Progressive Web Application' is a term that covers several relatively new
-technologies. It is the continuation of the general trend of expanding the
-capabilities of browser applications and closing the gap between them and native
-mobile applications. While many of these technologies apply also on desktop, the
-main target audience is mobile - [TODO: some statistics].
+The term 'Progressive Web Application' is an umbrella term for several
+relatively new, closely related technologies. It continues in the general trend
+of expanding the capabilities of browser applications and of closing the gap
+between browser and native mobile applications. While many of these technologies
+are useful also on desktop, the main target audience are mobile Web browsers.
 
-The technologies are:
+The term Progressive Web Applications has an exact specification in a checklist
+created by cite:pwa_checklist, which describes two levels of PWAs, a 'Baseline
+PWA' and an 'Exemplary PWA'. The defining characteristics of a Baseline PWA are:
+
+- Pages are responsive on tablets & mobile devices
+- All app URLs load while offline
+- Metadata provided for Add to Home screen
+- Page transitions do not feel like they block on the network
+- Each page has a URL
+- Pages use the History API
+- Site uses cache-first networking
+- Site appropriately informs the user when they are offline
+- Push notifications (consists of several related requirements)
+
+While there are several more requirements for an Exemplary PWA, it is just the
+baseline ones that we will focus on. The technologies used to fulfill these
+requirements are relatively recent developments, but they are supported in all
+the major Web browsers. They are:
+
 - Web App Manifest - a specification for the centralized location of application
   metadata - its name, icons, display mode, ...
 - Service Workers - 'a scriptable network proxy' cite:mdn_svcwrk. The
@@ -84,15 +106,8 @@ The technologies are:
   system - examples include geolocation or
   audio/video capture cite:what_web_can_do
 
-What is a Progressive Web Applications exactly is defined by a checklist created
-by Google cite:pwa_checklist. It describes two levels of PWAs, a 'Baseline PWA'
-and an 'Exemplary PWA'. The main defining characteristics of a Baseline PWA are:
-served over HTTPS, responsive design, all URLs available even while offline, and
-non-blocking page transitions. While there are more requirements for an
-Exemplary PWA, these are the most important ones.
-
-Some more notable PWAs are: Twitter cite:twitter, Uber cite:uber, or Flipkart
-cite:flipkart.
+Some notable examples of companies using PWAs are: Twitter cite:twitter, Uber
+cite:uber, or Flipkart cite:flipkart.
 
 ** Haskell
 #+CAPTION: An example of a web server in Haskell
@@ -114,55 +129,45 @@ cite:flipkart.
     client @HackageApi "http://hackage.haskell.org"
 #+END_SRC
 
-The programming language Haskell is a rather old one. Despite spreading into the
-industry only recently, it has been in development since 1990
-cite:haskell_history. It started out as government research project, a common
-base for programming language research. It has served as such, and in fact it
-still is the target of active research - some more prominent projects are
-'Dependent Haskell' cite:eisenberg2016dependent and 'Linear Haskell'
-cite:bernardy2017linear.
+Haskell is described as a "statically typed, purely functional programming
+language with type inference and lazy evaluation" cite:jones2003haskell. It is
+originally a research language, developed as a vehicle for new research in the
+area of programming languages since 1990 cite:haskell_history. It has served as
+such, and in fact it still is the target of active research - some more
+prominent projects are Dependent Haskell cite:eisenberg2016dependent and Linear
+Haskell cite:bernardy2017linear.
 
-[TODO: reword] Haskell is described as a "statically typed, purely functional
-programming language with type inference and lazy evaluation"
-cite:jones2003haskell. It is a language in which its expressive type system
-enables precise control over TODO: expressive types, dialog with the compiler,
-types encoding effects, citation for "If it compiles, it works".
+Only recently has it been used in commercial work, as exemplified by Facebook's
+Haskell spam filter cite:marlow2015fighting. While there are many benefits to
+using a strongly typed functional language - it eliminates entire classes of
+programming errors cite:Nanz_2015, anecdotally shown by the common saying that
+"If it compiles, it works" - it is conceptually different from languages
+commonly taught at universities.
 
-[TODO: reword] Why Haskell? It is a strongly typed language, which helps ensure
-correctness and prevent undefined behaviors - but it is less verbose and more
-expressive than Java and other languages a developer would imagine as 'strongly
-typed'. Haskell is one of the many languages capable of running in the browser -
-not directly, but by compiling down to JavaScript. Another technology that
-enables languages to run in the browser is WebAssembly, an alternative assembly
-language and a runtime designed specifically for the Web. Compiling Haskell for
-the Web via WebAssembly is almost doable, there are two active projects creating
-a Haskell compiler backend - WebGHC cite:webghc and Asterius cite:asterius.
+As for using Haskell in the browser, it may seem strange at first glance to want
+such a thing when JavaScript is the only language supported by Web
+browsers. There is however a growing number of languages that compile to
+JavaScript, that use it as their compile target instead of Assembly or LLVM,
+which can be done either by translating the logic of the program into JavaScript
+as is (transpiling), or by implementing an alternative runtime environment in
+JavaScript which then interprets the byte- or source-code. Another technology
+that enables languages to run in the browser is WebAssembly, an alternative
+assembly language and a runtime designed specifically for the Web.
 
-Compile-to-JavaScript languages are not as rare as it may sound. While languages
-not based on JavaScript itself are not exactly common, web developers have been
-using JavaScript compilers for a long time - CoffeeScript is rather popular
-language announced in 2010 cite:coffeescript, and developers wanting to use new
-ECMAScript 6 or 7 features (now supported in most browsers) also had no choice
-but to use compilers cite:babel.
+Web developers have been using JavaScript compilers for a long time -
+CoffeeScript is rather popular language announced in 2010
+cite:coffeescript. Also the new ECMAScript 6 or 7 features have only been usable
+via 'transpilers' until browsers implemented them natively, transpilers like
+Babel cite:babel. There are other, more advanced languages build with
+compilation to JavaScript in mind, e.g. TypeScript, a superset of ECMAScript 6
+cite:typescript, or Elm, a framework with its own language based on Haskell
+cite:czaplicki2012elm. The need to compile your code before running it is now
+quite accepted in the world of Web development.
 
-It is a language that enables its users to write reliable software by
-eliminating entire classes of programming errors cite:Nanz_2015. The errors that
-remain even after the program successfully compiles are usually logic or
-conceptual errors.
-
-While Haskell is not a language commonly associated with frontend development,
-it is one of the many languages with the ability to use JavaScript as the
-compilation target, instead of plain assembly or LLVM. In fact, such languages
-have now become quite common in frontend development, as is exemplified by the
-rapid rise of TypeScript, a superset of ECMAScript 6 cite:typescript, or Elm, a
-framework with its own language based on Haskell cite:czaplicki2012elm.
-
-Of the many reasons for selecting a language other than JavaScript for frontend
-development, one of the more notable ones is the ability to share code between
-the server and its client in the case they are written in the same
-language. This is the basic idea of the framework Meteor cite:meteor, and in
-fact the ability to run 'isomorphic code' - the same code on the client and the
-server both - is its main marketing point.
+The currently accepted way of running Haskell in the browser is via GHCJS, a
+Haskell-to-JavaScript compiler, although there are two active projects in the
+process of creating a Haskell-to-WebAssembly compiler - WebGHC cite:webghc and
+Asterius cite:asterius.
 
 ** Nix
 #+CAPTION: An example Nix derivation of GNU hello
@@ -181,29 +186,21 @@ stdenv.mkDerivation {
 }
 #+END_SRC
 
-One technology not yet mentioned, but upon which stands the entire build system
-used in this work from compiling to deploying, is Nix. Nix
+One technology not yet mentioned, but upon which will stand the entire build
+system used in this work from compiling to deploying, is Nix. Nix
 cite:dolstra2006purely is a package manager with focus on reproducibility and
-isolation. It is described as a purely functional package manager, where every
-package is built by a function without side-effects, with the result being
-immutable. Nix also ensures the exact versions of dependencies are used even
-during runtime - all the way up to ~libc~.
+isolation, described as a 'purely functional package manager' - every package is
+built in isolation by a 'pure function' without side-effects, and the result is
+immutable. When installing a package packaged in such a way, the exact versions
+of dependencies are installed and used as well (identified by a SHA-256 hash) -
+all runtime dependencies all the way up to ~libc~.
 
-Nix is a declarative build tool, similar in purpose to Make and in philosophy to
-Haskell. There are other tools built on top of Nix though, the most interesting
-being NixOS, a declarative operating system, and NixOps, a cloud deployment tool
-cite:dolstra2008nixos. Nix shines at cross-compilation, which is the main we
-will use it in this work - compiling to JavaScript or Android/iOS is trivial
-after the initial setup.
-
-Nix is another rather old technology under active development since 2004 after
-Eelco Dolstra introduced this idea in his academic work
-cite:dolstra2006purely. One package consists of a closure of all of its runtime
-dependencies, so even packages using different versions of dynamically linked
-libraries or even libc can coexist on the same machine. Adding atomic
-deployments and rollbacks is then quite easy, as a user environment only
-consists of symbolic links to the read-only Nix store, which is useful for NixOS
-or NixOps.
+Nix is a declarative build tool and a package manager, similar in purpose to
+Make and in philosophy to Haskell. There are other tools built on top of Nix
+though, the most interesting being NixOS, a declarative operating system, and
+NixOps, a cloud deployment tool cite:dolstra2008nixos. Nix shines at
+cross-compilation, which is the main reason we will use it in this work -
+compiling to JavaScript or Android/iOS is trivial after the initial setup.
 
 #+CAPTION: An example of a NixOS network
 #+ATTR_LATEX: :options frame=single
