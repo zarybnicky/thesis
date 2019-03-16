@@ -7,6 +7,7 @@ module Main where
 
 import Data.Bool (bool)
 import Data.ByteString (ByteString)
+import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Data.Time (Day, defaultTimeLocale, formatTime, fromGregorian, parseTimeM)
 import Language.Javascript.JSaddle.Warp (run)
@@ -77,19 +78,32 @@ dateInput initial disabled = do
       let i' = fmap (parseTimeM True defaultTimeLocale "%d.%m.%Y" . T.unpack) i
   pure i'
 
-flightBooker :: MonadWidget t m => m ()
+flightBooker :: forall t m. MonadWidget t m => m ()
 flightBooker = do
   let initial = fromGregorian 2019 3 15
   typ <- value <$> dropdown OneWay (constDyn (OneWay =: "one-way flight" <> Return =: "return flight")) def
-  from <- dateInput initial (constDyn True)
-  to <- dateInput initial ((== Return) <$> typ)
-  eClick <- button "Click Me"
-  _ <- widgetHold blank $ tagPromptlyDyn (f <$> typ <*> from <*> to) eClick
+  el "br" blank
+  from <- dateInput initial (constDyn False)
+  el "br" blank
+  to <- dateInput initial ((== OneWay) <$> typ)
+  el "br" blank
+
+  let result = f <$> typ <*> from <*> to
+      btnAttrs = maybe ("disabled" =: "disabled") (const mempty) <$> result
+  btn <- fst <$> elDynAttr' "button" btnAttrs (text "Click Me")
+  _ <- widgetHold blank $ fromMaybe blank <$> leftmost [
+      Nothing <$ updated result,
+      current result <@ domEvent Click btn
+    ]
   pure ()
   where
-    f OneWay (Just x) _ = text "Go!"
-    f Return (Just x) (Just y) = text "Go!"
-    f _ _ _ = text "Error"
+    f OneWay (Just x) _ = Just (text $ "You have booked a one-way flight on " <> showTime x)
+    f Return (Just x) (Just y)
+      | x < y = Just (text $ "You have booked a return flight on " <> showTime x <> " and " <> showTime y)
+      | otherwise = Nothing
+    f _ _ _ = Nothing
+    showTime :: Day -> T.Text
+    showTime = T.pack . formatTime defaultTimeLocale "%d.%m.%Y"
 
 
 timer :: MonadWidget t m => m ()
