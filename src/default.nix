@@ -2,11 +2,13 @@
   packages = {
     tapaw-core = ./tapaw-core;
     tapaw-7guis = ./tapaw-7guis;
+    tapaw-todomvc = ./tapaw-todomvc;
+    tapaw-hnpwa = ./tapaw-hnpwa;
   };
 
   shells = {
-    ghc = ["tapaw-core" "tapaw-7guis"];
-    ghcjs = ["tapaw-core" "tapaw-7guis"];
+    ghc = ["tapaw-core" "tapaw-7guis" "tapaw-todomvc" "tapaw-hnpwa"];
+    ghcjs = ["tapaw-core" "tapaw-7guis" "tapaw-todomvc" "tapaw-hnpwa"];
   };
 
   tools = ghc: [ ghc.ghcid ];

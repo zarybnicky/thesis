@@ -2,3 +2,5 @@ write-ghc-environment-files: never
 
 packages: tapaw-core/
           tapaw-7guis/
+          tapaw-todomvc/
+          tapaw-hnpwa/
