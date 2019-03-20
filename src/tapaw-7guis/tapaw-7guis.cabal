@@ -28,9 +28,10 @@ executable tapaw-7guis
                      , containers
                      , generic-lens
                      , ghcjs-dom
-                     , lens
                      , jsaddle
                      , jsaddle-warp
+                     , lens
+                     , megaparsec
                      , reflex-dom-core
                      , text
                      , time

@@ -7,22 +7,13 @@ module Tasks.TempConverter
   ) where
 
 import Reflex.Dom.Core
-import qualified Data.Text as T
-import Text.Read (readMaybe)
-
-import Utils (tshow)
-
-
-doubleInput :: MonadWidget t m => Event t Double -> m (Event t Double)
-doubleInput eSet = do
-  inp <- inputElement $ def { _inputElementConfig_setValue = Just (tshow <$> eSet) }
-  pure $ fmapMaybe (readMaybe . T.unpack) (_inputElement_input inp)
+import Utils (doubleInput)
 
 tempConverter :: MonadWidget t m => m ()
 tempConverter = do
-  rec celsius <- doubleInput (f2c <$> fahrenheit)
+  rec celsius <- doubleInput Nothing (f2c <$> fahrenheit)
       text " Celsius = "
-      fahrenheit <- doubleInput (c2f <$> celsius)
+      fahrenheit <- doubleInput Nothing (c2f <$> celsius)
   text " Fahrenheit"
   where
     f2c, c2f :: Double -> Double

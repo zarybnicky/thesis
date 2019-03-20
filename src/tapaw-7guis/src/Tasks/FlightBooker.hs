@@ -16,7 +16,9 @@ import Reflex.Dom.Core
 import Utils (buttonMaybe)
 
 
-data FlightType = OneWay | Return
+data FlightType
+  = OneWay
+  | Return
   deriving (Eq, Ord)
 
 dateInput :: MonadWidget t m => Day -> Dynamic t Bool -> m (Dynamic t (Maybe Day))

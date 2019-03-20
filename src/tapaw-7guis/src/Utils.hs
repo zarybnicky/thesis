@@ -3,6 +3,7 @@
 
 module Utils
   ( buttonMaybe
+  , doubleInput
   , selectViewListWithMaybeKey_
   , tshow
   ) where
@@ -11,6 +12,7 @@ import Data.Text (Text)
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Reflex.Dom.Core
+import Text.Read (readMaybe)
 
 
 tshow :: Show t => t -> Text
@@ -34,3 +36,10 @@ selectViewListWithMaybeKey_ selection vals mkChild = do
     let selected = demuxed selectionDemux (Just k)
     fmap (k <$) (mkChild v selected)
   pure $ switchPromptlyDyn $ leftmost . M.elems <$> selectChild
+
+doubleInput :: MonadWidget t m => Maybe Double -> Event t Double -> m (Event t Double)
+doubleInput mInit eSet = do
+  inp <- inputElement $ def
+    & inputElementConfig_setValue .~ (tshow <$> eSet)
+    & inputElementConfig_initialValue .~ maybe "" tshow mInit
+  pure $ fmapMaybe (readMaybe . T.unpack) (_inputElement_input inp)
