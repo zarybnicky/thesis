@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecursiveDo #-}
@@ -5,11 +7,12 @@
 
 module Main where
 
+import Control.Monad.IO.Class (liftIO)
 import Data.Bool (bool)
 import Data.ByteString (ByteString)
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
-import Data.Time (Day, defaultTimeLocale, formatTime, fromGregorian, parseTimeM)
+import Data.Time (Day, getCurrentTime, defaultTimeLocale, formatTime, fromGregorian, parseTimeM)
 import Language.Javascript.JSaddle.Warp (run)
 import Reflex.Dom.Core
 import Text.Read (readMaybe)
@@ -107,7 +110,24 @@ flightBooker = do
 
 
 timer :: MonadWidget t m => m ()
-timer = blank
+timer = do
+  t0 <- liftIO getCurrentTime
+  eTick <- tickLossy 0.1 t0
+
+  counterMax <- value <$> rangeInput def
+  eReset <- button "Reset"
+  rec counter <- foldDyn tick 0 $ leftmost
+        [ True <$ eReset
+        , False <$ gate ((<) <$> current counter <*> current counterMax) eTick
+        ]
+  elAttr "div" ("style" =: "width:100%;background-color:#ddd") $
+    elDynAttr "dir" (ffor counter $ \x -> "style" =: ("background-color:#red;width:" <> T.pack (show x) <> "%"))
+      blank
+  dynText $ T.pack . show . roundDouble <$> counter
+  where tick True _ = 0
+        tick False x = x + 0.1
+        roundDouble :: Float -> Float
+        roundDouble = (/ 10) . fromIntegral . (round :: Float -> Int) . (* 10)
 
 
 crud :: MonadWidget t m => m ()
