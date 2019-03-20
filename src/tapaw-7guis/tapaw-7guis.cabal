@@ -8,6 +8,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 executable tapaw-7guis
+  hs-source-dirs:      src
   main-is:             Main.hs
   default-language:    Haskell2010
   ghc-options:        -Wall
@@ -33,3 +34,12 @@ executable tapaw-7guis
                      , reflex-dom-core
                      , text
                      , time
+
+  other-modules:     Tasks.Counter
+                     Tasks.TempConverter
+                     Tasks.FlightBooker
+                     Tasks.Timer
+                     Tasks.Crud
+                     Tasks.CircleDrawer
+                     Tasks.Cells
+                     Utils
