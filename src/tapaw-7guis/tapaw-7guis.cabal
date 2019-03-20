@@ -24,6 +24,8 @@ executable tapaw-7guis
 
   build-depends:       base >=4.11 && <4.12
                      , bytestring
+                     , containers
+                     , generic-lens
                      , ghcjs-dom
                      , lens
                      , jsaddle
