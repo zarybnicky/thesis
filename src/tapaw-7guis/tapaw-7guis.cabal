@@ -24,6 +24,7 @@ executable tapaw-7guis
     cpp-options:      -DGHCJS_BROWSER
 
   build-depends:       base >=4.11 && <4.12
+                     , array
                      , bytestring
                      , containers
                      , generic-lens
@@ -32,9 +33,11 @@ executable tapaw-7guis
                      , jsaddle-warp
                      , lens
                      , megaparsec
+                     , mtl
                      , reflex-dom-core
                      , text
                      , time
+                     , transformers
 
   other-modules:     Tasks.Counter
                      Tasks.TempConverter

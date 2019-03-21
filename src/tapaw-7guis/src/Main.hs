@@ -40,4 +40,6 @@ css = mconcat
   , ".menu li { margin: 0; border: 1px solid #eee; }"
   , ".menu li.selected { font-weight: bold }"
   , ".menu a { padding: .4rem; display: block; }"
+  , ".cell { position: relative; }"
+  , ".cell > input { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }"
   ]
