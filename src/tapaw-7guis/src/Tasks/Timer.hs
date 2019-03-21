@@ -21,12 +21,14 @@ timer = do
 
   counterMax <- value <$> rangeInput def
   eReset <- button "Reset"
-  rec counter <- foldDyn (bool (const 0) (+ 0.1)) 0 $ leftmost
+  rec counter <- foldDyn (bool (+ 0.1) (const 0)) 0 $ leftmost
         [ True <$ eReset
         , False <$ gate ((<) <$> current counter <*> current counterMax) eTick
         ]
-  elAttr "div" ("style" =: "width:100%;background-color:#ddd") $
-    elDynAttr "dir" (ffor counter $ \x -> "style" =: ("background-color:#red;width:" <> tshow x <> "%"))
+  elAttr "div" ("style" =: "width:50px;background-color:#ddd") $
+    elDynAttr "div" (ffor2 counter counterMax $ \x y ->
+        let ratio = if y == 0 then 100 else x / y * 100
+        in "style" =: ("background-color:red;height:5px;width:" <> tshow ratio <> "%"))
       blank
   dynText $ tshow . roundDouble <$> counter
 
