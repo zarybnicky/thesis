@@ -13,9 +13,20 @@ import Data.Bool (bool)
 import Data.FileEmbed (embedFile)
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified GHCJS.DOM as DOM
+import qualified GHCJS.DOM.Element as DOM
+import qualified GHCJS.DOM.EventM as DOM
+import qualified GHCJS.DOM.HTMLElement as DOM
+import qualified GHCJS.DOM.Location as DOM
+import qualified GHCJS.DOM.Storage as DOM
+import qualified GHCJS.DOM.Window as DOM hiding (focus)
+import qualified GHCJS.DOM.WindowEventHandlers as DOM
+import GHCJS.DOM.Types (JSString, MonadJSM, liftJSM, uncheckedCastTo)
 import Language.Javascript.JSaddle.Warp (run)
+import Text.Read (readMaybe)
 import Reflex.Dom.Core
 
 
@@ -25,21 +36,48 @@ data TaskFilter
   | FilterCompleted
   deriving Eq
 
+taskFilter :: TaskFilter -> Map Int (Bool, Text) -> Map Int (Bool, Text)
+taskFilter FilterAll = id
+taskFilter FilterActive = M.filter (not . fst)
+taskFilter FilterCompleted = M.filter fst
+
 main :: IO ()
 main = run 3000 $ mainWidgetWithCss $(embedFile "src/index.css") $ do
+  window <- DOM.currentWindowUnchecked
+  storage <- DOM.getLocalStorage window
+  iFilter <- liftJSM $ fromMaybe FilterAll . readFilter <$> (DOM.getHash =<< DOM.getLocation window)
+  eFilter <- wrapDomEvent window (`DOM.on` DOM.hashChange)
+    (DOM.getHash =<< DOM.getLocation window)
+  iTasks <- readTasks storage
+
   elClass "section" "todoapp" $ do
     eNewItem <- inputBox
+    dFilter <- holdDyn iFilter (fromMaybe FilterAll . readFilter <$> eFilter)
     rec
-      dTasks <- foldDyn ($) M.empty $ leftmost
+      dTasks <- foldDyn ($) iTasks $ leftmost
         [ M.insert <$> (getNextIdx <$> current dTasks) <@> ((False,) <$> eNewItem)
         , toggleAll <$ eToggleAll
         , (\(k, mv) -> M.update (const mv) k) <$> eEdit
         , M.filter (not . fst) <$ eClearCompleted
         ]
-      (eToggleAll, eEdit) <- taskList dTasks
-      eClearCompleted <- navigation (constDyn FilterAll) dTasks
-    blank
+      (eToggleAll, eEdit) <- taskList (taskFilter <$> dFilter <*> dTasks)
+      eClearCompleted <- navigation dFilter dTasks
+    performEvent_ $ saveTasks storage <$> traceEvent "tasks" (updated dTasks)
   infoFooter
+
+readFilter :: Text -> Maybe TaskFilter
+readFilter "" = Just FilterAll
+readFilter "#" = Just FilterAll
+readFilter "#/all" = Just FilterAll
+readFilter "#/active" = Just FilterActive
+readFilter "#/completed" = Just FilterCompleted
+readFilter _ = Nothing
+
+saveTasks :: MonadJSM m => DOM.Storage -> Map Int (Bool, Text) -> m ()
+saveTasks st m = DOM.setItem st ("todosReflex" :: JSString) (show $ M.toList m)
+
+readTasks :: MonadJSM m => DOM.Storage -> m (Map Int (Bool, Text))
+readTasks st = maybe M.empty M.fromList . (readMaybe =<<) <$> DOM.getItem st ("todosReflex" :: JSString)
 
 getNextIdx :: Map Int a -> Int
 getNextIdx m
@@ -118,7 +156,7 @@ taskItem _ dValue _ = do
           (bool "" "editing " <$> dEditing)
     (eToggle, eStartEdit, eDestroy, eUpdated) <- elDynAttr "li" liClass $ do
       (eToggle', eStartEdit', eDestroy') <- taskView dChecked dText
-      eUpdated' <- taskEdit dText
+      eUpdated' <- taskEdit dText eStartEdit'
       pure (eToggle', eStartEdit', eDestroy', eUpdated')
   pure $ leftmost
     [ (Just .) . (,) <$> current dChecked <@> eUpdated
@@ -144,16 +182,19 @@ taskView dChecked dText =
          , domEvent Click btn
          )
 
-taskEdit :: MonadWidget t m => Dynamic t Text -> m (Event t Text)
-taskEdit dText = do
+taskEdit :: MonadWidget t m => Dynamic t Text -> Event t () -> m (Event t Text)
+taskEdit dText eToggle = do
   rec
     textbox <- inputElement $ def
-      & inputElementConfig_setValue .~ leftmost
-          [ updated dText
-          , current dText <@ keypress Escape textbox
-          ]
+      & inputElementConfig_setValue .~ (current dText <@ eToggle <> keydown Escape textbox)
       & inputElementConfig_elementConfig . elementConfig_initialAttributes .~ "class" =: "edit"
-  pure (current (value textbox) <@ keypress Enter textbox)
+  let textbox' = _element_raw $ _inputElement_element textbox
+  eDelayed <- delay 0.05 eToggle
+  performEvent_ $ DOM.focus (uncheckedCastTo DOM.HTMLElement textbox') <$ eDelayed
+  pure $ leftmost
+    [ current (value textbox) <@ keypress Enter textbox <> domEvent Blur textbox
+    , current dText <@ keydown Escape textbox
+    ]
 
 inputBox :: MonadWidget t m => m (Event t Text)
 inputBox =

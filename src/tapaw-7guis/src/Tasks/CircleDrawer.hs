@@ -79,7 +79,8 @@ circleDrawer = do
       (svg, eSelect) <- elDynAttrNS' svgNS "svg" (pure $ "style" =: "display:block;width:600px;height:300px") $ do
         elDynAttrNS svgNS "rect" (pure $ "width" =: "600" <> "height" =: "300" <> "stroke" =: "black" <> "fill" =: "none") blank
         selectViewListWithMaybeKey_ dSelected (csCurrent <$> cs) circle
-      eInsert <- wrapDomEvent (uncheckedCastTo DOM.HTMLElement $ _element_raw svg) (`DOM.on` DOM.mouseUp) $ do
+      let svg' = uncheckedCastTo DOM.HTMLElement (_element_raw svg)
+      eInsert <- wrapDomEvent svg' (`DOM.on` DOM.mouseUp) $ do
         e <- DOM.event
         x <- DOM.getOffsetX e
         y <- DOM.getOffsetY e
@@ -103,7 +104,8 @@ circleDrawer = do
 circle :: MonadWidget t m => Dynamic t Circle -> Dynamic t Bool -> m (Event t ())
 circle dCircle dSelected = do
   (c, ()) <- elDynAttrNS' svgNS "circle" (makeAttrs <$> dCircle <*> dSelected) blank
-  wrapDomEvent (uncheckedCastTo DOM.HTMLElement $ _element_raw c) (`DOM.on` DOM.mouseUp) DOM.stopPropagation
+  let e = uncheckedCastTo DOM.HTMLElement $ _element_raw c
+  wrapDomEvent e (`DOM.on` DOM.mouseUp) DOM.stopPropagation
   where
     makeAttrs (Circle x y r) selected = M.fromList
       [ ("cx", tshow x)

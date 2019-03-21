@@ -21,7 +21,6 @@ executable tapaw-todomvc
                       -fdiagnostics-color=never
   if impl(ghcjs -any)
     ghc-options:      -dedupe
-    cpp-options:      -DGHCJS_BROWSER
 
   build-depends:       base >=4.11 && <4.12
                      , bytestring
