@@ -1,9 +1,15 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Main where
 
@@ -14,12 +20,29 @@ import Data.ByteString (ByteString)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
+import Data.Proxy (Proxy(..))
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Time (UTCTime(..), fromGregorian, getCurrentTime, diffUTCTime)
+import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 import Language.Javascript.JSaddle.Warp (run)
 import Reflex.Dom.Core
+
+infixr 4 <!>
+infixr 7 =?, =!, =!?
+
+(<!>) :: (Semigroup a, Functor f) => a -> f a -> f a
+a <!> b = (a <>) <$> b
+
+(=?) :: Ord k => k -> Maybe v -> Map k v
+k =? mVal = maybe mempty (k =:) mVal
+
+(=!) :: Reflex t => k -> Dynamic t v -> Dynamic t (Map k v)
+k =! dVal = (k =:) <$> dVal
+
+(=!?) :: (Ord k, Reflex t) => k -> Dynamic t (Maybe v) -> Dynamic t (Map k v)
+k =!? dmVal = maybe mempty (k =:) <$> dmVal
 
 newtype UserId = UserId
   { unUserId :: Text
@@ -32,7 +55,7 @@ newtype ItemId = ItemId
 data AppState t = AppState
   { dNow :: Dynamic t UTCTime
   , dItemMap :: Dynamic t (Map ItemId Item)
-  , dItemLists :: Dynamic t (Map FilterType [ItemId])
+  , dItemLists :: forall a. KnownSymbol a => Dynamic t (Map (FilterType a) [ItemId])
   , dPending :: Dynamic t [AppRequest]
   }
 
@@ -42,21 +65,17 @@ data AppRequest
   | ReqUser UserId
   deriving Eq
 
-data FilterType
-  = FilterBest
-  | FilterNew
-  | FilterShow
-  | FilterAsk
-  | FilterJobs
-  deriving (Eq, Ord)
+data FilterType (a :: Symbol) where
+  FilterBest :: FilterType "best"
+  FilterNew :: FilterType "new"
+  FilterShow :: FilterType "show"
+  FilterAsk :: FilterType "ask"
+  FilterJobs :: FilterType "jobs"
+deriving instance Eq (FilterType a)
+deriving instance Ord (FilterType a)
 
-filterTypeToUrl :: FilterType -> Text
-filterTypeToUrl = \case
-  FilterBest -> "best"
-  FilterNew -> "new"
-  FilterShow -> "show"
-  FilterAsk -> "ask"
-  FilterJobs -> "jobs"
+filterTypeToUrl :: forall a. KnownSymbol a => FilterType a -> Text
+filterTypeToUrl _ = T.pack $ symbolVal (Proxy @a)
 
 data ItemType
   = ItemStory
@@ -115,7 +134,7 @@ main = run 3000 $ mainWidgetWithCss css $ do
 css :: ByteString
 css = ""
 
-itemList :: MonadWidget t m => AppState t -> FilterType -> Int -> m ()
+itemList :: (KnownSymbol a, MonadWidget t m) => AppState t -> FilterType a -> Int -> m ()
 itemList s filterType pageNum =
   divClass "news-view" $ do
     let dAllIds = (fromMaybe [] <$>) (M.lookup filterType <$> dItemLists s)
@@ -148,17 +167,17 @@ itemListItem s dItem =
       hostView dItem
     el "br" blank
     elClass "span" "meta" $ do
-      elDynAttr "span" (("class" =: "by" <>) . bool mempty ("style" =: "display:none") .
-                        (== ItemJob) . itemType <$> dItem) $ do
+      elDynAttr "span" ("class" =: "by" <!> (bool mempty ("style" =: "display:none") .
+                        (== ItemJob) . itemType <$> dItem)) $ do
         text "by "
         userLink (itemBy <$> dItem)
       text " "
       elClass "span" "time" (timeAgoView (dNow s) (itemTime <$> dItem))
       text " "
-      elDynAttr "span" (("class" =: "comments-link" <>) . bool mempty ("style" =: "display:none") .
-                        (== ItemJob) . itemType <$> dItem) $ do
+      elDynAttr "span" ("class" =: "comments-link" <!> (bool mempty ("style" =: "display:none") .
+                        (== ItemJob) . itemType <$> dItem)) $ do
         text "| "
-        elDynAttr "a" (("href" =:) . ("/item/" <>) . tshow . unItemId . itemId <$> dItem) $ do
+        elDynAttr "a" ("href" =! ("/item/" <!> (tshow . unItemId . itemId <$> dItem))) $ do
           display $ itemDescendants <$> dItem
           text " comments"
   where
@@ -172,11 +191,11 @@ itemView s dItem =
   divClass "item-view" $ do
     divClass "item-view-header" $ do
       elDynAttr "a"
-        (("target" =: "_blank" <>) . maybe mempty ("href" =:) . itemUrl <$> dItem)
+        ("target" =: "_blank" <!> "href" =!? (itemUrl <$> dItem))
         (el "h1" (dynText $ itemTitle <$> dItem))
       hostView dItem
       elClass "p" "meta" $ do
-        display $ itemScore <$> dItem
+        display (itemScore <$> dItem)
         text " points | by"
         userLink (itemBy <$> dItem)
         text " "
@@ -231,10 +250,10 @@ userView dNow' dmUser = void . dyn . ffor dmUser $ \case
     elClass "ul" "meta" $ do
       el "li" $ do
         elClass "span" "label" (text "Created: ")
-        timeAgoView dNow' (pure $ userCreated user)
+        timeAgoView dNow' (pure (userCreated user))
       el "li" $ do
         elClass "span" "label" (text "Karma: ")
-        text (tshow $ userKarma user)
+        text (tshow (userKarma user))
       case userAbout user of
         Nothing -> blank
         Just about -> void $ elDynHtmlAttr' "div" ("class" =: "about") (pure about)
@@ -245,7 +264,7 @@ userView dNow' dmUser = void . dyn . ffor dmUser $ \case
 
 spinner :: MonadWidget t m => Dynamic t Bool -> m ()
 spinner dShow =
-  elDynAttrNS svgNS "svg" ((baseAttrs <>) . ("class" =:) . bool "spinner" "spinner show" <$> dShow) $
+  elDynAttrNS svgNS "svg" (baseAttrs <!> "class" =! (bool "spinner" "spinner show" <$> dShow)) $
     elDynAttrNS svgNS "circle" (pure circleAttrs) blank
   where
     baseAttrs, circleAttrs :: Map Text Text
@@ -256,16 +275,16 @@ spinner dShow =
 
 hostView :: MonadWidget t m => Dynamic t Item -> m ()
 hostView dItem =
-  elDynAttr "span" (("class" =: "host" <>) . maybe ("style" =: "display:none") (const mempty) .
-                    itemUrl <$> dItem) $ do
+  elDynAttr "span" ("class" =: "host" <!> (maybe ("style" =: "display:none") (const mempty) .
+                    itemUrl <$> dItem)) $ do
     text " ("
-    dynText $ maybe "" getUrlHost . itemUrl <$> dItem
+    dynText (maybe "" getUrlHost . itemUrl <$> dItem)
     text ")"
 
 userLink :: MonadWidget t m => Dynamic t UserId -> m ()
 userLink dUserId =
   let userName = unUserId <$> dUserId
-  in elDynAttr "a" (("href" =:) . ("/user/" <>) <$> userName) (dynText userName)
+  in elDynAttr "a" ("href" =! ("/user/" <!> userName)) (dynText userName)
 
 timeAgoView :: MonadWidget t m => Dynamic t UTCTime -> Dynamic t UTCTime -> m ()
 timeAgoView dNow' dItemTime = do
