@@ -9,25 +9,34 @@
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Main where
 
 import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
 import Data.Bool (bool)
-import Data.ByteString (ByteString)
+import Data.FileEmbed (embedFile)
+import Data.List (uncons)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
-import Data.Proxy (Proxy(..))
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Time (UTCTime(..), fromGregorian, getCurrentTime, diffUTCTime)
-import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
+import Data.Time (UTCTime(..), getCurrentTime, diffUTCTime)
+import qualified GHCJS.DOM as DOM
+import qualified GHCJS.DOM.EventM as DOM
+import qualified GHCJS.DOM.History as DOM
+import qualified GHCJS.DOM.Location as DOM
+import qualified GHCJS.DOM.Window as DOM hiding (focus)
+import qualified GHCJS.DOM.WindowEventHandlers as DOM
+import Language.Javascript.JSaddle (liftJSM)
 import Language.Javascript.JSaddle.Warp (run)
 import Reflex.Dom.Core
+import Text.Read (readMaybe)
 
 infixr 4 <!>
 infixr 7 =?, =!, =!?
@@ -46,16 +55,16 @@ k =!? dmVal = maybe mempty (k =:) <$> dmVal
 
 newtype UserId = UserId
   { unUserId :: Text
-  } deriving (Eq)
+  } deriving (Show, Eq)
 
 newtype ItemId = ItemId
   { unItemId :: Int
-  } deriving (Eq, Ord)
+  } deriving (Show, Eq, Ord)
 
 data AppState t = AppState
   { dNow :: Dynamic t UTCTime
   , dItemMap :: Dynamic t (Map ItemId Item)
-  , dItemLists :: forall a. KnownSymbol a => Dynamic t (Map (FilterType a) [ItemId])
+  , dItemLists :: Dynamic t (Map FilterType [ItemId])
   , dPending :: Dynamic t [AppRequest]
   }
 
@@ -65,17 +74,13 @@ data AppRequest
   | ReqUser UserId
   deriving Eq
 
-data FilterType (a :: Symbol) where
-  FilterBest :: FilterType "best"
-  FilterNew :: FilterType "new"
-  FilterShow :: FilterType "show"
-  FilterAsk :: FilterType "ask"
-  FilterJobs :: FilterType "jobs"
-deriving instance Eq (FilterType a)
-deriving instance Ord (FilterType a)
-
-filterTypeToUrl :: forall a. KnownSymbol a => FilterType a -> Text
-filterTypeToUrl _ = T.pack $ symbolVal (Proxy @a)
+data FilterType
+  = FilterBest
+  | FilterNew
+  | FilterShow
+  | FilterAsk
+  | FilterJobs
+  deriving (Eq, Ord, Show)
 
 data ItemType
   = ItemStory
@@ -108,33 +113,68 @@ data User = User
   , userKarma :: Int
   }
 
+data Route
+  = RouteItemList FilterType Int
+  | RouteItem ItemId
+  | RouteUser UserId
+  deriving Show
+
 main :: IO ()
-main = run 3000 $ mainWidgetWithCss css $ do
+main = run 3000 $ mainWidgetWithCss $(embedFile "src/index.css") $ do
   t0 <- liftIO getCurrentTime
   dNow' <- fmap _tickInfo_lastUTC <$> clockLossy 1 t0
-
-  let item = Item
-        { itemId = ItemId 5
-        , itemType = ItemStory
-        , itemBy = UserId "zarybnicky"
-        , itemTime = UTCTime (fromGregorian 2019 03 21) 0
-        , itemText = "<b>Comment</b>"
-        , itemParent = Nothing
-        , itemPoll = Nothing
-        , itemKids = []
-        , itemUrl = Nothing
-        , itemScore = 5
-        , itemTitle = "Title"
-        , itemParts = []
-        , itemDescendants = 5
-        }
   let appState = AppState dNow' (pure M.empty) (pure M.empty) (pure [])
-  itemListItem appState (pure item)
 
-css :: ByteString
-css = ""
+  rec
+    ((), eSetRoute) <- runEventWriterT $ do
+      dRoute <- makeHistoryRouter eSetRoute
+      dyn $ ffor dRoute $ \case
+        RouteUser uid -> userView dNow' uid
+        RouteItemList f p -> itemList appState f p
+        RouteItem i -> itemView appState i
+      display dRoute
+  blank
 
-itemList :: (KnownSymbol a, MonadWidget t m) => AppState t -> FilterType a -> Int -> m ()
+filterTypeToUrl :: FilterType -> Text
+filterTypeToUrl = \case
+  FilterBest -> "best"
+  FilterNew -> "new"
+  FilterShow -> "show"
+  FilterAsk -> "ask"
+  FilterJobs -> "jobs"
+
+decodeRoute :: Text -> Route
+decodeRoute x = case uncons (drop 1 $ T.splitOn "/" x) of
+  Just ("best", rest) -> RouteItemList FilterBest (parsePageNum rest)
+  Just ("new", rest) -> RouteItemList FilterNew (parsePageNum rest)
+  Just ("show", rest) -> RouteItemList FilterShow (parsePageNum rest)
+  Just ("ask", rest) -> RouteItemList FilterAsk (parsePageNum rest)
+  Just ("jobs", rest) -> RouteItemList FilterJobs (parsePageNum rest)
+  Just ("item", rest) -> RouteItem (ItemId $ parsePageNum rest)
+  Just ("user", rest) -> RouteUser (UserId . T.intercalate "" $ take 1 rest)
+  _ -> RouteItemList FilterBest 1
+  where
+    parsePageNum :: [Text] -> Int
+    parsePageNum = max 1 . fromMaybe 1 . readMaybe . T.unpack . T.intercalate "" . take 1
+
+encodeRoute :: Route -> Text
+encodeRoute (RouteItemList f p) = "/" <> filterTypeToUrl f <> "/" <> tshow p
+encodeRoute (RouteItem u) = "/item/" <> tshow (unItemId u)
+encodeRoute (RouteUser u) = "/user/" <> unUserId u
+
+makeHistoryRouter :: MonadWidget t m => Event t Route -> m (Dynamic t Route)
+makeHistoryRouter eSetRoute = do
+  window <- liftJSM DOM.currentWindowUnchecked
+  location <- liftJSM (DOM.getLocation window)
+  history <- liftJSM (DOM.getHistory window)
+  iRoute <- liftJSM (getRoute location)
+  eRoute <- wrapDomEvent window (`DOM.on` DOM.popState) (getRoute location)
+  performEvent_ $ DOM.pushState history () ("" :: Text) . Just . encodeRoute <$> eSetRoute
+  holdDyn iRoute $ leftmost [eSetRoute, eRoute]
+  where
+    getRoute loc = (decodeRoute .) . (<>) <$> DOM.getPathname loc <*> DOM.getSearch loc
+
+itemList :: MonadWidget t m => AppState t -> FilterType -> Int -> m ()
 itemList s filterType pageNum =
   divClass "news-view" $ do
     let dAllIds = (fromMaybe [] <$>) (M.lookup filterType <$> dItemLists s)
