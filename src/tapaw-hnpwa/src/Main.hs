@@ -1,6 +1,8 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MonoLocalBinds #-}
@@ -11,6 +13,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ViewPatterns #-}
 
@@ -20,8 +23,10 @@ import Control.Lens hiding (element, uncons)
 import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (MonadReader, asks, runReaderT)
+import Data.Aeson as A
 import Data.Bool (bool)
 import Data.FileEmbed (embedFile)
+import Data.Generics.Sum (_Ctor)
 import Data.List (uncons)
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -32,6 +37,7 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Time (UTCTime(..), getCurrentTime, diffUTCTime)
+import GHC.Generics (Generic)
 import qualified GHCJS.DOM as DOM
 import qualified GHCJS.DOM.EventM as DOM
 import qualified GHCJS.DOM.History as DOM
@@ -60,11 +66,11 @@ k =!? dmVal = maybe mempty (k =:) <$> dmVal
 
 newtype UserId = UserId
   { unUserId :: Text
-  } deriving (Eq, Ord, Show)
+  } deriving (Eq, Ord, Show, FromJSONKey, FromJSON)
 
 newtype ItemId = ItemId
   { unItemId :: Int
-  } deriving (Eq, Ord, Show)
+  } deriving (Eq, Ord, Show, FromJSONKey, FromJSON)
 
 data AppState t = AppState
   { now :: Dynamic t UTCTime
@@ -77,7 +83,6 @@ data AppState t = AppState
 data AppRequest
   = ReqItem ItemId
   | ReqItemList FilterType
-  | ReqComments ItemId
   | ReqUser UserId
   deriving (Eq, Ord)
 
@@ -113,6 +118,31 @@ data Item = Item
   , itemDescendants :: Int
   }
 
+instance FromJSON ItemType where
+  parseJSON (A.String "story") = pure ItemStory
+  parseJSON (A.String "comment") = pure ItemComment
+  parseJSON (A.String "job") = pure ItemJob
+  parseJSON (A.String "poll") = pure ItemPoll
+  parseJSON (A.String "pollopt") = pure ItemPollOpt
+  parseJSON _ = mempty
+
+instance FromJSON Item where
+  parseJSON = withObject "Item" $ \o -> Item
+    <$> o .: "id"
+    <*> o .: "type"
+    <*> o .: "by"
+    <*> o .: "time"
+    <*> o .: "text"
+    <*> o .:? "parent"
+    <*> o .:? "poll"
+    <*> o .: "kids"
+    <*> o .:? "url"
+    <*> o .: "score"
+    <*> o .: "title"
+    <*> o .: "parts"
+    <*> o .: "descendants"
+
+
 data User = User
   { userId :: UserId
   , userCreated :: UTCTime
@@ -120,11 +150,18 @@ data User = User
   , userKarma :: Int
   }
 
+instance FromJSON User where
+  parseJSON = withObject "User" $ \o -> User
+    <$> o .: "id"
+    <*> o .: "created"
+    <*> o .:? "about"
+    <*> o .: "karma"
+
 data Route
   = RouteItemList FilterType Int
   | RouteItem ItemId
   | RouteUser UserId
-  deriving Show
+  deriving (Show, Generic)
 
 instance Semigroup Route where
   (<>) = const id
@@ -133,19 +170,33 @@ main :: IO ()
 main = run 3000 $ mainWidgetWithCss $(embedFile "src/index.css") $ do
   t0 <- liftIO getCurrentTime
   dNow <- fmap _tickInfo_lastUTC <$> clockLossy 1 t0
+  pb <- getPostBuild
 
   rec
-    dItemMap <- foldDyn (<>) M.empty (view _2 <$> eResponse)
-    dUserMap <- foldDyn (<>) M.empty (view _3 <$> eResponse)
-    dItemLists <- foldDyn (<>) M.empty (view _4 <$> eResponse)
+    let eRouteChg = leftmost [current dRoute <@ pb, updated dRoute]
 
-    pb <- getPostBuild
-    let eRequest = fmapMaybe id $ makeRequest <$> current dItemMap <*> current dUserMap <@>
-          leftmost [current dRoute <@ pb, updated dRoute]
-    eResponse <- fmap makeResponse <$> performRequestsAsync eRequest
+    let eIMRequest = fmapMaybe id $ makeIMRequest <$> current dItemMap <@>
+          fmapMaybe (preview (_Ctor @"RouteItem")) eRouteChg
+    let eUMRequest = fmapMaybe id $ makeUMRequest <$> current dUserMap <@>
+          fmapMaybe (preview (_Ctor @"RouteUser")) eRouteChg
+    let eILRequest = fmapMaybe id $ makeILRequest <$> current dItemLists <@>
+          fmapMaybe (preview (_Ctor @"RouteItemList" . _1)) eRouteChg
+
+    eIMResponse <- performRequest eIMRequest
+    eUMResponse <- performRequest eUMRequest
+    eILResponse <- performRequest eILRequest
+
+    dItemMap <- foldDyn (<>) M.empty ((\v -> itemId v =: v) . snd <$> eIMResponse)
+    dUserMap <- foldDyn (<>) M.empty ((\v -> userId v =: v) . snd <$> eUMResponse)
+    dItemLists <- foldDyn (<>) M.empty (uncurry (=:) <$> eILResponse)
+
     dPending <- foldDyn ($) S.empty
-      ((S.insert . fst <$> eRequest) <>
-       (S.delete . view _1 <$> eResponse))
+      ((S.insert . ReqItem . fst <$> eIMRequest) <>
+       (S.delete . ReqItem . fst <$> eIMResponse) <>
+       (S.insert . ReqUser . fst <$> eUMRequest) <>
+       (S.delete . ReqUser . fst <$> eUMResponse) <>
+       (S.insert . ReqItemList . fst <$> eILRequest) <>
+       (S.delete . ReqItemList . fst <$> eILResponse))
 
     let appState = AppState dNow dItemMap dUserMap dItemLists dPending
 
@@ -157,13 +208,25 @@ main = run 3000 $ mainWidgetWithCss $(embedFile "src/index.css") $ do
         RouteItem i -> itemView i
   blank
 
-  where
-    makeRequest :: Map ItemId Item -> Map UserId User -> Route -> Maybe (AppRequest, XhrRequest ())
-    makeRequest = undefined
-    makeResponse ::
-         (AppRequest, XhrResponse)
-      -> (AppRequest, Map ItemId Item, Map UserId User, Map FilterType [ItemId])
-    makeResponse = undefined
+performRequest ::
+     (MonadWidget t m, FromJSON a)
+  => Event t (k, XhrRequest ())
+  -> m (Event t (k, a))
+performRequest e =
+  fmapMaybe (\(k, v) -> (k, ) <$> decodeXhrResponse v) <$>
+  performRequestsAsync e
+
+makeUMRequest :: Map UserId User -> UserId -> Maybe (UserId, XhrRequest ())
+makeUMRequest map key = maybe (Just (key, xhrRequest "GET" "<url>" def))
+  (const Nothing) (M.lookup key map)
+
+makeIMRequest :: Map ItemId Item -> ItemId -> Maybe (ItemId, XhrRequest ())
+makeIMRequest map key = maybe (Just (key, xhrRequest "GET" "<url>" def))
+  (const Nothing) (M.lookup key map)
+
+makeILRequest :: Map FilterType [ItemId] -> FilterType -> Maybe (FilterType, XhrRequest ())
+makeILRequest map key = maybe (Just (key, xhrRequest "GET" "<url>" def))
+  (const Nothing) (M.lookup key map)
 
 topLevel :: (EventWriter t Route m, MonadWidget t m) => Dynamic t Route -> m () -> m ()
 topLevel dRoute contents =

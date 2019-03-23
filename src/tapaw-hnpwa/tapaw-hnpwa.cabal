@@ -24,9 +24,11 @@ executable tapaw-hnpwa
     cpp-options:      -DGHCJS_BROWSER
 
   build-depends:       base >=4.11 && <4.12
+                     , aeson
                      , bytestring
                      , containers
                      , file-embed
+                     , generic-lens
                      , ghcjs-dom
                      , lens
                      , jsaddle
