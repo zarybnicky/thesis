@@ -19,6 +19,7 @@ module Main where
 import Control.Lens hiding (element, uncons)
 import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Reader (MonadReader, asks, runReaderT)
 import Data.Bool (bool)
 import Data.FileEmbed (embedFile)
 import Data.List (uncons)
@@ -26,6 +27,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Data.Proxy (Proxy(Proxy))
+import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -36,7 +38,7 @@ import qualified GHCJS.DOM.History as DOM
 import qualified GHCJS.DOM.Location as DOM
 import qualified GHCJS.DOM.Window as DOM hiding (focus)
 import qualified GHCJS.DOM.WindowEventHandlers as DOM
-import Language.Javascript.JSaddle (liftJSM)
+import Language.Javascript.JSaddle (MonadJSM, liftJSM)
 import Language.Javascript.JSaddle.Warp (run)
 import Reflex.Dom.Core
 import Text.Read (readMaybe)
@@ -65,18 +67,19 @@ newtype ItemId = ItemId
   } deriving (Eq, Ord, Show)
 
 data AppState t = AppState
-  { dNow :: Dynamic t UTCTime
-  , dItemMap :: Dynamic t (Map ItemId Item)
-  , dUserMap :: Dynamic t (Map UserId User)
-  , dItemLists :: Dynamic t (Map FilterType [ItemId])
-  , dPending :: Dynamic t [AppRequest]
+  { now :: Dynamic t UTCTime
+  , itemMap :: Dynamic t (Map ItemId Item)
+  , userMap :: Dynamic t (Map UserId User)
+  , itemLists :: Dynamic t (Map FilterType [ItemId])
+  , pendingReqs :: Dynamic t (Set AppRequest)
   }
 
 data AppRequest
   = ReqItem ItemId
+  | ReqItemList FilterType
   | ReqComments ItemId
   | ReqUser UserId
-  deriving Eq
+  deriving (Eq, Ord)
 
 data FilterType
   = FilterBest
@@ -129,48 +132,75 @@ instance Semigroup Route where
 main :: IO ()
 main = run 3000 $ mainWidgetWithCss $(embedFile "src/index.css") $ do
   t0 <- liftIO getCurrentTime
-  dNow' <- fmap _tickInfo_lastUTC <$> clockLossy 1 t0
-  let appState = AppState dNow' (pure M.empty) (pure M.empty) (pure M.empty) (pure [])
+  dNow <- fmap _tickInfo_lastUTC <$> clockLossy 1 t0
 
   rec
-    ((), eSetRoute) <- runEventWriterT $ do
-      dRoute <- makeHistoryRouter eSetRoute
-      topLevel $ void $ dyn $ ffor dRoute $ \case
-        RouteUser uid -> userView appState uid
-        RouteItemList f p -> itemList appState f p
-        RouteItem i -> itemView appState i
-      display dRoute
+    dItemMap <- foldDyn (<>) M.empty (view _2 <$> eResponse)
+    dUserMap <- foldDyn (<>) M.empty (view _3 <$> eResponse)
+    dItemLists <- foldDyn (<>) M.empty (view _4 <$> eResponse)
+
+    pb <- getPostBuild
+    let eRequest = fmapMaybe id $ makeRequest <$> current dItemMap <*> current dUserMap <@>
+          leftmost [current dRoute <@ pb, updated dRoute]
+    eResponse <- fmap makeResponse <$> performRequestsAsync eRequest
+    dPending <- foldDyn ($) S.empty
+      ((S.insert . fst <$> eRequest) <>
+       (S.delete . view _1 <$> eResponse))
+
+    let appState = AppState dNow dItemMap dUserMap dItemLists dPending
+
+    dRoute <- makeHistoryRouter eSetRoute
+    ((), eSetRoute) <- flip runReaderT appState . runEventWriterT $
+      topLevel dRoute . void . dyn . ffor dRoute $ \case
+        RouteUser uid -> userView uid
+        RouteItemList f p -> itemList f p
+        RouteItem i -> itemView i
   blank
 
-topLevel :: (EventWriter t Route m, MonadWidget t m) => m () -> m ()
-topLevel contents =
+  where
+    makeRequest :: Map ItemId Item -> Map UserId User -> Route -> Maybe (AppRequest, XhrRequest ())
+    makeRequest = undefined
+    makeResponse ::
+         (AppRequest, XhrResponse)
+      -> (AppRequest, Map ItemId Item, Map UserId User, Map FilterType [ItemId])
+    makeResponse = undefined
+
+topLevel :: (EventWriter t Route m, MonadWidget t m) => Dynamic t Route -> m () -> m ()
+topLevel dRoute contents =
   elAttr "div" ("id" =: "app") $ do
     elClass "header" "header" $
       elClass "nav" "inner" $ do
+        let sel = demux (routeToFilter <$> dRoute)
         appLink (RouteItemList FilterBest 1) (pure mempty)
           (elAttr "img" ("class" =: "logo" <> "alt" =: "Logo" <> "src" =: "/logo-48.png") blank)
-        appLink (RouteItemList FilterBest 1) (pure mempty) (text "Top")
-        appLink (RouteItemList FilterNew 1) (pure mempty) (text "New")
-        appLink (RouteItemList FilterShow 1) (pure mempty) (text "Show")
-        appLink (RouteItemList FilterAsk 1) (pure mempty) (text "Ask")
-        appLink (RouteItemList FilterJobs 1) (pure mempty) (text "Jobs")
+        appLink (RouteItemList FilterBest 1) (demuxActive sel FilterBest) (text "Top")
+        appLink (RouteItemList FilterNew 1) (demuxActive sel FilterNew) (text "New")
+        appLink (RouteItemList FilterShow 1) (demuxActive sel FilterShow) (text "Show")
+        appLink (RouteItemList FilterAsk 1) (demuxActive sel FilterAsk) (text "Ask")
+        appLink (RouteItemList FilterJobs 1) (demuxActive sel FilterJobs) (text "Jobs")
         elAttr "a" ("class" =: "github" <> "href" =: "https://github.com/zarybnicky/thesis" <>
                     "target" =: "_blank" <> "rel" =: "noopener") (text "Built with Reflex")
     divClass "view" contents
+  where
+    demuxActive sel f = bool mempty ("class" =: "router-link-active") <$> demuxed sel (Just f)
+    routeToFilter (RouteItemList f _) = Just f
+    routeToFilter _ = Nothing
 
-itemList :: MonadWidget t m => AppState t -> FilterType -> Int -> m ()
-itemList s filterType pageNum =
+itemList :: (MonadReader (AppState t) m, MonadWidget t m) => FilterType -> Int -> m ()
+itemList filterType pageNum =
   divClass "news-view" $ do
-    let dAllIds = (fromMaybe [] <$>) (M.lookup filterType <$> dItemLists s)
+    dItemMap <- asks itemMap
+    dItemLists <- asks itemLists
+    let dAllIds = (fromMaybe [] <$>) (M.lookup filterType <$> dItemLists)
         itemsPerPage = 30 :: Double
         dMaxPage = ceiling . (/ itemsPerPage) . fromIntegral . length <$> dAllIds
         dCurrentIds = take 30 . drop ((pageNum - 1) * 30) <$> dAllIds
-        dItems = restrictItems <$> dItemMap s <*> dCurrentIds
+        dItems = restrictItems <$> dItemMap <*> dCurrentIds
     divClass "news-list-nav" $ do
       elDynAttr "a" (pure makePrevAttrs) (text "< prev")
       el "span" $ display (pure pageNum) >> text "/" >> display dMaxPage
       elDynAttr "a" (makeNextAttrs <$> dMaxPage) (text "more >")
-    void $ divClass "news-list" (simpleList dItems (itemListItem s))
+    void $ divClass "news-list" (simpleList dItems itemListItem)
   where
     makePrevAttrs =
       if 1 < pageNum
@@ -181,8 +211,8 @@ itemList s filterType pageNum =
         then "href" =: ("/" <> filterTypeToUrl filterType <> "/" <> tshow (pageNum + 1))
         else "class" =: "disabled"
 
-itemListItem :: MonadWidget t m => AppState t -> Dynamic t Item -> m ()
-itemListItem s dItem =
+itemListItem :: (MonadReader (AppState t) m, MonadWidget t m) => Dynamic t Item -> m ()
+itemListItem dItem =
   elClass "li" "news-item" $ do
     elClass "span" "score" $ display (itemScore <$> dItem)
     text " "
@@ -196,7 +226,7 @@ itemListItem s dItem =
         text "by "
         userLink (itemBy <$> dItem)
       text " "
-      elClass "span" "time" (timeAgoView (dNow s) (itemTime <$> dItem))
+      elClass "span" "time" (timeAgoView (itemTime <$> dItem))
       text " "
       elDynAttr "span" ("class" =: "comments-link" <!> (bool mempty ("style" =: "display:none") .
                         (== ItemJob) . itemType <$> dItem)) $ do
@@ -210,10 +240,12 @@ itemListItem s dItem =
       Nothing -> "href" =: ("/item/" <> (tshow . unItemId $ itemId x))
       Just url -> "target" =: "_blank" <> "rel" =: "noopener" <> "href" =: url
 
-itemView :: MonadWidget t m => AppState t -> ItemId -> m ()
-itemView s iid =
+itemView :: (MonadReader (AppState t) m, MonadWidget t m) => ItemId -> m ()
+itemView iid =
   divClass "item-view" $ do
-    let dmItem = M.lookup iid <$> dItemMap s
+    dItemMap <- asks itemMap
+    dPendingReqs <- asks pendingReqs
+    let dmItem = M.lookup iid <$> dItemMap
     void $ dyn $ ffor dmItem . maybe blank $ \(item :: Item) -> do
       divClass "item-view-header" $ do
         elAttr "a"
@@ -225,26 +257,27 @@ itemView s iid =
           text " points | by"
           userLink (pure $ itemBy item)
           text " "
-          timeAgoView (dNow s) (pure $ itemTime item)
+          timeAgoView (pure $ itemTime item)
       divClass "item-view-comments" $ do
         elClass "p" "item-view-comments-header" $ do
           text (commentsHeader item)
-          spinner $ ffor (dPending s) (ReqComments iid `elem`)
-        let kids = flip restrictItems (itemKids item) <$> dItemMap s
-        void $ elClass "ul" "comment-children" (simpleList kids (commentView s))
+          spinner $ ffor dPendingReqs (ReqComments iid `elem`)
+        let kids = flip restrictItems (itemKids item) <$> dItemMap
+        void $ elClass "ul" "comment-children" (simpleList kids commentView)
   where
     commentsHeader item =
       if itemDescendants item > 0
         then tshow (itemDescendants item) <> " comments"
         else "No comments yet"
 
-commentView :: MonadWidget t m => AppState t -> Dynamic t Item -> m ()
-commentView s dItem =
+commentView :: (MonadReader (AppState t) m, MonadWidget t m) => Dynamic t Item -> m ()
+commentView dItem =
   elClass "li" "comment" $ do
+    dItemMap <- asks itemMap
     divClass "by" $ do
       userLink (itemBy <$> dItem)
       text " "
-      timeAgoView (dNow s) (itemTime <$> dItem)
+      timeAgoView (itemTime <$> dItem)
     _ <- elDynHtmlAttr' "div" ("class" =: "text") (itemText <$> dItem)
     rec
       dOpen <- foldDyn (const not) True eToggle
@@ -252,8 +285,8 @@ commentView s dItem =
         (e, ()) <- el' "button" (dynText $ toggleText <$> dItem <*> dOpen)
         pure (domEvent Click e)
     _ <- dyn . ffor dOpen . bool blank . void $ do
-      let kids = restrictItems <$> dItemMap s <*> (itemKids <$> dItem)
-      elClass "ul" "comment-children" (simpleList kids (commentView s))
+      let kids = restrictItems <$> dItemMap <*> (itemKids <$> dItem)
+      elClass "ul" "comment-children" (simpleList kids commentView)
     pure ()
   where
     toggleAttrs item open = mconcat
@@ -266,17 +299,17 @@ commentView s dItem =
         then "[+] 1 reply collapsed"
         else "[+] " <> tshow (length $ itemKids item) <> " replies collapsed"
 
-userView :: MonadWidget t m => AppState t -> UserId -> m ()
-userView s uid = do
-  let dmUser = M.lookup uid <$> dUserMap s
-  void . dyn . ffor dmUser $ \case
+userView :: (MonadReader (AppState t) m, MonadWidget t m) => UserId -> m ()
+userView uid = do
+  dUserMap <- asks userMap
+  void . dyn . ffor (M.lookup uid <$> dUserMap) $ \case
     Nothing -> el "h1" (text "User not found.")
     Just user -> do
       el "h1" (text $ "User : " <> unUserId uid)
       elClass "ul" "meta" $ do
         el "li" $ do
           elClass "span" "label" (text "Created: ")
-          timeAgoView (dNow s) (pure (userCreated user))
+          timeAgoView (pure $ userCreated user)
         el "li" $ do
           elClass "span" "label" (text "Karma: ")
           text (tshow (userKarma user))
@@ -288,7 +321,15 @@ userView s uid = do
         text " | "
         elAttr "a" ("href" =: ("https://news.ycombinator.com/threads?id=" <> unUserId uid)) (text "comments")
 
-makeHistoryRouter :: MonadWidget t m => Event t Route -> m (Dynamic t Route)
+makeHistoryRouter ::
+     ( MonadJSM m
+     , MonadJSM (Performable m)
+     , TriggerEvent t m
+     , PerformEvent t m
+     , MonadHold t m
+     )
+  => Event t Route
+  -> m (Dynamic t Route)
 makeHistoryRouter eSetRoute = do
   window <- liftJSM DOM.currentWindowUnchecked
   location <- liftJSM (DOM.getLocation window)
@@ -341,20 +382,21 @@ userLink dUserId =
   let userName = unUserId <$> dUserId
   in elDynAttr "a" ("href" =! ("/user/" <!> userName)) (dynText userName)
 
-timeAgoView :: MonadWidget t m => Dynamic t UTCTime -> Dynamic t UTCTime -> m ()
-timeAgoView dNow' dItemTime = do
-  dynText (getTimeAgo <$> dNow' <*> dItemTime)
+timeAgoView :: (MonadReader (AppState t) m, MonadWidget t m) => Dynamic t UTCTime -> m ()
+timeAgoView dItemTime = do
+  dNow <- asks now
+  dynText (getTimeAgo <$> dNow <*> dItemTime)
   text " ago"
   where
     getTimeAgo :: UTCTime -> UTCTime -> Text
-    getTimeAgo now before =
-      let diff = diffUTCTime now before
+    getTimeAgo tnow before =
+      let diff = diffUTCTime tnow before
       in if | diff < 3600 -> pluralize (floor $ diff / 60) " minute"
             | diff < 86400 -> pluralize (floor $ diff / 3600) " hour"
             | True -> pluralize (floor $ diff / 86400) " day"
 
 restrictItems :: Map ItemId Item -> [ItemId] -> [Item]
-restrictItems itemMap itemIds = M.elems $ M.restrictKeys itemMap (S.fromList itemIds)
+restrictItems items = M.elems . M.restrictKeys items . S.fromList
 
 filterTypeToUrl :: FilterType -> Text
 filterTypeToUrl = \case

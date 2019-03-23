@@ -31,6 +31,7 @@ executable tapaw-hnpwa
                      , lens
                      , jsaddle
                      , jsaddle-warp
+                     , mtl
                      , reflex-dom-core
                      , text
                      , time
