@@ -21,7 +21,7 @@
 
     tapaw-hnpwa = overrideCabal super.tapaw-hnpwa (drv: {
       postFixup = ''
-        if [ -n $out/bin/tapaw-hnpwa.jsexe ]; then
+        if [ ! -e $out/bin/tapaw-hnpwa.jsexe ]; then
           echo "GHC only build? Not compressing JS"
           exit 0
         fi
