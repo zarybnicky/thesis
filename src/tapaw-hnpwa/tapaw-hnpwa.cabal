@@ -32,6 +32,7 @@ executable tapaw-hnpwa
                      , websockets
 
   other-modules:       Tapaw.HNPwa
+                       Tapaw.HNPwa.Types
 
   build-depends:       base >=4.11 && <4.12
                      , aeson

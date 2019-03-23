@@ -18,5 +18,27 @@
 
   overrides = with pkgs.haskell.lib; self: super: {
     generic-lens = dontCheck (super.generic-lens);
+
+    tapaw-hnpwa = overrideCabal super.tapaw-hnpwa (drv: {
+      postFixup = ''
+        if [ -n $out/bin/tapaw-hnpwa.jsexe ]; then
+          echo "GHC only build? Not compressing JS"
+          exit 0
+        fi
+        pushd $out/bin/tapaw-hnpwa.jsexe
+        mv all.js all.unminified.js
+        ${pkgs.closurecompiler}/bin/closure-compiler \
+          all.unminified.js \
+          -O ADVANCED \
+          --externs=all.js.externs \
+          --jscomp_off=checkVars \
+          --create_source_map="all.js.map" \
+          --source_map_format=V3 \
+          > all.js
+        echo "//# sourceMappingURL=all.js.map" >> all.js
+        cp ${./tapaw-hnpwa/static}/* .
+        popd
+      '';
+    });
   };
 })
