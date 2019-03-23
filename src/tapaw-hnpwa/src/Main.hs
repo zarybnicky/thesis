@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
@@ -15,6 +16,7 @@
 
 module Main where
 
+import Control.Lens hiding (element, uncons)
 import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
 import Data.Bool (bool)
@@ -23,6 +25,7 @@ import Data.List (uncons)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
+import Data.Proxy (Proxy(Proxy))
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -55,15 +58,16 @@ k =!? dmVal = maybe mempty (k =:) <$> dmVal
 
 newtype UserId = UserId
   { unUserId :: Text
-  } deriving (Show, Eq)
+  } deriving (Eq, Ord, Show)
 
 newtype ItemId = ItemId
   { unItemId :: Int
-  } deriving (Show, Eq, Ord)
+  } deriving (Eq, Ord, Show)
 
 data AppState t = AppState
   { dNow :: Dynamic t UTCTime
   , dItemMap :: Dynamic t (Map ItemId Item)
+  , dUserMap :: Dynamic t (Map UserId User)
   , dItemLists :: Dynamic t (Map FilterType [ItemId])
   , dPending :: Dynamic t [AppRequest]
   }
@@ -119,60 +123,40 @@ data Route
   | RouteUser UserId
   deriving Show
 
+instance Semigroup Route where
+  (<>) = const id
+
 main :: IO ()
 main = run 3000 $ mainWidgetWithCss $(embedFile "src/index.css") $ do
   t0 <- liftIO getCurrentTime
   dNow' <- fmap _tickInfo_lastUTC <$> clockLossy 1 t0
-  let appState = AppState dNow' (pure M.empty) (pure M.empty) (pure [])
+  let appState = AppState dNow' (pure M.empty) (pure M.empty) (pure M.empty) (pure [])
 
   rec
     ((), eSetRoute) <- runEventWriterT $ do
       dRoute <- makeHistoryRouter eSetRoute
-      dyn $ ffor dRoute $ \case
-        RouteUser uid -> userView dNow' uid
+      topLevel $ void $ dyn $ ffor dRoute $ \case
+        RouteUser uid -> userView appState uid
         RouteItemList f p -> itemList appState f p
         RouteItem i -> itemView appState i
       display dRoute
   blank
 
-filterTypeToUrl :: FilterType -> Text
-filterTypeToUrl = \case
-  FilterBest -> "best"
-  FilterNew -> "new"
-  FilterShow -> "show"
-  FilterAsk -> "ask"
-  FilterJobs -> "jobs"
-
-decodeRoute :: Text -> Route
-decodeRoute x = case uncons (drop 1 $ T.splitOn "/" x) of
-  Just ("best", rest) -> RouteItemList FilterBest (parsePageNum rest)
-  Just ("new", rest) -> RouteItemList FilterNew (parsePageNum rest)
-  Just ("show", rest) -> RouteItemList FilterShow (parsePageNum rest)
-  Just ("ask", rest) -> RouteItemList FilterAsk (parsePageNum rest)
-  Just ("jobs", rest) -> RouteItemList FilterJobs (parsePageNum rest)
-  Just ("item", rest) -> RouteItem (ItemId $ parsePageNum rest)
-  Just ("user", rest) -> RouteUser (UserId . T.intercalate "" $ take 1 rest)
-  _ -> RouteItemList FilterBest 1
-  where
-    parsePageNum :: [Text] -> Int
-    parsePageNum = max 1 . fromMaybe 1 . readMaybe . T.unpack . T.intercalate "" . take 1
-
-encodeRoute :: Route -> Text
-encodeRoute (RouteItemList f p) = "/" <> filterTypeToUrl f <> "/" <> tshow p
-encodeRoute (RouteItem u) = "/item/" <> tshow (unItemId u)
-encodeRoute (RouteUser u) = "/user/" <> unUserId u
-
-makeHistoryRouter :: MonadWidget t m => Event t Route -> m (Dynamic t Route)
-makeHistoryRouter eSetRoute = do
-  window <- liftJSM DOM.currentWindowUnchecked
-  location <- liftJSM (DOM.getLocation window)
-  history <- liftJSM (DOM.getHistory window)
-  iRoute <- liftJSM (getRoute location)
-  eRoute <- wrapDomEvent window (`DOM.on` DOM.popState) (getRoute location)
-  performEvent_ $ DOM.pushState history () ("" :: Text) . Just . encodeRoute <$> eSetRoute
-  holdDyn iRoute $ leftmost [eSetRoute, eRoute]
-  where
-    getRoute loc = (decodeRoute .) . (<>) <$> DOM.getPathname loc <*> DOM.getSearch loc
+topLevel :: (EventWriter t Route m, MonadWidget t m) => m () -> m ()
+topLevel contents =
+  elAttr "div" ("id" =: "app") $ do
+    elClass "header" "header" $
+      elClass "nav" "inner" $ do
+        appLink (RouteItemList FilterBest 1) (pure mempty)
+          (elAttr "img" ("class" =: "logo" <> "alt" =: "Logo" <> "src" =: "/logo-48.png") blank)
+        appLink (RouteItemList FilterBest 1) (pure mempty) (text "Top")
+        appLink (RouteItemList FilterNew 1) (pure mempty) (text "New")
+        appLink (RouteItemList FilterShow 1) (pure mempty) (text "Show")
+        appLink (RouteItemList FilterAsk 1) (pure mempty) (text "Ask")
+        appLink (RouteItemList FilterJobs 1) (pure mempty) (text "Jobs")
+        elAttr "a" ("class" =: "github" <> "href" =: "https://github.com/zarybnicky/thesis" <>
+                    "target" =: "_blank" <> "rel" =: "noopener") (text "Built with Reflex")
+    divClass "view" contents
 
 itemList :: MonadWidget t m => AppState t -> FilterType -> Int -> m ()
 itemList s filterType pageNum =
@@ -226,27 +210,28 @@ itemListItem s dItem =
       Nothing -> "href" =: ("/item/" <> (tshow . unItemId $ itemId x))
       Just url -> "target" =: "_blank" <> "rel" =: "noopener" <> "href" =: url
 
-itemView :: MonadWidget t m => AppState t -> Dynamic t Item -> m ()
-itemView s dItem =
+itemView :: MonadWidget t m => AppState t -> ItemId -> m ()
+itemView s iid =
   divClass "item-view" $ do
-    divClass "item-view-header" $ do
-      elDynAttr "a"
-        ("target" =: "_blank" <!> "href" =!? (itemUrl <$> dItem))
-        (el "h1" (dynText $ itemTitle <$> dItem))
-      hostView dItem
-      elClass "p" "meta" $ do
-        display (itemScore <$> dItem)
-        text " points | by"
-        userLink (itemBy <$> dItem)
-        text " "
-        timeAgoView (dNow s) (itemTime <$> dItem)
-    divClass "item-view-comments" $ do
-      elClass "p" "item-view-comments-header" $ do
-        dynText (commentsHeader <$> dItem)
-        spinner $ ffor2 dItem (dPending s) $ \i reqs ->
-          ReqComments (itemId i) `elem` reqs
-      let kids = restrictItems <$> dItemMap s <*> (itemKids <$> dItem)
-      void $ elClass "ul" "comment-children" (simpleList kids (commentView s))
+    let dmItem = M.lookup iid <$> dItemMap s
+    void $ dyn $ ffor dmItem . maybe blank $ \(item :: Item) -> do
+      divClass "item-view-header" $ do
+        elAttr "a"
+          ("target" =: "_blank" <> "href" =? itemUrl item)
+          (el "h1" (text $ itemTitle item))
+        hostView (pure item)
+        elClass "p" "meta" $ do
+          text (tshow $ itemScore item)
+          text " points | by"
+          userLink (pure $ itemBy item)
+          text " "
+          timeAgoView (dNow s) (pure $ itemTime item)
+      divClass "item-view-comments" $ do
+        elClass "p" "item-view-comments-header" $ do
+          text (commentsHeader item)
+          spinner $ ffor (dPending s) (ReqComments iid `elem`)
+        let kids = flip restrictItems (itemKids item) <$> dItemMap s
+        void $ elClass "ul" "comment-children" (simpleList kids (commentView s))
   where
     commentsHeader item =
       if itemDescendants item > 0
@@ -281,26 +266,56 @@ commentView s dItem =
         then "[+] 1 reply collapsed"
         else "[+] " <> tshow (length $ itemKids item) <> " replies collapsed"
 
-userView :: MonadWidget t m => Dynamic t UTCTime -> Dynamic t (Maybe User) -> m ()
-userView dNow' dmUser = void . dyn . ffor dmUser $ \case
-  Nothing -> el "h1" (text "User not found.")
-  Just user -> do
-    let uid = unUserId (userId user)
-    el "h1" (text $ "User : " <> uid)
-    elClass "ul" "meta" $ do
-      el "li" $ do
-        elClass "span" "label" (text "Created: ")
-        timeAgoView dNow' (pure (userCreated user))
-      el "li" $ do
-        elClass "span" "label" (text "Karma: ")
-        text (tshow (userKarma user))
-      case userAbout user of
-        Nothing -> blank
-        Just about -> void $ elDynHtmlAttr' "div" ("class" =: "about") (pure about)
-    elClass "p" "links" $ do
-      elAttr "a" ("href" =: ("https://news.ycombinator.com/submitted?id=" <> uid)) (text "submissions")
-      text " | "
-      elAttr "a" ("href" =: ("https://news.ycombinator.com/threads?id=" <> uid)) (text "comments")
+userView :: MonadWidget t m => AppState t -> UserId -> m ()
+userView s uid = do
+  let dmUser = M.lookup uid <$> dUserMap s
+  void . dyn . ffor dmUser $ \case
+    Nothing -> el "h1" (text "User not found.")
+    Just user -> do
+      el "h1" (text $ "User : " <> unUserId uid)
+      elClass "ul" "meta" $ do
+        el "li" $ do
+          elClass "span" "label" (text "Created: ")
+          timeAgoView (dNow s) (pure (userCreated user))
+        el "li" $ do
+          elClass "span" "label" (text "Karma: ")
+          text (tshow (userKarma user))
+        case userAbout user of
+          Nothing -> blank
+          Just about -> void $ elDynHtmlAttr' "div" ("class" =: "about") (pure about)
+      elClass "p" "links" $ do
+        elAttr "a" ("href" =: ("https://news.ycombinator.com/submitted?id=" <> unUserId uid)) (text "submissions")
+        text " | "
+        elAttr "a" ("href" =: ("https://news.ycombinator.com/threads?id=" <> unUserId uid)) (text "comments")
+
+makeHistoryRouter :: MonadWidget t m => Event t Route -> m (Dynamic t Route)
+makeHistoryRouter eSetRoute = do
+  window <- liftJSM DOM.currentWindowUnchecked
+  location <- liftJSM (DOM.getLocation window)
+  history <- liftJSM (DOM.getHistory window)
+  iRoute <- liftJSM (getRoute location)
+  eRoute <- wrapDomEvent window (`DOM.on` DOM.popState) (getRoute location)
+  performEvent_ $ DOM.pushState history () ("" :: Text) . Just . encodeRoute <$> eSetRoute
+  holdDyn iRoute $ leftmost [eSetRoute, eRoute]
+  where
+    getRoute loc = (decodeRoute .) . (<>) <$> DOM.getPathname loc <*> DOM.getSearch loc
+
+appLink ::
+     forall t m. (EventWriter t Route m, MonadWidget t m)
+  => Route
+  -> Dynamic t (Map Text Text)
+  -> m ()
+  -> m ()
+appLink r dAttrs inner = do
+  modifyAttrs <- dynamicAttributesToModifyAttributes $ (<> "href" =: encodeRoute r) <$> dAttrs
+  (e, ()) <- element "a" ((def :: ElementConfig EventResult t (DomBuilderSpace m))
+    & modifyAttributes .~ fmapCheap mapKeysToAttributeName modifyAttrs
+    & elementConfig_eventSpec %~
+        addEventSpecFlags
+        (Proxy :: Proxy (DomBuilderSpace m))
+        Click
+        (const preventDefault)) inner
+  tellEvent $ r <$ domEvent Click e
 
 spinner :: MonadWidget t m => Dynamic t Bool -> m ()
 spinner dShow =
@@ -340,6 +355,33 @@ timeAgoView dNow' dItemTime = do
 
 restrictItems :: Map ItemId Item -> [ItemId] -> [Item]
 restrictItems itemMap itemIds = M.elems $ M.restrictKeys itemMap (S.fromList itemIds)
+
+filterTypeToUrl :: FilterType -> Text
+filterTypeToUrl = \case
+  FilterBest -> "best"
+  FilterNew -> "new"
+  FilterShow -> "show"
+  FilterAsk -> "ask"
+  FilterJobs -> "jobs"
+
+decodeRoute :: Text -> Route
+decodeRoute x = case uncons (drop 1 $ T.splitOn "/" x) of
+  Just ("best", rest) -> RouteItemList FilterBest (parsePageNum rest)
+  Just ("new", rest) -> RouteItemList FilterNew (parsePageNum rest)
+  Just ("show", rest) -> RouteItemList FilterShow (parsePageNum rest)
+  Just ("ask", rest) -> RouteItemList FilterAsk (parsePageNum rest)
+  Just ("jobs", rest) -> RouteItemList FilterJobs (parsePageNum rest)
+  Just ("item", rest) -> RouteItem (ItemId $ parsePageNum rest)
+  Just ("user", rest) -> RouteUser (UserId . T.intercalate "" $ take 1 rest)
+  _ -> RouteItemList FilterBest 1
+  where
+    parsePageNum :: [Text] -> Int
+    parsePageNum = max 1 . fromMaybe 1 . readMaybe . T.unpack . T.intercalate "" . take 1
+
+encodeRoute :: Route -> Text
+encodeRoute (RouteItemList f p) = "/" <> filterTypeToUrl f <> "/" <> tshow p
+encodeRoute (RouteItem u) = "/item/" <> tshow (unItemId u)
+encodeRoute (RouteUser u) = "/user/" <> unUserId u
 
 getUrlHost :: Text -> Text
 getUrlHost = T.intercalate "/"
