@@ -16,6 +16,8 @@ pkgs.writeShellScriptBin "ghcid-here" ''
     esac
   done
   shift $(expr $OPTIND - 1)
-  PACKAGE=$(basename ''${1:-"$PWD"})
-  ${ghc.ghcid}/bin/ghcid -W -c "cabal new-repl --ghc-options=-fobject-code $PACKAGE" -T "$MAIN"
+  if [ -n $1 ]; then
+    PACKAGE=$(basename ''${1})
+  fi
+  ${ghc.ghcid}/bin/ghcid -W -c "cabal new-repl --ghc-options=-fobject-code ''${PACKAGE:-}" -T "$MAIN"
 ''

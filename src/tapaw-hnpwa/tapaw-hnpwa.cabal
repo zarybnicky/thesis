@@ -9,7 +9,6 @@ cabal-version:       >=1.10
 
 executable tapaw-hnpwa
   hs-source-dirs:      src
-  main-is:             Main.hs
   default-language:    Haskell2010
   ghc-options:        -Wall
                       -Wcompat
@@ -19,15 +18,25 @@ executable tapaw-hnpwa
                       -Wmonomorphism-restriction
                       -fwarn-tabs
                       -fdiagnostics-color=never
+
   if impl(ghcjs -any)
     ghc-options:      -dedupe
     cpp-options:      -DGHCJS_BROWSER
+    main-is:           Main.hs
+  else
+    main-is:           Main-warp.hs
+    build-depends:     base >=4.11 && <4.12
+                     , wai
+                     , wai-app-static
+                     , warp
+                     , websockets
+
+  other-modules:       Tapaw.HNPwa
 
   build-depends:       base >=4.11 && <4.12
                      , aeson
                      , bytestring
                      , containers
-                     , file-embed
                      , generic-lens
                      , ghcjs-dom
                      , lens
