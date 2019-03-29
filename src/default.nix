@@ -18,6 +18,7 @@
 
   overrides = with pkgs.haskell.lib; self: super: {
     generic-lens = dontCheck (super.generic-lens);
+    extra = dontCheck (super.extra);
 
     tapaw-hnpwa = overrideCabal super.tapaw-hnpwa (drv: {
       postFixup = ''
