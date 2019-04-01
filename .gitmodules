@@ -1,3 +1,9 @@
 [submodule "reflex-platform"]
 	path = reflex-platform
 	url = https://github.com/reflex-frp/reflex-platform/
+[submodule "src/tapaw-hnpwa/preact-hn"]
+	path = src/tapaw-hnpwa/preact-hn
+	url = https://github.com/kristoferbaxter/preact-hn
+[submodule "src/tapaw-hnpwa/vue-hackernews-2.0"]
+	path = src/tapaw-hnpwa/vue-hackernews-2.0
+	url = https://github.com/vuejs/vue-hackernews-2.0
