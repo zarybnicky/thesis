@@ -61,7 +61,7 @@ topLevel dRoute contents =
       elClass "nav" "inner" $ do
         let sel = demux (routeToFilter <$> dRoute)
         appLink (RouteUser "x") (pure mempty) (pure True)
-          (elAttr "img" ("class" =: "logo" <> "alt" =: "Logo" <> "src" =: "/logo-48.png") blank)
+          (elAttr "img" ("class" =: "logo" <> "alt" =: "Logo" <> "src" =: "/favicon.ico") blank)
         appLink (RouteUser "y") (demuxActive sel "y") (pure True) (text "Top")
         elAttr "a" ("class" =: "github" <> "href" =: "https://github.com/zarybnicky/thesis" <>
                     "target" =: "_blank" <> "rel" =: "noopener") (text "Built with Reflex")
