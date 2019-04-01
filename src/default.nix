@@ -4,11 +4,12 @@
     tapaw-7guis = ./tapaw-7guis;
     tapaw-todomvc = ./tapaw-todomvc;
     tapaw-hnpwa = ./tapaw-hnpwa;
+    tapaw-realworld-client = ./tapaw-realworld-client;
   };
 
   shells = {
-    ghc = ["tapaw-core" "tapaw-7guis" "tapaw-todomvc" "tapaw-hnpwa"];
-    ghcjs = ["tapaw-core" "tapaw-7guis" "tapaw-todomvc" "tapaw-hnpwa"];
+    ghc = ["tapaw-core" "tapaw-7guis" "tapaw-todomvc" "tapaw-hnpwa" "tapaw-realworld-client"];
+    ghcjs = ["tapaw-core" "tapaw-7guis" "tapaw-todomvc" "tapaw-hnpwa" "tapaw-realworld-client"];
   };
 
   tools = ghc: [

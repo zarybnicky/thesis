@@ -7,3 +7,6 @@
 [submodule "src/tapaw-hnpwa/vue-hackernews-2.0"]
 	path = src/tapaw-hnpwa/vue-hackernews-2.0
 	url = https://github.com/vuejs/vue-hackernews-2.0
+[submodule "src/tapaw-realworld-client/realworld-e2e-test"]
+	path = src/tapaw-realworld-client/realworld-e2e-test
+	url = https://github.com/anishkny/realworld-e2e-test

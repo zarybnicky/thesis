@@ -4,4 +4,5 @@
  ("tapaw-todomvc" . ((nil . ((dante-target . "tapaw-todomvc")))))
  ("tapaw-hnpwa/src-bin" . ((nil . ((dante-target . "exe:tapaw-hnpwa")))))
  ("tapaw-hnpwa" . ((nil . ((dante-target . "tapaw-hnpwa")))))
+ ("tapaw-realworld-client" . ((nil . ((dante-target . "tapaw-realworld-client")))))
 )
