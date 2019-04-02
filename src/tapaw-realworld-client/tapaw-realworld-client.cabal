@@ -31,10 +31,12 @@ executable tapaw-realworld-client
                      , warp
                      , websockets
 
-  other-modules:       Tapaw.RealWorld.Client
+  other-modules:       Tapaw.RealWorld.API
+                       Tapaw.RealWorld.Client
                        Tapaw.RealWorld.Client.Navigation
                        Tapaw.RealWorld.Client.Types
                        Tapaw.RealWorld.Client.Utils
+                       Tapaw.RealWorld.Types
 
   build-depends:       base >=4.11 && <4.12
                      , aeson
@@ -47,5 +49,6 @@ executable tapaw-realworld-client
                      , jsaddle-warp
                      , mtl
                      , reflex-dom-core
+                     , servant
                      , text
                      , time
