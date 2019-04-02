@@ -1,0 +1,40 @@
+version: '2.2'
+services:
+  mongo:
+    image: mongo:3.3
+    restart: always
+    volumes:
+     - mongo_data:/data/db
+    ports:
+     - 27017:27017
+
+  backend:
+    build: backend
+    environment:
+      - NODE_ENV=production
+      - SECRET=secret
+      - MONGODB_URI=mongodb://mongo/conduit
+    ports:
+      - 2990:3000
+    links:
+      - mongo
+
+  tests:
+    build: puppeteer
+    command: "wait-for-it.sh backend:3000 -- mocha --recursive /tests"
+    environment:
+      - LAUNCH_CHROME_NO_SANDBOX=1
+      - CI=1
+    volumes:
+      - ./tests:/tests
+      - ./screenshots:/screenshots
+    links:
+      - realworld
+
+  realworld:
+    build: dockerhost
+    cap_add: [ 'NET_ADMIN', 'NET_RAW' ]
+    mem_limit: 4M
+
+volumes:
+  mongo_data:
