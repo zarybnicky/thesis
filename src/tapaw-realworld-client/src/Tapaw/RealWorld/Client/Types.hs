@@ -23,7 +23,7 @@ import Text.Read (readMaybe)
 
 data Route
   = RouteUser Text
-  deriving (Show, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 instance Semigroup Route where
   (<>) = const id
