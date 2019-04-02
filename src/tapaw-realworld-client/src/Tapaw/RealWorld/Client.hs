@@ -13,9 +13,9 @@ import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (MonadReader, asks, runReaderT)
 import Data.Bool (bool)
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Char (chr)
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Time (UTCTime(..), getCurrentTime)
 import Language.Javascript.JSaddle (JSM)
 import Reflex.Dom.Core
@@ -72,11 +72,13 @@ headerView dRoute =
       elClass "li" "nav-item" $
         appLink (RouteUser "y") (demuxActive sel (RouteUser "y")) (pure True) $ do
           elClass "i" "ion-compose" blank
-          text "\00A0New Post"
+          nbsp
+          text "New Post"
       elClass "li" "nav-item" $
         appLink (RouteUser "z") (demuxActive sel (RouteUser "z")) (pure True) $ do
           elClass "i" "ion-gear-a" blank
-          text "\00A0Settings"
+          nbsp
+          text "Settings"
       elClass "li" "nav-item" $
         appLink (RouteUser "z") (demuxActive sel (RouteUser "z")) (pure True) $
           text "Sign up"
@@ -175,7 +177,8 @@ profilePage = divClass "profile-page" $ do
     el "p" (text "Cofounder @GoThinkster, lived in Aol's HQ for a few months, kinda looks like Peeta from the Hunger Games")
     elClass "button" "btn btn-sm btn-outline-secondary action-btn" $ do
       elClass "i" "ion-plus-round" blank
-      text "\00A0Follow Eric Simons"
+      nbsp
+      text "Follow Eric Simons"
 
   divClass "container" $ divClass "row" $
     divClass "col-xs-12 col-md-10 offset-md-1" $ do
@@ -272,12 +275,14 @@ articlePage = divClass "article-page" $ do
         elClass "span" "date" (text "January 20th")
       elClass "button" "btn btn-sm btn-outline-secondary" $ do
         elClass "i" "ion-plus-round" blank
-        text "\00A0Follow Eric Simons "
+        nbsp
+        text "Follow Eric Simons "
         elClass "span" "counter" (text "(10)")
-      text "\00A0\00A0"
+      nbsp >> nbsp
       elClass "button" "btn btn-sm btn-outline-secondary" $ do
         elClass "i" "ion-heart" blank
-        text "\00A0Favorite Post "
+        nbsp
+        text "Favorite Post "
         elClass "span" "counter" (text "(29)")
 
   divClass "container page" $ do
@@ -296,12 +301,14 @@ articlePage = divClass "article-page" $ do
         elClass "span" "date" (text "January 20th")
       elClass "button" "btn btn-sm btn-outline-secondary" $ do
         elClass "i" "ion-plus-round" blank
-        text "\00A0Follow Eric Simons "
+        nbsp
+        text "Follow Eric Simons "
         elClass "span" "counter" (text "(10)")
-      text "\00A0"
+      nbsp
       elClass "button" "btn btn-sm btn-outline-secondary" $ do
         elClass "i" "ion-heart" blank
-        text "\00A0Favorite Post "
+        nbsp
+        text "Favorite Post "
         elClass "span" "counter" (text "(29)")
 
     divClass "row" $ divClass "col-xs-12 col-md-8 offset-md-2" $ do
@@ -318,7 +325,7 @@ articlePage = divClass "article-page" $ do
         divClass "card-footer" $ do
           elAttr "a" ("href" =: "" <> "class" =: "comment-author") $
             elAttr "img" ("src" =: "http://i.imgur.com/Qr71crq.jpg" <> "class" =: "comment-author-img") blank
-          text "\00A0"
+          nbsp
           elAttr "a" ("href" =: "" <> "class" =: "comment-author") (text "Jacob Schmidt")
           elClass "span" "date-posted" (text "Dec 29th")
 
@@ -328,9 +335,12 @@ articlePage = divClass "article-page" $ do
         divClass "card-footer" $ do
           elAttr "a" ("href" =: "" <> "class" =: "comment-author") $
             elAttr "img" ("src" =: "http://i.imgur.com/Qr71crq.jpg" <> "class" =: "comment-author-img") blank
-          text "\00A0"
+          nbsp
           elAttr "a" ("href" =: "" <> "class" =: "comment-author") (text "Jacob Schmidt")
           elClass "span" "date-posted" (text "Dec 29th")
           elClass "span" "mod-options" $ do
             elClass "i" "ion-edit" blank
             elClass "i" "ion-trash-a" blank
+
+nbsp :: DomBuilder t m => m ()
+nbsp = text . T.singleton $ chr 160
