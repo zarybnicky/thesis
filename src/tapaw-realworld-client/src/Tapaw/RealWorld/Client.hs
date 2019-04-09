@@ -26,11 +26,11 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Time (UTCTime(..), getCurrentTime)
 import Language.Javascript.JSaddle (JSM)
-import Servant.API
-import Servant.Reflex
 import Reflex.Dom.Core hiding (Client)
+import Servant.Reflex (BaseUrl(..), Client, QParam(..), ReqResult(..), Scheme(..), client, reqSuccess)
 import Tapaw.RealWorld.API (ConduitAPI)
 import Tapaw.RealWorld.Types
+import Tapaw.RealWorld.Client.API
 import Tapaw.RealWorld.Client.Navigation (makeHistoryRouter, appLink, appLinkDyn)
 import Tapaw.RealWorld.Client.Types
 import Tapaw.RealWorld.Client.Utils ((=!), tshow)
@@ -121,6 +121,8 @@ footerView =
       elAttr "a" ("href" =: "https://thinkster.io") (text "Thinkster")
       text ". Code & design licensed under MIT."
 
+-- List of articles pulled from either Feed, Global, or by Tag
+-- Pagination for list of articles
 homePage :: AppStateM t m => m ()
 homePage = divClass "home-page" $ do
   pb <- getPostBuild
@@ -170,6 +172,8 @@ articlePreview dArticle =
       el "p" . dynText $ ffor dArticle (^. field @"description")
       el "span" (text "Read more...")
 
+-- Uses JWT (store the token in localStorage)
+-- Authentication can be easily switched to session/cookie based
 loginRegisterPage :: AppStateM t m => m ()
 loginRegisterPage =
   divClass "auth-page" $ divClass "container page" $
@@ -191,6 +195,8 @@ loginRegisterPage =
                         "type" =: "password" <> "placeholder" =: "Password") blank
       elClass "button" "btn btn-lg btn-primary pull-xs-right" (text "Sign up")
 
+-- Show basic user info
+-- List of articles populated from author's created articles or author's favorited articles
 profilePage :: MonadWidget t m => Text -> m ()
 profilePage userSlug = divClass "profile-page" $ do
   divClass "user-info" $ divClass "container" $
@@ -266,26 +272,65 @@ settingsPage =
                         "type" =: "password" <> "placeholder" =: "Password") blank
       elClass "button" "btn btn-lg btn-primary pull-xs-right" (text "Update Settings")
 
-createEditArticlePage :: MonadWidget t m => Maybe Text -> m ()
+createEditArticlePage :: AppStateM t m => Maybe Text -> m ()
 createEditArticlePage mArticleSlug =
   divClass "editor-page" $ divClass "container page" $
       divClass "row" $ divClass "col-md-10 offset-md-1 col-xs-12" $
       el "form" $ el "fieldset" $ do
-    elClass "fieldset" "form-group" $
-      elAttr "input" ("type" =: "text" <> "class" =: "form-control form-control-lg" <>
-                      "placeholder" =: "Article Title") blank
-    elClass "fieldset" "form-group" $
-      elAttr "input" ("type" =: "text" <> "class" =: "form-control" <>
-                      "placeholder" =: "What's this article about?") blank
-    elClass "fieldset" "form-group" $
-      elAttr "textarea" ("class" =: "form-control" <> "rows" =: "8" <>
-                         "placeholder" =: "Write your article (in markdown)") blank
-    elClass "fieldset" "form-group" $ do
-      elAttr "input" ("type" =: "text" <> "class" =: "form-control" <>
-                      "placeholder" =: "Enter tags") blank
-      divClass "tag-list" blank
-    elClass "button" "btn btn-lg btn-primary pull-xs-right" (text "Publish Article")
+    pb <- getPostBuild
+    api <- getApi
+    eInit <- case mArticleSlug of
+      Nothing -> pure never
+      Just a -> fmap (^. field @"article") . fmapMaybe reqSuccess <$> getArticle api (pure (Right a)) pb
 
+    dTitle <- fmap value . elClass "fieldset" "form-group" $
+      inputElement $ def
+        & inputElementConfig_setValue .~ ffor eInit (^. field @"title")
+        & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("type" =: "text" <> "class" =: "form-control form-control-lg" <> "placeholder" =: "Article Title")
+    dDesc <- fmap value . elClass "fieldset" "form-group" $
+      inputElement $ def
+        & inputElementConfig_setValue .~ ffor eInit (^. field @"description")
+        & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("type" =: "text" <> "class" =: "form-control" <> "placeholder" =: "What's this article about?")
+    dBody <- fmap value . elClass "fieldset" "form-group" $
+      textAreaElement $ def
+        & textAreaElementConfig_setValue .~ ffor eInit (^. field @"body")
+        & textAreaElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("class" =: "form-control" <> "rows" =: "8" <> "placeholder" =: "Write your article (in markdown)")
+    dTags <- elClass "fieldset" "form-group" $ do
+      rec
+        dTag <- inputElement $ def
+          & inputElementConfig_setValue .~ ("" <$ keypress Enter dTag)
+          & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+              ("type" =: "text" <> "class" =: "form-control" <> "placeholder" =: "Enter tags")
+        tags <- foldDyn ($) [] $ leftmost
+          [ ffor eInit (const . (^. field @"tagList"))
+          , (:) <$> current (value dTag) <@ keypress Enter dTag
+          , ffor eDelete (\x -> filter (/= x))
+          ]
+        eDelete <- fmap (switchDyn . fmap leftmost) . divClass "tag-list" $ simpleList tags $ \t ->
+          elClass "span" "tag-default tag-pill" $ do
+            (btn, ()) <- elClass' "i" "ion-close-round" blank
+            dynText t
+            pure $ current t <@ domEvent Click btn
+      pure tags
+    (btn, ()) <- elClass' "button" "btn btn-lg btn-primary pull-xs-right" (text "Publish Article")
+    let dArticle = NewArticle <$> dTitle <*> dDesc <*> dBody <*> dTags
+    eRes <- case mArticleSlug of
+      Nothing -> createArticle api (Right . NewArticleRequest <$> dArticle) (domEvent Click btn)
+      Just a -> updateArticle api (pure $ Right a) (Right . UpdateArticleRequest <$> dArticle) (domEvent Click btn)
+    let (eErr, eRedirect) = fanEither . ffor eRes $ \case
+          ResponseSuccess _ a _ -> Right (RouteArticle $ a ^. field @"article" . field @"slug")
+          ResponseFailure _ e _ -> Left e
+          RequestFailure _ e -> Left e
+    tellEvent eRedirect
+    dynText =<< holdDyn "" (leftmost ["" <$ domEvent Click btn, eErr])
+
+-- Delete article button (only shown to article's author)
+-- Render markdown from server client side
+-- Comments section at bottom of page
+-- Delete comment button (only shown to comment's author)
 articlePage :: MonadWidget t m => Text -> m ()
 articlePage articleSlug = divClass "article-page" $ do
   divClass "banner" $ divClass "container" $ do
@@ -367,38 +412,3 @@ articlePage articleSlug = divClass "article-page" $ do
 
 nbsp :: DomBuilder t m => m ()
 nbsp = text . T.singleton $ chr 160
-
-getArticles ::
-     forall t m.
-     Client t m ConduitAPI ()
-  -> Dynamic t (QParam (Maybe Text))
-  -> Dynamic t (QParam (Maybe Text))
-  -> Dynamic t (QParam (Maybe Text))
-  -> Dynamic t (QParam (Maybe Int))
-  -> Dynamic t (QParam (Maybe Int))
-  -> Event t ()
-  -> m (Event t (ReqResult () MultipleArticlesResponse))
-getArticles (f :<|> _) = f
-
-getArticle ::
-     forall t m.
-     Client t m ConduitAPI ()
-  -> Dynamic t (Either Text Text)
-  -> Event t ()
-  -> m (Event t (ReqResult () SingleArticleResponse))
-getArticle (_ :<|> f :<|> _) = f
-
-getArticleComments ::
-     forall t m.
-     Client t m ConduitAPI ()
-  -> Dynamic t (Either Text Text)
-  -> Event t ()
-  -> m (Event t (ReqResult () MultipleCommentsResponse))
-getArticleComments (_ :<|> _ :<|> f :<|> _) = f
-
-tagsGet ::
-     forall t m.
-     Client t m ConduitAPI ()
-  -> Event t ()
-  -> m (Event t (ReqResult () TagsResponse))
-tagsGet (_ :<|> _ :<|> _ :<|> f :<|> _) = f

@@ -19,8 +19,8 @@ type ConduitAPI
     :> QueryParam "tag" (Maybe Text)
     :> QueryParam "author" (Maybe Text)
     :> QueryParam "favorited" (Maybe Text)
-    :> QueryParam "limit" (Maybe Int)
-    :> QueryParam "offset" (Maybe Int)
+    :> QueryParam "limit" Int
+    :> QueryParam "offset" Int
     :> Verb 'GET 200 '[JSON] MultipleArticlesResponse -- 'getArticles' route
   :<|> "articles" :> Capture "slug" Text :> Verb 'GET 200 '[JSON] SingleArticleResponse -- 'getArticle' route
   :<|> "articles" :> Capture "slug" Text :> "comments" :> Verb 'GET 200 '[JSON] MultipleCommentsResponse -- 'getArticleComments' route

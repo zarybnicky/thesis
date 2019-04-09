@@ -20,7 +20,6 @@ module Tapaw.RealWorld.Types
   , SingleArticleResponse(..)
   , SingleCommentResponse(..)
   , TagsResponse(..)
-  , UpdateArticle(..)
   , UpdateArticleRequest(..)
   , UpdateUserRequest(..)
   , User(..)
@@ -85,18 +84,12 @@ data NewArticle = NewArticle
   , tagList :: [Text]
   } deriving (Show, Eq, Generic, FromJSON, ToJSON)
 
-data UpdateArticle = UpdateArticle
-  { title :: Text
-  , description :: Text
-  , body :: Text
-  } deriving (Show, Eq, Generic, FromJSON, ToJSON)
-
 newtype NewArticleRequest = NewArticleRequest
   { article :: NewArticle
   } deriving (Show, Eq, Generic, FromJSON, ToJSON)
 
 newtype UpdateArticleRequest = UpdateArticleRequest
-  { article :: UpdateArticle
+  { article :: NewArticle
   } deriving (Show, Eq, Generic, FromJSON, ToJSON)
 
 newtype SingleArticleResponse = SingleArticleResponse
