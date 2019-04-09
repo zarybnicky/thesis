@@ -1,32 +1,49 @@
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Tapaw.RealWorld.Client
   ( frontend
   ) where
 
+import Control.Lens ((^.))
 import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (MonadReader, asks, runReaderT)
 import Data.Bool (bool)
 import Data.Char (chr)
+import Data.Generics.Product (field)
+import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Time (UTCTime(..), getCurrentTime)
 import Language.Javascript.JSaddle (JSM)
-import Reflex.Dom.Core
+import Servant.API
+import Servant.Reflex
+import Reflex.Dom.Core hiding (Client)
+import Tapaw.RealWorld.API (ConduitAPI)
+import Tapaw.RealWorld.Types
 import Tapaw.RealWorld.Client.Navigation (makeHistoryRouter, appLink, appLinkDyn)
 import Tapaw.RealWorld.Client.Types
-import Tapaw.RealWorld.Client.Utils ((<!>), (=?), (=!), tshow)
+import Tapaw.RealWorld.Client.Utils ((=!), tshow)
 
 
 data AppState t = AppState
-  { now :: Dynamic t UTCTime
+  { stateNow :: Dynamic t UTCTime
+  , stateBaseUrl :: Dynamic t BaseUrl
+  , stateUser :: Dynamic t (Maybe User)
+  , stateRoute :: Demux t Route
   }
+
+type AppStateM t m = (MonadReader (AppState t) m, EventWriter t Route m, MonadWidget t m)
 
 headWidget :: DomBuilder t m => m ()
 headWidget = do
@@ -39,51 +56,61 @@ headWidget = do
   elAttr "link" ("rel" =: "stylesheet" <> "href" =: "/index.css") blank
 
 frontend :: JSM ()
-frontend = mainWidgetWithHead headWidget $ do
+frontend = mainWidgetWithHead headWidget app
+
+getApi :: forall t m. AppStateM t m => m (Client t m ConduitAPI ())
+getApi = client (Proxy @ConduitAPI) (Proxy @m) (Proxy @()) <$> asks stateBaseUrl
+
+app :: forall t m. MonadWidget t m => m ()
+app = do
   t0 <- liftIO getCurrentTime
   dNow <- fmap _tickInfo_lastUTC <$> clockLossy 1 t0
+  let url = constDyn (BaseFullUrl Http "localhost" 2990 "/api") :: Dynamic t BaseUrl
 
   rec
-    let appState = AppState dNow
+    dUser <- holdDyn Nothing never
+    let appState :: AppState t
+        appState = AppState dNow url dUser (demux dRoute)
 
-    dRoute <- makeHistoryRouter (RouteUser "x") eSetRoute
+    dRoute <- makeHistoryRouter RouteHome eSetRoute
     ((), eSetRoute) <- flip runReaderT appState . runEventWriterT $
-      topLevel dRoute . void . dyn . ffor dRoute $ \case
-        RouteUser _ -> blank
+      topLevel . void . dyn . ffor dRoute $ \case
+        RouteHome -> homePage
+        RouteLogin -> loginRegisterPage
+        RouteRegister -> loginRegisterPage
+        RouteProfile x -> profilePage x
+        RouteSettings -> settingsPage
+        RouteEditor mx -> createEditArticlePage mx
+        RouteArticle x -> articlePage x
   blank
 
-topLevel ::
-     (EventWriter t Route m, MonadWidget t m) => Dynamic t Route -> m () -> m ()
-topLevel dRoute contents =
-  elAttr "div" ("id" =: "app") $ do
-    headerView dRoute
-    contents
-    footerView
+topLevel :: AppStateM t m => m () -> m ()
+topLevel contents =
+  elAttr "div" ("id" =: "app") $ headerView >> contents >> footerView
 
-headerView :: (EventWriter t Route m, MonadWidget t m) => Dynamic t Route -> m ()
-headerView dRoute =
+headerView :: forall t m. AppStateM t m => m ()
+headerView =
   elClass "nav" "navbar navbar-light" $ divClass "container" $ do
     elAttr "a" ("class" =: "navbar-brand" <> "href" =: "/index.html") (text "conduit")
     elClass "ul" "nav navbar-nav pull-xs-right" $ do
-      let sel = demux dRoute
-      -- TODO: Add "active" class when you're on that page
-      elClass "li" "nav-item" $
-        appLink (RouteUser "x") (demuxActive sel (RouteUser "x")) (pure True) (text "Home")
-      elClass "li" "nav-item" $
-        appLink (RouteUser "y") (demuxActive sel (RouteUser "y")) (pure True) $ do
-          elClass "i" "ion-compose" blank
-          nbsp
-          text "New Post"
-      elClass "li" "nav-item" $
-        appLink (RouteUser "z") (demuxActive sel (RouteUser "z")) (pure True) $ do
-          elClass "i" "ion-gear-a" blank
-          nbsp
-          text "Settings"
-      elClass "li" "nav-item" $
-        appLink (RouteUser "z") (demuxActive sel (RouteUser "z")) (pure True) $
-          text "Sign up"
+      sel <- asks stateRoute
+      dMenuItems <- ffor (asks stateUser) $ fmap (\case
+        Nothing ->
+          [ (RouteHome, text "Home")
+          , (RouteLogin, text "Sign in")
+          , (RouteRegister, text "Sign up")
+          ]
+        Just u ->
+          [ (RouteHome, text "home")
+          , (RouteEditor Nothing, elClass "i" "ion-compose" blank >> nbsp >> text "New Post")
+          , (RouteSettings, elClass "i" "ion-gear-a" blank >> nbsp >> text "Settings")
+          , let un = u ^. field @"username" in (RouteProfile un, text un)
+          ])
+      void $ simpleList dMenuItems (menuLink sel)
   where
-    demuxActive sel f = ("class" =:) . bool "nav-link" "nav-link active" <$> demuxed sel f
+    menuLink :: Demux t Route -> Dynamic t (Route, m ()) -> m ()
+    menuLink sel drc = void . dyn . ffor drc $ \(r, c) -> elClass "li" "nav-item" $
+      appLink r (("class" =:) . bool "nav-link" "nav-link active" <$> demuxed sel r) (pure True) c
 
 footerView :: MonadWidget t m => m ()
 footerView =
@@ -94,8 +121,9 @@ footerView =
       elAttr "a" ("href" =: "https://thinkster.io") (text "Thinkster")
       text ". Code & design licensed under MIT."
 
-homePage :: MonadWidget t m => m ()
+homePage :: AppStateM t m => m ()
 homePage = divClass "home-page" $ do
+  pb <- getPostBuild
   divClass "banner" $ divClass "container" $ do
     elClass "h1" "logo-font" (text "conduit")
     el "p" (text "A place to share your knowledge.")
@@ -107,53 +135,48 @@ homePage = divClass "home-page" $ do
         elClass "li" "nav-item" $
           elAttr "a" ("class" =: "nav-link active" <> "href" =: "") (text "Global Feed")
 
-      divClass "article-preview" $ do
-        divClass "article-meta" $ do
-          elAttr "a" ("href" =: "profile.html") $
-            elAttr "img" ("src"  =: "http://i.imgur.com/Qr71crq.jpg") blank
-          divClass "info" $ do
-            elAttr "a" ("class" =: "author" <> "href" =: "") (text "Eric Simons")
-            elClass "span" "date" (text "January 20th")
-          elClass "button" "btn btn-outline-primary btn-sm pull-xs-right" $ do
-            elClass "i" "ion-heart" blank
-            text "29"
-        elAttr "a" ("class" =: "preview-link" <> "href" =: "") $ do
-          el "h1" (text "How to build webapps that scale")
-          el "p" (text "This is the description for the post.")
-          el "span" (text "Read more...")
-
-      divClass "article-preview" $ do
-        divClass "article-meta" $ do
-          elAttr "a" ("href" =: "/profile.html") $
-            elAttr "img" ("src" =: "http://i.imgur.com/N4VcUeJ.jpg") blank
-          divClass "info" $ do
-            elAttr "a" ("href" =: "" <> "class" =: "author") (text "Albert Pai")
-            elClass "span" "date" (text "January 20th")
-          elClass "button" "btn btn-outline-primary btn-sm pull-xs-right" $ do
-            elClass "i" "ion-heart" blank
-            text "32"
-        elAttr "a" ("href" =: "" <> "class" =: "preview-link") $ do
-          el "h1" (text "The song you won't ever stop singing. No matter how hard you try.")
-          el "p" (text "This is the description for the post.")
-          el "span" (text "Read more...")
+      api <- getApi
+      eArticles <- fmap (^. field @"articles") . fmapMaybe reqSuccess <$> getArticles api
+        (pure QNone) (pure QNone) (pure QNone) (pure QNone) (pure QNone) pb
+      dArticles <- holdDyn [] eArticles
+      void $ simpleList dArticles articlePreview
 
     divClass "col-md-3" $ divClass "sidebar" $ do
       el "p" (text "Popular Tags")
       elClass "div" "tag-list" $ do
-        elAttr "a" ("href" =: "" <> "class" =: "tag-pill tag-default") (text "programming")
-        elAttr "a" ("href" =: "" <> "class" =: "tag-pill tag-default") (text "emberjs")
-        elAttr "a" ("href" =: "" <> "class" =: "tag-pill tag-default") (text "angularjs")
-        elAttr "a" ("href" =: "" <> "class" =: "tag-pill tag-default") (text "react")
-        elAttr "a" ("href" =: "" <> "class" =: "tag-pill tag-default") (text "mean")
-        elAttr "a" ("href" =: "" <> "class" =: "tag-pill tag-default") (text "node")
-        elAttr "a" ("href" =: "" <> "class" =: "tag-pill tag-default") (text "rails")
+        api <- getApi
+        eTags <- fmap (^. field @"tags") . fmapMaybe reqSuccess <$> tagsGet api pb
+        dTags <- holdDyn [] eTags
+        void . simpleList dTags $ \t ->
+          elAttr "a" ("href" =: "" <> "class" =: "tag-pill tag-default") (dynText t)
 
-loginRegisterPage :: MonadWidget t m => m ()
+articlePreview :: AppStateM t m => Dynamic t Article -> m ()
+articlePreview dArticle =
+  divClass "article-preview" $ do
+    let dUsername = ffor dArticle (^. field @"author" . field @"username")
+        dImage = ffor dArticle (^. field @"author" . field @"image")
+        dSlug = ffor dArticle (^. field @"slug")
+    divClass "article-meta" $ do
+      appLinkDyn (RouteProfile <$> dUsername) mempty (pure True) $
+        elDynAttr "img" ("src"  =! dImage) blank
+      divClass "info" $ do
+        appLinkDyn (RouteProfile <$> dUsername) (pure $ "class" =: "author") (pure True) (dynText dUsername)
+        elClass "span" "date" (text "January 20th")
+        elClass "button" "btn btn-outline-primary btn-sm pull-xs-right" $ do
+          elClass "i" "ion-heart" blank
+          dynText $ ffor dArticle (tshow . (^. field @"favoritesCount"))
+    appLinkDyn (RouteArticle <$> dSlug) (pure $ "class" =: "preview-link") (pure True) $ do
+      el "h1" . dynText $ ffor dArticle (^. field @"title")
+      el "p" . dynText $ ffor dArticle (^. field @"description")
+      el "span" (text "Read more...")
+
+loginRegisterPage :: AppStateM t m => m ()
 loginRegisterPage =
   divClass "auth-page" $ divClass "container page" $
       divClass "row" $ divClass "col-md-6 offset-md-3 col-xs-12" $ do
     elClass "h1" "text-xs-center" (text "Sign up")
-    elClass "p" "text-xs-center" $ elAttr "a" ("href" =: "") (text "Have an account?")
+    elClass "p" "text-xs-center" $
+      appLink RouteLogin (pure mempty) (pure True) (text "Have an account?")
     elClass "ul" "error-messages" $ el "li" (text "That email is already taken")
 
     el "form" $ do
@@ -168,8 +191,8 @@ loginRegisterPage =
                         "type" =: "password" <> "placeholder" =: "Password") blank
       elClass "button" "btn btn-lg btn-primary pull-xs-right" (text "Sign up")
 
-profilePage :: MonadWidget t m => m ()
-profilePage = divClass "profile-page" $ do
+profilePage :: MonadWidget t m => Text -> m ()
+profilePage userSlug = divClass "profile-page" $ do
   divClass "user-info" $ divClass "container" $
       divClass "row" $ divClass "col-xs-12 col-md-10 offset-md-1" $ do
     elAttr "img" ("src" =: "http://i.imgur.com/Qr71crq.jpg" <> "class" =: "user-img") blank
@@ -243,8 +266,8 @@ settingsPage =
                         "type" =: "password" <> "placeholder" =: "Password") blank
       elClass "button" "btn btn-lg btn-primary pull-xs-right" (text "Update Settings")
 
-createEditArticlePage :: MonadWidget t m => m ()
-createEditArticlePage =
+createEditArticlePage :: MonadWidget t m => Maybe Text -> m ()
+createEditArticlePage mArticleSlug =
   divClass "editor-page" $ divClass "container page" $
       divClass "row" $ divClass "col-md-10 offset-md-1 col-xs-12" $
       el "form" $ el "fieldset" $ do
@@ -263,8 +286,8 @@ createEditArticlePage =
       divClass "tag-list" blank
     elClass "button" "btn btn-lg btn-primary pull-xs-right" (text "Publish Article")
 
-articlePage :: MonadWidget t m => m ()
-articlePage = divClass "article-page" $ do
+articlePage :: MonadWidget t m => Text -> m ()
+articlePage articleSlug = divClass "article-page" $ do
   divClass "banner" $ divClass "container" $ do
     el "h1" (text "How to build webapps that scale")
     divClass "article-meta" $ do
@@ -344,3 +367,38 @@ articlePage = divClass "article-page" $ do
 
 nbsp :: DomBuilder t m => m ()
 nbsp = text . T.singleton $ chr 160
+
+getArticles ::
+     forall t m.
+     Client t m ConduitAPI ()
+  -> Dynamic t (QParam (Maybe Text))
+  -> Dynamic t (QParam (Maybe Text))
+  -> Dynamic t (QParam (Maybe Text))
+  -> Dynamic t (QParam (Maybe Int))
+  -> Dynamic t (QParam (Maybe Int))
+  -> Event t ()
+  -> m (Event t (ReqResult () MultipleArticlesResponse))
+getArticles (f :<|> _) = f
+
+getArticle ::
+     forall t m.
+     Client t m ConduitAPI ()
+  -> Dynamic t (Either Text Text)
+  -> Event t ()
+  -> m (Event t (ReqResult () SingleArticleResponse))
+getArticle (_ :<|> f :<|> _) = f
+
+getArticleComments ::
+     forall t m.
+     Client t m ConduitAPI ()
+  -> Dynamic t (Either Text Text)
+  -> Event t ()
+  -> m (Event t (ReqResult () MultipleCommentsResponse))
+getArticleComments (_ :<|> _ :<|> f :<|> _) = f
+
+tagsGet ::
+     forall t m.
+     Client t m ConduitAPI ()
+  -> Event t ()
+  -> m (Event t (ReqResult () TagsResponse))
+tagsGet (_ :<|> _ :<|> _ :<|> f :<|> _) = f
