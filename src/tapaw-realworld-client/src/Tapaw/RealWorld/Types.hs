@@ -21,6 +21,7 @@ module Tapaw.RealWorld.Types
   , SingleCommentResponse(..)
   , TagsResponse(..)
   , UpdateArticleRequest(..)
+  , UpdateUser(..)
   , UpdateUserRequest(..)
   , User(..)
   , UserResponse(..)
@@ -118,6 +119,14 @@ data NewUser = NewUser
   , password :: Text
   } deriving (Show, Eq, Generic, FromJSON, ToJSON)
 
+data UpdateUser = UpdateUser
+  { username :: Text
+  , email :: Text
+  , bio :: Text
+  , image :: Text
+  , password :: Maybe Text
+  } deriving (Show, Eq, Generic, FromJSON, ToJSON)
+
 data Profile = Profile
   { username :: Text
   , bio :: Text
@@ -130,7 +139,7 @@ newtype NewUserRequest = NewUserRequest
   } deriving (Show, Eq, Generic, FromJSON, ToJSON)
 
 newtype UpdateUserRequest = UpdateUserRequest
-  { user :: User
+  { user :: UpdateUser
   } deriving (Show, Eq, Generic, FromJSON, ToJSON)
 
 newtype UserResponse = UserResponse

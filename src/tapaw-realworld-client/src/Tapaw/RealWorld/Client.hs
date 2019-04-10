@@ -15,7 +15,7 @@ module Tapaw.RealWorld.Client
   ) where
 
 import Control.Lens ((^.))
-import Control.Monad (void)
+import Control.Monad (forM_, void)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (MonadReader, asks, runReaderT)
 import Data.Bool (bool)
@@ -33,7 +33,7 @@ import Tapaw.RealWorld.Types
 import Tapaw.RealWorld.Client.API
 import Tapaw.RealWorld.Client.Navigation (makeHistoryRouter, appLink, appLinkDyn)
 import Tapaw.RealWorld.Client.Types
-import Tapaw.RealWorld.Client.Utils ((=!), tshow)
+import Tapaw.RealWorld.Client.Utils ((=!), (<!>), tshow)
 
 
 data AppState t = AppState
@@ -76,8 +76,8 @@ app = do
     ((), eSetRoute) <- flip runReaderT appState . runEventWriterT $
       topLevel . void . dyn . ffor dRoute $ \case
         RouteHome -> homePage
-        RouteLogin -> loginRegisterPage
-        RouteRegister -> loginRegisterPage
+        RouteLogin -> loginPage
+        RouteRegister -> registerPage
         RouteProfile x -> profilePage x
         RouteSettings -> settingsPage
         RouteEditor mx -> createEditArticlePage mx
@@ -158,15 +158,7 @@ articlePreview dArticle =
     let dUsername = ffor dArticle (^. field @"author" . field @"username")
         dImage = ffor dArticle (^. field @"author" . field @"image")
         dSlug = ffor dArticle (^. field @"slug")
-    divClass "article-meta" $ do
-      appLinkDyn (RouteProfile <$> dUsername) mempty (pure True) $
-        elDynAttr "img" ("src"  =! dImage) blank
-      divClass "info" $ do
-        appLinkDyn (RouteProfile <$> dUsername) (pure $ "class" =: "author") (pure True) (dynText dUsername)
-        elClass "span" "date" (text "January 20th")
-        elClass "button" "btn btn-outline-primary btn-sm pull-xs-right" $ do
-          elClass "i" "ion-heart" blank
-          dynText $ ffor dArticle (tshow . (^. field @"favoritesCount"))
+    divClass "article-meta" (articleMeta dArticle False)
     appLinkDyn (RouteArticle <$> dSlug) (pure $ "class" =: "preview-link") (pure True) $ do
       el "h1" . dynText $ ffor dArticle (^. field @"title")
       el "p" . dynText $ ffor dArticle (^. field @"description")
@@ -174,40 +166,90 @@ articlePreview dArticle =
 
 -- Uses JWT (store the token in localStorage)
 -- Authentication can be easily switched to session/cookie based
-loginRegisterPage :: AppStateM t m => m ()
-loginRegisterPage =
+loginPage :: AppStateM t m => m ()
+loginPage =
   divClass "auth-page" $ divClass "container page" $
-      divClass "row" $ divClass "col-md-6 offset-md-3 col-xs-12" $ do
+      divClass "row" $ divClass "col-md-6 offset-md-3 col-xs-12" $ mdo
+    elClass "h1" "text-xs-center" (text "Sign in")
+    elClass "p" "text-xs-center" $
+      appLink RouteRegister (pure mempty) (pure True) (text "Need an account?")
+    elClass "ul" "error-messages" . el "li" . dynText =<< holdDyn "" eErr
+
+    (form, (dReq, eClick)) <- el' "form" $ do
+      dEmail <- fmap value . elClass "fieldset" "form-group" $
+        inputElement $ def
+          & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("class" =: "form-control form-control-lg" <> "type" =: "email" <> "placeholder" =: "Email")
+      dPassword <- fmap value . elClass "fieldset" "form-group" $
+        inputElement $ def
+          & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("class" =: "form-control form-control-lg" <> "type" =: "password" <> "placeholder" =: "Password")
+      (btn, ()) <- elClass' "button" "btn btn-lg btn-primary pull-xs-right" (text "Sign up")
+      pure (LoginUser <$> dEmail <*> dPassword, domEvent Click btn)
+    api <- getApi
+    eRes <- login api (Right . LoginUserRequest <$> dReq) (domEvent Submit form <> eClick)
+    let (eErr, eUser) = fanEither . ffor eRes $ \case
+          ResponseSuccess _ r _ -> Right (r ^. field @"user")
+          ResponseFailure _ e _ -> Left e
+          RequestFailure _ e -> Left e
+    -- TODO: store token
+    tellEvent $ RouteHome <$ eUser
+    pure ()
+
+registerPage :: AppStateM t m => m ()
+registerPage =
+  divClass "auth-page" $ divClass "container page" $
+      divClass "row" $ divClass "col-md-6 offset-md-3 col-xs-12" $ mdo
     elClass "h1" "text-xs-center" (text "Sign up")
     elClass "p" "text-xs-center" $
       appLink RouteLogin (pure mempty) (pure True) (text "Have an account?")
-    elClass "ul" "error-messages" $ el "li" (text "That email is already taken")
+    elClass "ul" "error-messages" . el "li" . dynText =<< holdDyn "" eErr
 
-    el "form" $ do
-      elClass "fieldset" "form-group" $
-        elAttr "input" ("class" =: "form-control form-control-lg" <>
-                        "type" =: "text" <> "placeholder" =: "Your Name") blank
-      elClass "fieldset" "form-group" $
-        elAttr "input" ("class" =: "form-control form-control-lg" <>
-                        "type" =: "text" <> "placeholder" =: "Email") blank
-      elClass "fieldset" "form-group" $
-        elAttr "input" ("class" =: "form-control form-control-lg" <>
-                        "type" =: "password" <> "placeholder" =: "Password") blank
-      elClass "button" "btn btn-lg btn-primary pull-xs-right" (text "Sign up")
+    (form, (dReq, eClick)) <- el' "form" $ do
+      dName <- fmap value . elClass "fieldset" "form-group" $
+        inputElement $ def
+          & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("class" =: "form-control form-control-lg" <> "placeholder" =: "Your Name")
+      dEmail <- fmap value . elClass "fieldset" "form-group" $
+        inputElement $ def
+          & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("class" =: "form-control form-control-lg" <> "type" =: "email" <> "placeholder" =: "Email")
+      dPassword <- fmap value . elClass "fieldset" "form-group" $
+        inputElement $ def
+          & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("class" =: "form-control form-control-lg" <> "type" =: "password" <> "placeholder" =: "Password")
+      (btn, ()) <- elClass' "button" "btn btn-lg btn-primary pull-xs-right" (text "Sign up")
+      pure (NewUser <$> dName <*> dEmail <*> dPassword, domEvent Click btn)
+    api <- getApi
+    eRes <- createUser api (Right . NewUserRequest <$> dReq) (domEvent Submit form <> eClick)
+    let (eErr, eUser) = fanEither . ffor eRes $ \case
+          ResponseSuccess _ r _ -> Right (r ^. field @"user")
+          ResponseFailure _ e _ -> Left e
+          RequestFailure _ e -> Left e
+    -- TODO: store token
+    tellEvent $ RouteHome <$ eUser
 
 -- Show basic user info
 -- List of articles populated from author's created articles or author's favorited articles
-profilePage :: MonadWidget t m => Text -> m ()
+profilePage :: AppStateM t m => Text -> m ()
 profilePage userSlug = divClass "profile-page" $ do
+  pb <- getPostBuild
+  api <- getApi
+  eUser <- fmapMaybe reqSuccess <$> getProfileByUsername api (pure $ Right userSlug) pb
+  dUser <- holdDyn (Profile "" "" "" False) (ffor eUser (^. field @"profile"))
+
   divClass "user-info" $ divClass "container" $
       divClass "row" $ divClass "col-xs-12 col-md-10 offset-md-1" $ do
-    elAttr "img" ("src" =: "http://i.imgur.com/Qr71crq.jpg" <> "class" =: "user-img") blank
-    el "h4" (text "Eric Simons")
-    el "p" (text "Cofounder @GoThinkster, lived in Aol's HQ for a few months, kinda looks like Peeta from the Hunger Games")
+    elDynAttr "img" ("class" =: "user-img" <!> "src" =! ((^. field @"image") <$> dUser)) blank
+    el "h4" . dynText $ (^. field @"username") <$> dUser
+    el "p" . dynText $ (^. field @"bio") <$> dUser
     elClass "button" "btn btn-sm btn-outline-secondary action-btn" $ do
       elClass "i" "ion-plus-round" blank
       nbsp
       text "Follow Eric Simons"
+
+  eFeed <- getArticles api (pure QNone) (pure . QParamSome $ Just userSlug) (pure QNone) (pure QNone) (pure QNone) pb
+  dFeed <- holdDyn [] $ (^. field @"articles") <$> fmapMaybe reqSuccess eFeed
 
   divClass "container" $ divClass "row" $
     divClass "col-xs-12 col-md-10 offset-md-1" $ do
@@ -218,59 +260,88 @@ profilePage userSlug = divClass "profile-page" $ do
           elClass "li" "nav-item" $
             elAttr "a" ("class" =: "nav-link" <> "href" =: "") (text "Favorited Articles")
 
-      divClass "articles-preview" $ do
-        divClass "article-meta" $ do
-          elAttr "a" ("href" =: "") $ elAttr "img" ("src" =: "http://i.imgur.com/Qr71crq.jpg") blank
-          divClass "info" $ do
-            elAttr "a" ("href" =: "" <> "class" =: "author") (text "Eric Simons")
-            elClass "span" "date" (text "January 20th")
-          elClass "button" "btn btn-outline-primary btn-sm pull-xs-right" $ do
-            elClass "i" "ion-heart" blank
-            text "29"
-        elAttr "a" ("class" =: "preview-link" <> "href" =: "") $ do
-          el "h1" (text "How to build webapps that scale")
-          el "p" (text "This is the description for the post.")
-          el "span" (text "Read more...")
+      void . simpleList dFeed $ \dArticle -> do
+        divClass "articles-preview" $ do
+          divClass "article-meta" (articleMeta dArticle False)
+          appLinkDyn (RouteArticle . (^. field @"slug") <$> dArticle) (pure $ "class" =: "preview-link") (pure True) $ do
+            el "h1" . dynText $ ffor dArticle (^. field @"title")
+            el "p" . dynText $ ffor dArticle (^. field @"description")
+            el "span" $ text "Read more..."
+            void . dyn . ffor dArticle $ \x -> case x ^. field @"tagList" of
+              [] -> pure ()
+              xs -> elClass "ul" "tag-list" . forM_ xs $
+                elClass "li" "tag-default tag-pill tag-outline" . text
 
-      divClass "article-preview" $ do
-        divClass "article-meta" $ do
-          elAttr "a" ("href" =: "") $ elAttr "img" ("src" =: "http://i.imgur.com/N4VcUeJ.jpg") blank
-          divClass "info" $ do
-            elAttr "a" ("href" =: "" <> "class" =: "author") (text "Albert Pai")
-            elClass "span" "date" (text "January 20th")
-          elClass "button" "btn btn-outline-primary btn-sm pull-xs-right" $ do
-            elClass "i" "ion-heart" blank
-            text "32"
-        elAttr "a" ("class" =: "preview-link" <> "href" =: "") $ do
-          el "h1" (text "The song you won't ever stop singing. No matter how hard you try.")
-          el "p" (text "This is the description for the post.")
-          el "span" (text "Read more...")
-          elClass "ul" "tag-list" $ do
-            elClass "li" "tag-default tag-pill tag-outline" (text "Music")
-            elClass "li" "tag-default tag-pill tag-outline" (text "Song")
+articleMeta :: AppStateM t m => Dynamic t Article -> Bool -> m ()
+articleMeta dArticle showFull = do
+  let dProfile = ffor dArticle (^. field @"author")
+  appLinkDyn (RouteProfile . (^. field @"username") <$> dProfile) mempty (pure True) $
+    elDynAttr "img" ("src" =! ffor dProfile (^. field @"image")) blank
+  divClass "info" $ do
+    appLinkDyn (RouteProfile . (^. field @"username") <$> dProfile) (pure $ "class" =: "author") (pure True) $
+      dynText $ ffor dProfile (^. field @"username")
+    elClass "span" "date" (text "January 20th")
+  if showFull
+    then do
+      elClass "button" "btn btn-sm btn-outline-secondary" $ do
+        elClass "i" "ion-plus-round" blank
+        nbsp
+        text "Follow Eric Simons"
+      nbsp >> nbsp
+      elClass "button" "btn btn-sm btn-outline-secondary" $ do
+        elClass "i" "ion-heart" blank
+        nbsp
+        text "Favorite Post "
+        elClass "span" "counter" . dynText . ffor dArticle $ tshow . (^. field @"favoritesCount")
+    else do
+      elClass "button" "btn btn-outline-primary btn-sm pull-xs-right" $ do
+        elClass "i" "ion-heart" blank
+        elClass "span" "counter" . dynText . ffor dArticle $ tshow . (^. field @"favoritesCount")
 
-settingsPage :: MonadWidget t m => m ()
+settingsPage :: AppStateM t m => m ()
 settingsPage =
   divClass "settings-page" $ divClass "container page" $
-      divClass "row" $ divClass "col-md-6 offset-md-3 col-xs-12" $ do
+      divClass "row" $ divClass "col-md-6 offset-md-3 col-xs-12" $ mdo
+    pb <- getPostBuild
+    api <- getApi
+    eInit <- fmap (^. field @"user") . fmapMaybe reqSuccess <$> getCurrentUser api pb
+
     elClass "h1" "text-xs-center" (text "Your Settings")
-    el "form" $ el "fieldset" $ do
-      elClass "fieldset" "form-group" $
-        elAttr "input" ("class" =: "form-control" <>
-                        "type" =: "text" <> "placeholder" =: "URL of profile picture") blank
-      elClass "fieldset" "form-group" $
-        elAttr "input" ("class" =: "form-control form-control-lg" <>
-                        "type" =: "text" <> "placeholder" =: "Your Name") blank
-      elClass "fieldset" "form-group" $
-        elAttr "textarea" ("class" =: "form-control form-control-lg" <>
-                           "rows" =: "8" <> "placeholder" =: "Short bio about you") blank
-      elClass "fieldset" "form-group" $
-        elAttr "input" ("class" =: "form-control form-control-lg" <>
-                        "type" =: "text" <> "placeholder" =: "Email") blank
-      elClass "fieldset" "form-group" $
-        elAttr "input" ("class" =: "form-control form-control-lg" <>
-                        "type" =: "password" <> "placeholder" =: "Password") blank
-      elClass "button" "btn btn-lg btn-primary pull-xs-right" (text "Update Settings")
+    elClass "ul" "error-messages" . el "li" . dynText =<< holdDyn "" eErr
+    (form, (dReq, eClick)) <- el' "form" $ el "fieldset" $ do
+      dImage <- fmap value . elClass "fieldset" "form-group" $ inputElement $ def
+        & inputElementConfig_setValue .~ ffor eInit (^. field @"image")
+        & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("class" =: "form-control" <> "placeholder" =: "URL of profile picture")
+      dName <- fmap value . elClass "fieldset" "form-group" $ inputElement $ def
+        & inputElementConfig_setValue .~ ffor eInit (^. field @"username")
+        & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("class" =: "form-control form-control-lg" <> "placeholder" =: "Your Name")
+      dBio <- fmap value . elClass "fieldset" "form-group" $ textAreaElement $ def
+        & textAreaElementConfig_setValue .~ ffor eInit (^. field @"bio")
+        & textAreaElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("class" =: "form-control form-control-lg" <> "rows" =: "8" <> "placeholder" =: "Short bio about you")
+      dEmail <- fmap value . elClass "fieldset" "form-group" $ inputElement $ def
+        & inputElementConfig_setValue .~ ffor eInit (^. field @"email")
+        & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("class" =: "form-control form-control-lg" <> "placeholder" =: "Email")
+      dPassword <- fmap value . elClass "fieldset" "form-group" $ inputElement $ def
+        & inputElementConfig_setValue .~ ffor eInit (^. field @"email")
+        & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+            ("class" =: "form-control form-control-lg" <> "type" =: "password" <> "placeholder" =: "Password")
+      (btn, ()) <- elClass' "button" "btn btn-lg btn-primary pull-xs-right" (text "Update Settings")
+      pure (UpdateUser <$> dName <*> dEmail <*> dBio <*> dImage <*> fmap tmaybe dPassword, domEvent Click btn)
+    eRes <- updateCurrentUser api (Right . UpdateUserRequest <$> dReq) (domEvent Submit form <> eClick)
+    let (eErr, eUser) = fanEither . ffor eRes $ \case
+          ResponseSuccess{} -> Right ()
+          ResponseFailure _ e _ -> Left e
+          RequestFailure _ e -> Left e
+    tellEvent $ RouteHome <$ eUser
+    -- TODO: Logout button
+
+tmaybe :: Text -> Maybe Text
+tmaybe "" = Nothing
+tmaybe x = Just x
 
 createEditArticlePage :: AppStateM t m => Maybe Text -> m ()
 createEditArticlePage mArticleSlug =
@@ -287,23 +358,23 @@ createEditArticlePage mArticleSlug =
       inputElement $ def
         & inputElementConfig_setValue .~ ffor eInit (^. field @"title")
         & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
-            ("type" =: "text" <> "class" =: "form-control form-control-lg" <> "placeholder" =: "Article Title")
+          ("class" =: "form-control form-control-lg" <> "placeholder" =: "Article Title")
     dDesc <- fmap value . elClass "fieldset" "form-group" $
       inputElement $ def
         & inputElementConfig_setValue .~ ffor eInit (^. field @"description")
         & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
-            ("type" =: "text" <> "class" =: "form-control" <> "placeholder" =: "What's this article about?")
+          ("class" =: "form-control" <> "placeholder" =: "What's this article about?")
     dBody <- fmap value . elClass "fieldset" "form-group" $
       textAreaElement $ def
         & textAreaElementConfig_setValue .~ ffor eInit (^. field @"body")
         & textAreaElementConfig_elementConfig . elementConfig_initialAttributes .~
-            ("class" =: "form-control" <> "rows" =: "8" <> "placeholder" =: "Write your article (in markdown)")
+          ("class" =: "form-control" <> "rows" =: "8" <> "placeholder" =: "Write your article (in markdown)")
     dTags <- elClass "fieldset" "form-group" $ do
       rec
         dTag <- inputElement $ def
           & inputElementConfig_setValue .~ ("" <$ keypress Enter dTag)
           & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
-              ("type" =: "text" <> "class" =: "form-control" <> "placeholder" =: "Enter tags")
+              ("class" =: "form-control" <> "placeholder" =: "Enter tags")
         tags <- foldDyn ($) [] $ leftmost
           [ ffor eInit (const . (^. field @"tagList"))
           , (:) <$> current (value dTag) <@ keypress Enter dTag
@@ -331,81 +402,59 @@ createEditArticlePage mArticleSlug =
 -- Render markdown from server client side
 -- Comments section at bottom of page
 -- Delete comment button (only shown to comment's author)
-articlePage :: MonadWidget t m => Text -> m ()
+articlePage :: AppStateM t m => Text -> m ()
 articlePage articleSlug = divClass "article-page" $ do
+  pb <- getPostBuild
+  api <- getApi
+  eArticle <- fmapMaybe reqSuccess <$> getArticle api (pure $ Right articleSlug) pb
+  dArticle <- holdDyn (Article "" "" "" "" [] 0 0 False 0 (Profile "" "" "" False))
+    (ffor eArticle (^. field @"article"))
   divClass "banner" $ divClass "container" $ do
-    el "h1" (text "How to build webapps that scale")
-    divClass "article-meta" $ do
-      elAttr "a" ("href" =: "") $
-        elAttr "img" ("src" =: "http://i.imgur.com/Qr71crq.jpg") blank
-      divClass "info" $ do
-        elAttr "a" ("href" =: "" <> "class" =: "author") (text "Eric Simons")
-        elClass "span" "date" (text "January 20th")
-      elClass "button" "btn btn-sm btn-outline-secondary" $ do
-        elClass "i" "ion-plus-round" blank
-        nbsp
-        text "Follow Eric Simons "
-        elClass "span" "counter" (text "(10)")
-      nbsp >> nbsp
-      elClass "button" "btn btn-sm btn-outline-secondary" $ do
-        elClass "i" "ion-heart" blank
-        nbsp
-        text "Favorite Post "
-        elClass "span" "counter" (text "(29)")
-
+    el "h1" . dynText $ ffor dArticle (^. field @"title")
+    divClass "article-meta" (articleMeta dArticle True)
   divClass "container page" $ do
-    divClass "row article-content" $ divClass "col-md-12" $ do
-      el "p" (text "Web development technologies have evolved at an incredible clip over the past few years.")
-      elAttr "h2" ("id" =: "introducing-ionic") (text "Introducing RealWorld.")
-      el "p" (text "It's a great solution for learning how other frameworks work.")
+    divClass "row article-content" $ divClass "col-md-12" $
+      el "p" . dynText $ ffor dArticle (^. field @"body")
 
     el "hr" blank
-
-    divClass "article-actions" $ divClass "article-meta" $ do
-      elAttr "a" ("href" =: "") $
-        elAttr "img" ("src" =: "http://i.imgur.com/Qr71crq.jpg") blank
-      divClass "info" $ do
-        elAttr "a" ("href" =: "" <> "class" =: "author") (text "Eric Simons")
-        elClass "span" "date" (text "January 20th")
-      elClass "button" "btn btn-sm btn-outline-secondary" $ do
-        elClass "i" "ion-plus-round" blank
-        nbsp
-        text "Follow Eric Simons "
-        elClass "span" "counter" (text "(10)")
-      nbsp
-      elClass "button" "btn btn-sm btn-outline-secondary" $ do
-        elClass "i" "ion-heart" blank
-        nbsp
-        text "Favorite Post "
-        elClass "span" "counter" (text "(29)")
+    divClass "article-actions" $ divClass "article-meta" (articleMeta dArticle True)
 
     divClass "row" $ divClass "col-xs-12 col-md-8 offset-md-2" $ do
-      elClass "form" "card comment-form" $ do
-        divClass "card-block" $
-          elAttr "textarea" ("class" =: "form-control" <> "placeholder" =: "Write a comment..." <> "rows" =: "3") blank
-        divClass "card-footer" $ do
-          elAttr "img" ("src" =: "http://i.imgur.com/Qr71crq.jpg" <> "class" =: "comment-author-tag") blank
-          elClass "button" "btn btn-sm btn-primary" (text "Post Comment")
+      rec
+        (form, (dReqComment, eClick)) <- elClass' "form" "card comment-form" $ do
+          dText <- fmap value . divClass "card-block" . textAreaElement $ def
+            & textAreaElementConfig_setValue .~ ("" <$ eResComment)
+            & textAreaElementConfig_elementConfig . elementConfig_initialAttributes .~
+              ("class" =: "form-control" <> "placeholder" =: "Write a comment..." <> "rows" =: "3")
+          (btn, ()) <- divClass "card-footer" $ do
+            elDynAttr "img" ("class" =: "comment-author-tag" <!> "src" =! ffor dArticle (^. field @"author" . field @"image")) blank
+            elClass' "button" "btn btn-sm btn-primary" (text "Post Comment")
+          pure (NewComment <$> dText, domEvent Click btn)
+        eResComment <- fmapMaybe reqSuccess <$> createArticleComment api
+          (pure $ Right articleSlug)
+          (Right . NewCommentRequest <$> dReqComment)
+          (domEvent Submit form <> eClick)
 
-      divClass "card" $ do
-        divClass "card-block" $
-          elClass "p" "card-text" (text "With supporting text below as a natural lead-in to additional content.")
-        divClass "card-footer" $ do
-          elAttr "a" ("href" =: "" <> "class" =: "comment-author") $
-            elAttr "img" ("src" =: "http://i.imgur.com/Qr71crq.jpg" <> "class" =: "comment-author-img") blank
-          nbsp
-          elAttr "a" ("href" =: "" <> "class" =: "comment-author") (text "Jacob Schmidt")
-          elClass "span" "date-posted" (text "Dec 29th")
+      eComments <- fmapMaybe reqSuccess <$> getArticleComments api
+        (Right . (^. field @"slug") <$> dArticle) pb
+      dComments <- foldDyn ($) [] $ leftmost
+        [const . (^. field @"comments") <$> eComments
+        , (:) . (^. field @"comment") <$> eResComment
+        ]
 
-      divClass "card" $ do
+      void . simpleList dComments $ \dComment -> divClass "card" $ do
+        let dUsername = ffor dComment (^. field @"author" . field @"username")
+            dImage = ffor dComment (^. field @"author" . field @"image")
         divClass "card-block" $
-          elClass "p" "card-text" (text "With supporting text below as a natural lead-in to additional content.")
+          elClass "p" "card-text" . dynText $ ffor dComment (^. field @"body")
         divClass "card-footer" $ do
-          elAttr "a" ("href" =: "" <> "class" =: "comment-author") $
-            elAttr "img" ("src" =: "http://i.imgur.com/Qr71crq.jpg" <> "class" =: "comment-author-img") blank
+          appLinkDyn (RouteProfile <$> dUsername) (pure $ "class" =: "comment-author") (pure True) $
+            elDynAttr "img" ("class" =: "comment-author-img" <!> "src" =! dImage) blank
           nbsp
-          elAttr "a" ("href" =: "" <> "class" =: "comment-author") (text "Jacob Schmidt")
+          appLinkDyn (RouteProfile <$> dUsername) (pure $ "class" =: "comment-author") (pure True) $
+            dynText dUsername
           elClass "span" "date-posted" (text "Dec 29th")
+          -- TODO: only for comment author
           elClass "span" "mod-options" $ do
             elClass "i" "ion-edit" blank
             elClass "i" "ion-trash-a" blank
