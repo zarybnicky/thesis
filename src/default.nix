@@ -1,4 +1,4 @@
-(import ../reflex-platform {}).project ({ pkgs, ... }: {
+(import ../reflex-platform {}).project ({ pkgs, ghc8_4, ... }: {
   packages = {
     tapaw-core = ./tapaw-core;
     tapaw-7guis = ./tapaw-7guis;
@@ -13,14 +13,23 @@
   };
 
   tools = ghc: [
-    ghc.ghcid
-    (import ../src-snippets/ghcid-here { inherit pkgs ghc; })
+    ghc8_4.ghcid
+    (import ../src-snippets/ghcid-here { inherit pkgs; ghc = ghc8_4; })
   ];
 
   overrides = with pkgs.haskell.lib; self: super: {
-    generic-lens = dontCheck (super.generic-lens);
-    extra = dontCheck (super.extra);
-    servant-reflex = doJailbreak (super.servant-reflex);
+    inspection-testing = if self.ghc.isGhcjs or false then null else super.inspection-testing;
+    generic-lens = dontCheck super.generic-lens;
+    hpack = dontCheck super.hpack;
+    extra = dontCheck super.extra;
+    Glob = dontCheck super.Glob;
+    servant-reflex = doJailbreak super.servant-reflex;
+    polysemy = super.callCabal2nix "polysemy" (pkgs.fetchFromGitHub {
+      owner = "isovector";
+      repo = "polysemy";
+      rev = "fbbed8d2c682df201c86132467694b8827022f35";
+      sha256 = "0p66d7r0v2s2wkpc1nsv7pg1arpsdqj0a26y730bmlnas3flyn8b";
+    }) {};
 
     tapaw-hnpwa = overrideCabal super.tapaw-hnpwa (drv: {
       postFixup = ''
