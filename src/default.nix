@@ -1,4 +1,4 @@
-(import ../reflex-platform {}).project ({ pkgs, ghc8_4, ... }: {
+(import ../reflex-platform {}).project ({ pkgs, ghc, ... }: {
   packages = {
     tapaw-core = ./tapaw-core;
     tapaw-7guis = ./tapaw-7guis;
@@ -12,24 +12,24 @@
     ghcjs = ["tapaw-core" "tapaw-7guis" "tapaw-todomvc" "tapaw-hnpwa" "tapaw-realworld-client"];
   };
 
-  tools = ghc: [
-    ghc8_4.ghcid
-    (import ../src-snippets/ghcid-here { inherit pkgs; ghc = ghc8_4; })
+  tools = _: [
+    ghc.ghcid
+    (import ../src-snippets/ghcid-here { inherit ghc pkgs; })
   ];
 
   overrides = with pkgs.haskell.lib; self: super: {
     inspection-testing = if self.ghc.isGhcjs or false then null else super.inspection-testing;
-    generic-lens = dontCheck super.generic-lens;
-    hpack = dontCheck super.hpack;
-    extra = dontCheck super.extra;
-    Glob = dontCheck super.Glob;
+    mockery = if self.ghc.isGhcjs or false then null else super.mockery;
+    generic-lens = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) super.generic-lens;
+    extra = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) super.extra;
+
     servant-reflex = doJailbreak super.servant-reflex;
-    polysemy = super.callCabal2nix "polysemy" (pkgs.fetchFromGitHub {
+    polysemy = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) (super.callCabal2nix "polysemy" (pkgs.fetchFromGitHub {
       owner = "isovector";
       repo = "polysemy";
       rev = "fbbed8d2c682df201c86132467694b8827022f35";
       sha256 = "0p66d7r0v2s2wkpc1nsv7pg1arpsdqj0a26y730bmlnas3flyn8b";
-    }) {};
+    }) {});
 
     tapaw-hnpwa = overrideCabal super.tapaw-hnpwa (drv: {
       postFixup = ''
