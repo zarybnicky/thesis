@@ -18,7 +18,6 @@ executable trivial-server
                       -Wmonomorphism-restriction
                       -fwarn-tabs
                       -O2
-                      -fdiagnostics-color=never
 
   build-depends:       base >=4.11 && <4.12
                      , aeson

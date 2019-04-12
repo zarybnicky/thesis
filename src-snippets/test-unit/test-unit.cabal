@@ -16,7 +16,7 @@ library
                      -Wredundant-constraints
                      -Wmonomorphism-restriction
                      -fwarn-tabs
-                     -fdiagnostics-color=never
+
   build-depends:     base >=4.11 && <4.12
                    , aeson
                    , containers
@@ -41,7 +41,6 @@ test-suite test
                      -Wredundant-constraints
                      -Wmonomorphism-restriction
                      -fwarn-tabs
-                     -fdiagnostics-color=never
                      -threaded -O2
   hs-source-dirs:    test
   other-modules:     Demo.EffectsTest

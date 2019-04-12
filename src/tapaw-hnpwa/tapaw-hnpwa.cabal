@@ -17,7 +17,6 @@ executable tapaw-hnpwa
                       -Wredundant-constraints
                       -Wmonomorphism-restriction
                       -fwarn-tabs
-                      -fdiagnostics-color=never
 
   if impl(ghcjs -any)
     ghc-options:      -dedupe

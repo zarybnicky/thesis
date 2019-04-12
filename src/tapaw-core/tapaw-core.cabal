@@ -24,7 +24,6 @@ library
                       -Wredundant-constraints
                       -Wmonomorphism-restriction
                       -fwarn-tabs
-                      -fdiagnostics-color=never
 
   exposed-modules:     Tapaw.Prelude
 
