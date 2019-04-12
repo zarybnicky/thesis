@@ -14,7 +14,7 @@ import Tapaw.RealWorld.Client (frontend)
 import WaiAppStatic.Types (MaxAge(MaxAgeSeconds))
 
 main :: IO ()
-main = devMain 3000
+main = devMain 8000
 
 devMain :: Int -> IO ()
 devMain port =
