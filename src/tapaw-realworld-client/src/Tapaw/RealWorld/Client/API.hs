@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 
 module Tapaw.RealWorld.Client.API
@@ -26,164 +29,195 @@ import Data.Text (Text)
 import Reflex.Dom.Core (Dynamic, Event)
 import Servant.API
 import Servant.Reflex
-import Tapaw.RealWorld.API
+import Tapaw.RealWorld.Client.Types (AppStateM, getApi)
 import Tapaw.RealWorld.Types
 
 
 getArticles ::
-     forall t m.
-     Client t m ConduitAPI ()
-  -> Dynamic t (QParam (Maybe Text))
-  -> Dynamic t (QParam (Maybe Text))
-  -> Dynamic t (QParam (Maybe Text))
+     forall t m a. AppStateM t m
+  => Dynamic t (QParam Text)
+  -> Dynamic t (QParam Text)
+  -> Dynamic t (QParam Text)
   -> Dynamic t (QParam Int)
   -> Dynamic t (QParam Int)
-  -> Event t ()
-  -> m (Event t (ReqResult () MultipleArticlesResponse))
-getArticles (f :<|> _) = f
+  -> Event t a
+  -> m (Event t (ReqResult a MultipleArticlesResponse))
+getArticles a b c d e f = do
+  (fn :<|> _) <- getApi
+  fn a b c d e f
 
 getArticle ::
-     forall t m.
-     Client t m ConduitAPI ()
-  -> Dynamic t (Either Text Text)
-  -> Event t ()
-  -> m (Event t (ReqResult () SingleArticleResponse))
-getArticle (_ :<|> f :<|> _) = f
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
+  -> Event t a
+  -> m (Event t (ReqResult a SingleArticleResponse))
+getArticle a b = do
+  (_ :<|> f :<|> _) <- getApi
+  f a b
 
 getArticleComments ::
-     forall t m.
-     Client t m ConduitAPI ()
-  -> Dynamic t (Either Text Text)
-  -> Event t ()
-  -> m (Event t (ReqResult () MultipleCommentsResponse))
-getArticleComments (_ :<|> _ :<|> f :<|> _) = f
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
+  -> Event t a
+  -> m (Event t (ReqResult a MultipleCommentsResponse))
+getArticleComments a b = do
+  (_ :<|> _ :<|> f :<|> _) <- getApi
+  f a b
 
 tagsGet ::
-     forall t m.
-     Client t m ConduitAPI ()
-  -> Event t ()
-  -> m (Event t (ReqResult () TagsResponse))
-tagsGet (_ :<|> _ :<|> _ :<|> f :<|> _) = f
+     forall t m a. AppStateM t m
+  => Event t a
+  -> m (Event t (ReqResult a TagsResponse))
+tagsGet a = do
+  (_ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f a
 
 getArticlesFeed ::
-     forall t m.
-     Client t m ConduitAPI ()
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
   -> Dynamic t (QParam Int)
   -> Dynamic t (QParam Int)
-  -> Event t ()
-  -> m (Event t (ReqResult () MultipleArticlesResponse))
-getArticlesFeed (_ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+  -> Event t a
+  -> m (Event t (ReqResult a MultipleArticlesResponse))
+getArticlesFeed a b c d = do
+  (_ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f (fmap ("Token " <>) <$> a) b c d
 
 createArticle ::
-     forall t m.
-     Client t m ConduitAPI ()
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
   -> Dynamic t (Either Text NewArticleRequest)
-  -> Event t ()
-  -> m (Event t (ReqResult () SingleArticleResponse))
-createArticle (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+  -> Event t a
+  -> m (Event t (ReqResult a SingleArticleResponse))
+createArticle a b c = do
+  (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f (fmap ("Token " <>) <$> a) b c
 
 deleteArticle ::
-     forall t m.
-     Client t m ConduitAPI ()
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
   -> Dynamic t (Either Text Text)
-  -> Event t ()
-  -> m (Event t (ReqResult () ()))
-deleteArticle (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+  -> Event t a
+  -> m (Event t (ReqResult a ()))
+deleteArticle a b c = do
+  (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f (fmap ("Token " <>) <$> a) b c
 
 updateArticle ::
-     forall t m.
-     Client t m ConduitAPI ()
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
   -> Dynamic t (Either Text Text)
   -> Dynamic t (Either Text UpdateArticleRequest)
-  -> Event t ()
-  -> m (Event t (ReqResult () SingleArticleResponse))
-updateArticle (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+  -> Event t a
+  -> m (Event t (ReqResult a SingleArticleResponse))
+updateArticle a b c d = do
+  (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f (fmap ("Token " <>) <$> a) b c d
 
 createArticleComment ::
-     forall t m.
-     Client t m ConduitAPI ()
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
   -> Dynamic t (Either Text Text)
   -> Dynamic t (Either Text NewCommentRequest)
-  -> Event t ()
-  -> m (Event t (ReqResult () SingleCommentResponse))
-createArticleComment (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+  -> Event t a
+  -> m (Event t (ReqResult a SingleCommentResponse))
+createArticleComment a b c d = do
+  (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f (fmap ("Token " <>) <$> a) b c d
 
 deleteArticleComment ::
-     forall t m.
-     Client t m ConduitAPI ()
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
   -> Dynamic t (Either Text Text)
   -> Dynamic t (Either Text Int)
-  -> Event t ()
-  -> m (Event t (ReqResult () ()))
-deleteArticleComment (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+  -> Event t a
+  -> m (Event t (ReqResult a ()))
+deleteArticleComment a b c d = do
+  (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f (fmap ("Token " <>) <$> a) b c d
 
 createArticleFavorite ::
-     forall t m.
-     Client t m ConduitAPI ()
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
   -> Dynamic t (Either Text Text)
-  -> Event t ()
-  -> m (Event t (ReqResult () SingleArticleResponse))
-createArticleFavorite (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+  -> Event t a
+  -> m (Event t (ReqResult a SingleArticleResponse))
+createArticleFavorite a b c = do
+  (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f (fmap ("Token " <>) <$> a) b c
 
 deleteArticleFavorite ::
-     forall t m.
-     Client t m ConduitAPI ()
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
   -> Dynamic t (Either Text Text)
-  -> Event t ()
-  -> m (Event t (ReqResult () SingleArticleResponse))
-deleteArticleFavorite (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+  -> Event t a
+  -> m (Event t (ReqResult a SingleArticleResponse))
+deleteArticleFavorite a b c = do
+  (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f (fmap ("Token " <>) <$> a) b c
 
 followUserByUsername ::
-     forall t m.
-     Client t m ConduitAPI ()
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
   -> Dynamic t (Either Text Text)
-  -> Event t ()
-  -> m (Event t (ReqResult () ProfileResponse))
-followUserByUsername (_ :<|>_ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+  -> Event t a
+  -> m (Event t (ReqResult a ProfileResponse))
+followUserByUsername a b c = do
+  (_ :<|>_ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f (fmap ("Token " <>) <$> a) b c
 
 unfollowUserByUsername ::
-     forall t m.
-     Client t m ConduitAPI ()
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
   -> Dynamic t (Either Text Text)
-  -> Event t ()
-  -> m (Event t (ReqResult () ProfileResponse))
-unfollowUserByUsername (_ :<|> _ :<|> _ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+  -> Event t a
+  -> m (Event t (ReqResult a ProfileResponse))
+unfollowUserByUsername a b c = do
+  (_ :<|> _ :<|> _ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f (fmap ("Token " <>) <$> a) b c
 
 login ::
-     forall t m.
-     Client t m ConduitAPI ()
-  -> Dynamic t (Either Text LoginUserRequest)
-  -> Event t ()
-  -> m (Event t (ReqResult () UserResponse))
-login (_ :<|> _ :<|> _ :<|> _ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text LoginUserRequest)
+  -> Event t a
+  -> m (Event t (ReqResult a UserResponse))
+login a b = do
+  (_ :<|> _ :<|> _ :<|> _ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f a b
 
 createUser ::
-     forall t m.
-     Client t m ConduitAPI ()
-  -> Dynamic t (Either Text NewUserRequest)
-  -> Event t ()
-  -> m (Event t (ReqResult () UserResponse))
-createUser (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text NewUserRequest)
+  -> Event t a
+  -> m (Event t (ReqResult a UserResponse))
+createUser a b = do
+  (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f a b
 
 getCurrentUser ::
-     forall t m.
-     Client t m ConduitAPI ()
-  -> Event t ()
-  -> m (Event t (ReqResult () UserResponse))
-getCurrentUser (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
+  -> Event t a
+  -> m (Event t (ReqResult a UserResponse))
+getCurrentUser a b = do
+  (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f (fmap ("Token " <>) <$> a) b
 
 updateCurrentUser ::
-     forall t m.
-     Client t m ConduitAPI ()
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
   -> Dynamic t (Either Text UpdateUserRequest)
-  -> Event t ()
-  -> m (Event t (ReqResult () UserResponse))
-updateCurrentUser (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) = f
+  -> Event t a
+  -> m (Event t (ReqResult a UserResponse))
+updateCurrentUser a b c = do
+  (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f :<|> _) <- getApi
+  f (fmap ("Token " <>) <$> a) b c
 
 getProfileByUsername ::
-     forall t m.
-     Client t m ConduitAPI ()
-  -> Dynamic t (Either Text Text)
-  -> Event t ()
-  -> m (Event t (ReqResult () ProfileResponse))
-getProfileByUsername (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f) = f
+     forall t m a. AppStateM t m
+  => Dynamic t (Either Text Text)
+  -> Event t a
+  -> m (Event t (ReqResult a ProfileResponse))
+getProfileByUsername a b = do
+  (_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|>_ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> _ :<|> f) <- getApi
+  f a b

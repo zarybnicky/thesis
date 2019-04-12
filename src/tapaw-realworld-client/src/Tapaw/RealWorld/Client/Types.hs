@@ -1,16 +1,50 @@
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Tapaw.RealWorld.Client.Types
-  ( Route(..)
+  ( AppState(..)
+  , AppStateM
+  , Route(..)
   , decodeRoute
   , encodeRoute
+  , getApi
   ) where
 
+import Control.Monad.Reader (MonadReader, asks)
 import Data.List (uncons)
+import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
+import Data.These (These)
+import Data.Time (UTCTime)
 import qualified Data.Text as T
 import GHC.Generics (Generic)
+import Reflex.Dom.Core hiding (Client, link)
+import Servant.Reflex (BaseUrl, Client, client)
+import Tapaw.RealWorld.API (ConduitAPI)
+import Tapaw.RealWorld.Types (User)
+
+data AppState t = AppState
+  { stateNow :: Dynamic t UTCTime
+  , stateBaseUrl :: Dynamic t BaseUrl
+  , stateUser :: Dynamic t (Maybe User)
+  , stateRoute :: Demux t Route
+  }
+
+type AppStateM t m
+   = ( MonadReader (AppState t) m
+     , EventWriter t (These Route (Maybe User)) m
+     , MonadWidget t m
+     )
+
+getApi :: forall t m a. AppStateM t m => m (Client t m ConduitAPI a)
+getApi = client (Proxy @ConduitAPI) (Proxy @m) (Proxy @a) <$> asks stateBaseUrl
+
 
 data Route
   = RouteHome

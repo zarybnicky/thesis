@@ -16,9 +16,9 @@ import Tapaw.RealWorld.Types
 -- | Servant type-level API, generated from the Swagger spec for Conduit.
 type ConduitAPI
   =   "articles"
-    :> QueryParam "tag" (Maybe Text)
-    :> QueryParam "author" (Maybe Text)
-    :> QueryParam "favorited" (Maybe Text)
+    :> QueryParam "tag" Text
+    :> QueryParam "author" Text
+    :> QueryParam "favorited" Text
     :> QueryParam "limit" Int
     :> QueryParam "offset" Int
     :> Verb 'GET 200 '[JSON] MultipleArticlesResponse -- 'getArticles' route
@@ -31,37 +31,47 @@ type ConduitAPI
   :<|> "tags"
     :> Verb 'GET 200 '[JSON] TagsResponse -- 'tagsGet' route
   :<|> "articles" :> "feed"
+    :> Header "Authorization" Text
     :> QueryParam "limit" Int
     :> QueryParam "offset" Int
     :> Verb 'GET 200 '[JSON] MultipleArticlesResponse -- 'getArticlesFeed' route
   :<|> "articles"
+    :> Header "Authorization" Text
     :> ReqBody '[JSON] NewArticleRequest
     :> Verb 'POST 200 '[JSON] SingleArticleResponse -- 'createArticle' route
   :<|> "articles"
+    :> Header "Authorization" Text
     :> Capture "slug" Text
     :> Verb 'DELETE 200 '[JSON] () -- 'deleteArticle' route
   :<|> "articles"
+    :> Header "Authorization" Text
     :> Capture "slug" Text
     :> ReqBody '[JSON] UpdateArticleRequest
     :> Verb 'PUT 200 '[JSON] SingleArticleResponse -- 'updateArticle' route
   :<|> "articles"
+    :> Header "Authorization" Text
     :> Capture "slug" Text :> "comments"
     :> ReqBody '[JSON] NewCommentRequest
     :> Verb 'POST 200 '[JSON] SingleCommentResponse -- 'createArticleComment' route
   :<|> "articles"
+    :> Header "Authorization" Text
     :> Capture "slug" Text :> "comments"
     :> Capture "id" Int
     :> Verb 'DELETE 200 '[JSON] () -- 'deleteArticleComment' route
   :<|> "articles"
+    :> Header "Authorization" Text
     :> Capture "slug" Text :> "favorite"
     :> Verb 'POST 200 '[JSON] SingleArticleResponse -- 'createArticleFavorite' route
   :<|> "articles"
+    :> Header "Authorization" Text
     :> Capture "slug" Text :> "favorite"
     :> Verb 'DELETE 200 '[JSON] SingleArticleResponse -- 'deleteArticleFavorite' route
   :<|> "profiles"
+    :> Header "Authorization" Text
     :> Capture "username" Text :> "follow"
     :> Verb 'POST 200 '[JSON] ProfileResponse -- 'followUserByUsername' route
   :<|> "profiles"
+    :> Header "Authorization" Text
     :> Capture "username" Text :> "follow"
     :> Verb 'DELETE 200 '[JSON] ProfileResponse -- 'unfollowUserByUsername' route
   :<|> "users" :> "login"
@@ -70,9 +80,11 @@ type ConduitAPI
   :<|> "users"
     :> ReqBody '[JSON] NewUserRequest
     :> Verb 'POST 200 '[JSON] UserResponse -- 'createUser' route
-  :<|> "users"
+  :<|> "user"
+    :> Header "Authorization" Text
     :> Verb 'GET 200 '[JSON] UserResponse -- 'getCurrentUser' route
-  :<|> "users"
+  :<|> "user"
+    :> Header "Authorization" Text
     :> ReqBody '[JSON] UpdateUserRequest
     :> Verb 'PUT 200 '[JSON] UserResponse -- 'updateCurrentUser' route
   :<|> "profiles"

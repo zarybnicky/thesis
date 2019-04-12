@@ -51,6 +51,8 @@ executable tapaw-realworld-client
                      , mtl
                      , reflex-dom-core
                      , servant
+                     , servant-auth
                      , servant-reflex
                      , text
+                     , these
                      , time

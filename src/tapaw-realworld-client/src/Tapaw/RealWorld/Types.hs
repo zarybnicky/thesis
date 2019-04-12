@@ -3,28 +3,28 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module Tapaw.RealWorld.Types
-  ( Article(..)
-  , Comment(..)
-  , LoginUser(..)
-  , LoginUserRequest(..)
-  , MultipleArticlesResponse(..)
-  , MultipleCommentsResponse(..)
-  , NewArticle(..)
-  , NewArticleRequest(..)
-  , NewComment(..)
-  , NewCommentRequest(..)
-  , NewUser(..)
-  , NewUserRequest(..)
-  , Profile(..)
-  , ProfileResponse(..)
-  , SingleArticleResponse(..)
-  , SingleCommentResponse(..)
-  , TagsResponse(..)
-  , UpdateArticleRequest(..)
-  , UpdateUser(..)
-  , UpdateUserRequest(..)
-  , User(..)
-  , UserResponse(..)
+  ( Article(Article)
+  , Comment(Comment)
+  , LoginUser(LoginUser)
+  , LoginUserRequest(LoginUserRequest)
+  , MultipleArticlesResponse(MultipleArticlesResponse)
+  , MultipleCommentsResponse(MultipleCommentsResponse)
+  , NewArticle(NewArticle)
+  , NewArticleRequest(NewArticleRequest)
+  , NewComment(NewComment)
+  , NewCommentRequest(NewCommentRequest)
+  , NewUser(NewUser)
+  , NewUserRequest(NewUserRequest)
+  , Profile(Profile)
+  , ProfileResponse(ProfileResponse)
+  , SingleArticleResponse(SingleArticleResponse)
+  , SingleCommentResponse(SingleCommentResponse)
+  , TagsResponse(TagsResponse)
+  , UpdateArticleRequest(UpdateArticleRequest)
+  , UpdateUser(UpdateUser)
+  , UpdateUserRequest(UpdateUserRequest)
+  , User(User)
+  , UserResponse(UserResponse)
   ) where
 
 import Data.Aeson (FromJSON, ToJSON)
@@ -36,8 +36,8 @@ import GHC.Generics (Generic)
 
 data Comment = Comment
   { id :: Int
-  , createdAt :: Integer
-  , updatedAt :: Integer
+  , createdAt :: Text
+  , updatedAt :: Text
   , body :: Text
   , author :: Profile
   } deriving (Show, Eq, Generic, FromJSON, ToJSON)
@@ -71,8 +71,8 @@ data Article = Article
   , description :: Text
   , body :: Text
   , tagList :: [Text]
-  , createdAt :: Integer
-  , updatedAt :: Integer
+  , createdAt :: Text
+  , updatedAt :: Text
   , favorited :: Bool
   , favoritesCount :: Int
   , author :: Profile
@@ -109,14 +109,18 @@ data User = User
   { email :: Text
   , token :: Text
   , username :: Text
-  , bio :: Text
-  , image :: Text
+  , bio :: Maybe Text
+  , image :: Maybe Text
   } deriving (Show, Eq, Generic, FromJSON, ToJSON)
+instance Semigroup User where
+  _ <> a = a
 
 data NewUser = NewUser
   { username :: Text
   , email :: Text
   , password :: Text
+  , bio :: Text
+  , image :: Text
   } deriving (Show, Eq, Generic, FromJSON, ToJSON)
 
 data UpdateUser = UpdateUser

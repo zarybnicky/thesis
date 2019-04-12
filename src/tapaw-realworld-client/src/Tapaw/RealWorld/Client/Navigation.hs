@@ -5,14 +5,17 @@
 
 module Tapaw.RealWorld.Client.Navigation
   ( makeHistoryRouter
+  , link
   , appLink
   , appLinkDyn
   ) where
 
 import Control.Lens ((%~))
+import Control.Monad.Fix (MonadFix)
 import Data.Proxy (Proxy(Proxy))
 import Data.Map (Map)
 import Data.Text (Text)
+import Data.These (These(This))
 import qualified GHCJS.DOM as DOM
 import qualified GHCJS.DOM.EventM as DOM
 import qualified GHCJS.DOM.History as DOM
@@ -20,7 +23,7 @@ import qualified GHCJS.DOM.Location as DOM
 import qualified GHCJS.DOM.Window as DOM hiding (focus)
 import qualified GHCJS.DOM.WindowEventHandlers as DOM
 import Language.Javascript.JSaddle (MonadJSM, liftJSM)
-import Reflex.Dom.Core
+import Reflex.Dom.Core hiding (link)
 import Tapaw.RealWorld.Client.Types (Route, decodeRoute, encodeRoute)
 
 
@@ -30,6 +33,7 @@ makeHistoryRouter ::
      , TriggerEvent t m
      , PerformEvent t m
      , MonadHold t m
+     , MonadFix m
      , PostBuild t m
      )
   => Route
@@ -43,35 +47,46 @@ makeHistoryRouter initialRoute eSetRoute = do
   pb <- getPostBuild
   eRoute <- wrapDomEvent window (`DOM.on` DOM.popState) (getRoute location)
   performEvent_ $ DOM.pushState history () ("" :: Text) . Just . encodeRoute <$> eSetRoute
-  holdDyn initialRoute $ leftmost [iRoute <$ pb, eSetRoute, eRoute]
+  holdUniqDyn =<< holdDyn initialRoute (leftmost [iRoute <$ pb, eSetRoute, eRoute])
   where
     getRoute loc = (decodeRoute .) . (<>) <$> DOM.getPathname loc <*> DOM.getSearch loc
 
+link ::
+     forall t m. (PostBuild t m, DomBuilder t m)
+  => Dynamic t (Map AttributeName Text)
+  -> Dynamic t Bool
+  -> m ()
+  -> m (Event t ())
+link dAttrs dDisabled inner = do
+  modifyAttrs <- dynamicAttributesToModifyAttributes dAttrs
+  (e, ()) <- element "a" ((def :: ElementConfig EventResult t (DomBuilderSpace m))
+    & modifyAttributes .~ modifyAttrs
+    & elementConfig_eventSpec %~
+        addEventSpecFlags
+        (Proxy :: Proxy (DomBuilderSpace m))
+        Click
+        (const preventDefault)) inner
+  pure $ gate (current dDisabled) (domEvent Click e)
+
 appLink ::
-     (EventWriter t Route m, Reflex t, PostBuild t m, DomBuilder t m)
+     (EventWriter t (These Route a) m, Reflex t, PostBuild t m, DomBuilder t m)
   => Route
-  -> Dynamic t (Map Text Text)
+  -> Dynamic t (Map AttributeName Text)
   -> Dynamic t Bool
   -> m ()
   -> m ()
 appLink = appLinkDyn . pure
 
 appLinkDyn ::
-     forall t m.
-     (EventWriter t Route m, Reflex t, PostBuild t m, DomBuilder t m)
+     forall t m a.
+     (EventWriter t (These Route a) m, Reflex t, PostBuild t m, DomBuilder t m)
   => Dynamic t Route
-  -> Dynamic t (Map Text Text)
+  -> Dynamic t (Map AttributeName Text)
   -> Dynamic t Bool
   -> m ()
   -> m ()
 appLinkDyn dR dAttrs dDisabled inner = do
-  modifyAttrs <- dynamicAttributesToModifyAttributes $
-    ffor2 dR dAttrs (\r attrs -> "href" =: encodeRoute r <> attrs)
-  (e, ()) <- element "a" ((def :: ElementConfig EventResult t (DomBuilderSpace m))
-    & modifyAttributes .~ fmapCheap mapKeysToAttributeName modifyAttrs
-    & elementConfig_eventSpec %~
-        addEventSpecFlags
-        (Proxy :: Proxy (DomBuilderSpace m))
-        Click
-        (const preventDefault)) inner
-  tellEvent $ current dR <@ gate (current dDisabled) (domEvent Click e)
+  let dAttrs' = ffor2 dR dAttrs (\r attrs -> "href" =: encodeRoute r <> attrs)
+  eClick <- link dAttrs' dDisabled inner
+  tellEvent $ This <$> current dR <@ eClick
+
