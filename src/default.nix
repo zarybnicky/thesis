@@ -1,15 +1,16 @@
-(import ../reflex-platform {}).project ({ pkgs, ghc, ... }: {
+(import ../reflex-platform {}).project ({ pkgs, ghc, ... }: rec {
   packages = {
     tapaw-core = ./tapaw-core;
     tapaw-7guis = ./tapaw-7guis;
     tapaw-todomvc = ./tapaw-todomvc;
     tapaw-hnpwa = ./tapaw-hnpwa;
+    tapaw-prerender = ./tapaw-prerender;
     tapaw-realworld-client = ./tapaw-realworld-client;
   };
 
   shells = {
-    ghc = ["tapaw-core" "tapaw-7guis" "tapaw-todomvc" "tapaw-hnpwa" "tapaw-realworld-client"];
-    ghcjs = ["tapaw-core" "tapaw-7guis" "tapaw-todomvc" "tapaw-hnpwa" "tapaw-realworld-client"];
+    ghc = builtins.attrNames packages;
+    ghcjs = builtins.attrNames packages;
   };
 
   tools = _: [
