@@ -29,5 +29,6 @@ executable storage-tagged
                , lens
                , jsaddle
                , jsaddle-warp
+               , mtl
                , reflex-dom-core
                , text

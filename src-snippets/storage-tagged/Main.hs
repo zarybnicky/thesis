@@ -16,16 +16,27 @@
 module Main where
 
 import Control.Lens hiding (set)
+import Control.Monad (void)
 import Data.Aeson (FromJSON, ToJSON, Result(..), fromJSON, toJSON)
+import Data.Coerce (coerce)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
+import Data.Word (Word64)
 import GHC.Generics (Generic)
+import GHC.IORef (IORef(..))
 import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 import GHCJS.DOM (currentWindowUnchecked)
-import GHCJS.DOM.Window (getLocalStorage)
+import GHCJS.DOM.EventM (on)
+import qualified GHCJS.DOM.IDBDatabase as IDB
+import qualified GHCJS.DOM.IDBFactory as IDB
+import qualified GHCJS.DOM.IDBRequest as IDB
+import qualified GHCJS.DOM.IDBObjectStore as IDB
+import GHCJS.DOM.Types (IDBObjectStoreParameters(..), IDBRequestResult(..))
+import GHCJS.DOM.Window (getLocalStorage, getIndexedDB)
 import Language.Javascript.JSaddle
   ( JSException
   , JSString
+  , JSVal(..)
   , MonadJSM
   , (!)
   , catch
@@ -36,6 +47,7 @@ import Language.Javascript.JSaddle
   , jss
   , liftJSM
   , maybeNullOrUndefined
+  , toJSVal
   )
 import Language.Javascript.JSaddle.Warp (run)
 import Reflex.Dom.Core hiding (Error)
@@ -54,6 +66,8 @@ main = run 3000 $ mainWidget $ mdo
   display dVal
   w <- currentWindowUnchecked
   performEvent_ $ (\x -> liftJSM $ w ^. jss ("x" :: JSString) x) . toJSON <$> eVal
+
+  liftJSM $ initObjectStore ("db", Just 1) "table"
 
 get :: forall (tag :: Symbol) a m. (KnownSymbol tag, FromJSON a, MonadJSM m) => m (Maybe a)
 get = liftJSM $ do
@@ -94,3 +108,17 @@ setTagged :: forall a m. (Stored a, MonadJSM m) => a -> m ()
 setTagged = set @(StoreTag a)
 
 
+initObjectStore :: MonadJSM m => (Text, Maybe Word64) -> Text -> m ()
+initObjectStore (dbName, dbVersion) tableName = liftJSM $ do
+  dbFactory <- getIndexedDB =<< currentWindowUnchecked
+  c <- jsg ("console" :: JSString)
+  openReq <- IDB.open dbFactory dbName dbVersion
+  void . on openReq IDB.success $ do
+    db <- IDB.getResultUnsafe openReq
+    params <- liftJSM . toJSVal . toJSON $ ("keyPath" :: Text) =: ("id" :: Text)
+    _ <- liftJSM $ c ^. js1 ("log" :: JSString) db
+    os <- IDB.createObjectStore (coerce db) tableName (Just $ IDBObjectStoreParameters params)
+    _ <- liftJSM $ c ^. js1 ("log" :: JSString) os
+    pure ()
+
+  -- TODO: onVersionChange
