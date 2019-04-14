@@ -1,8 +1,10 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecursiveDo #-}
@@ -14,54 +16,81 @@
 module Main where
 
 import Control.Lens hiding (set)
-import Data.Aeson (FromJSON, ToJSON, encode, decode)
-import qualified Data.ByteString.Lazy.Char8 as BC
+import Data.Aeson (FromJSON, ToJSON, Result(..), fromJSON, toJSON)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
-import qualified Data.Text as T
+import GHC.Generics (Generic)
 import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 import GHCJS.DOM (currentWindowUnchecked)
-import GHCJS.DOM.Storage (getItem, setItem)
 import GHCJS.DOM.Window (getLocalStorage)
-import Language.Javascript.JSaddle (MonadJSM, liftJSM)
+import Language.Javascript.JSaddle
+  ( JSException
+  , JSString
+  , MonadJSM
+  , (!)
+  , catch
+  , fromJSVal
+  , js1
+  , js2
+  , jsg
+  , jss
+  , liftJSM
+  , maybeNullOrUndefined
+  )
 import Language.Javascript.JSaddle.Warp (run)
-import Reflex.Dom.Core
+import Reflex.Dom.Core hiding (Error)
 
 main :: IO ()
 main = run 3000 $ mainWidget $ mdo
-  val0 <- maybe "Nothing" unVal <$> getTagged
-  val <- holdDyn val0 eVal
-  let eVal = current (value inp) <@ keypress Enter inp
-  performEvent_ $ setTagged . Val <$> eVal
+  val0 <- getTagged
+  dVal <- holdDyn val0 (Just <$> eVal)
+  let eVal = User <$> current (value inp) <*> current (value inp2) <@ leftmost [keypress Enter inp, keypress Enter inp2]
+  performEvent_ $ setTagged <$> eVal
 
   pb <- getPostBuild
-  inp <- textInput $ def & setValue .~ (val0 <$ pb)
+  inp <- textInput $ def & setValue .~ (maybe "" name val0 <$ pb)
+  inp2 <- textInput $ def & setValue .~ (maybe "" surname val0 <$ pb)
   el "br" blank
-  dynText val
+  display dVal
+  w <- currentWindowUnchecked
+  performEvent_ $ (\x -> liftJSM $ w ^. jss ("x" :: JSString) x) . toJSON <$> eVal
 
 get :: forall (tag :: Symbol) a m. (KnownSymbol tag, FromJSON a, MonadJSM m) => m (Maybe a)
 get = liftJSM $ do
   storage <- getLocalStorage =<< currentWindowUnchecked
-  val <- getItem storage (symbolVal $ Proxy @tag)
-  pure $ decode . BC.pack . T.unpack =<< val
+  storage ! symbolVal (Proxy @tag) >>= maybeNullOrUndefined >>= \case
+    Nothing -> pure Nothing
+    Just v -> do
+      json <- jsg ("JSON" :: JSString)
+      v' <- catch (fromJSVal =<< json ^. js1 ("parse" :: JSString) v) (\(_ :: JSException) -> pure Nothing)
+      pure $ resultToMaybe . fromJSON =<< v'
+  where
+    resultToMaybe (Success a) = Just a
+    resultToMaybe (Error _) = Nothing
 
 set :: forall (tag :: Symbol) a m. (KnownSymbol tag, ToJSON a, MonadJSM m) => a -> m ()
 set a = liftJSM $ do
   storage <- getLocalStorage =<< currentWindowUnchecked
-  setItem storage (symbolVal $ Proxy @tag) . T.pack . BC.unpack $ encode a
+  json <- jsg ("JSON" :: JSString)
+  val <- json ^. js1 ("stringify" :: JSString) (toJSON a)
+  _ <- storage ^. js2 ("setItem" :: JSString) (symbolVal (Proxy @tag)) val
+  pure ()
 
 class (FromJSON a, ToJSON a, KnownSymbol (StoreTag a)) => Stored a where
   type StoreTag a :: Symbol
 
-newtype Val = Val
-  { unVal :: Text
-  } deriving (FromJSON, ToJSON)
+data User = User
+  { name :: Text
+  , surname :: Text
+  } deriving (Show, Generic, FromJSON, ToJSON)
 
-instance Stored Val where
-  type StoreTag Val = "stuff"
+instance Stored User where
+  type StoreTag User = "currentUser"
 
 getTagged :: forall a m. (Stored a, MonadJSM m) => m (Maybe a)
 getTagged = get @(StoreTag a)
 
 setTagged :: forall a m. (Stored a, MonadJSM m) => a -> m ()
 setTagged = set @(StoreTag a)
+
+
