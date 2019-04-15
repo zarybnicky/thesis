@@ -21,7 +21,7 @@ executable hydration
   if impl(ghcjs -any)
     ghc-options: -dedupe
     cpp-options: -DGHCJS_BROWSER
-  build-depends: base >=4.11 && <4.12
+  build-depends: base
                , bytestring
                , containers
                , ghcjs-dom

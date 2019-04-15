@@ -30,7 +30,7 @@
       repo = "polysemy";
       rev = "fbbed8d2c682df201c86132467694b8827022f35";
       sha256 = "0p66d7r0v2s2wkpc1nsv7pg1arpsdqj0a26y730bmlnas3flyn8b";
-    }) {});
+    }) { hpack = ghc.hpack; });
 
     tapaw-hnpwa = overrideCabal super.tapaw-hnpwa (drv: {
       postFixup = ''

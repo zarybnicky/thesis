@@ -27,7 +27,7 @@ library
 
   exposed-modules:     Tapaw.Prelude
 
-  build-depends:       base ^>=4.11.1.0
+  build-depends:       base
                      , bytestring
                      , containers
                      , data-default

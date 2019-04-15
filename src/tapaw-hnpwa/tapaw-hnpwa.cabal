@@ -24,7 +24,7 @@ executable tapaw-hnpwa
     main-is:           Main.hs
   else
     main-is:           Main-warp.hs
-    build-depends:     base >=4.11 && <4.12
+    build-depends:     base
                      , wai
                      , wai-app-static
                      , warp
@@ -33,7 +33,7 @@ executable tapaw-hnpwa
   other-modules:       Tapaw.HNPwa
                        Tapaw.HNPwa.Types
 
-  build-depends:       base >=4.11 && <4.12
+  build-depends:       base
                      , aeson
                      , bytestring
                      , containers

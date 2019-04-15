@@ -24,8 +24,7 @@ executable tapaw-realworld-client
     main-is:           Main.hs
   else
     main-is:           Main-warp.hs
-    build-depends:     base >=4.11 && <4.12
-                     , wai
+    build-depends:     wai
                      , wai-app-static
                      , warp
                      , websockets
@@ -38,7 +37,7 @@ executable tapaw-realworld-client
                        Tapaw.RealWorld.Client.Utils
                        Tapaw.RealWorld.Types
 
-  build-depends:       base >=4.11 && <4.12
+  build-depends:       base
                      , aeson
                      , bytestring
                      , containers

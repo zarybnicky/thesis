@@ -21,7 +21,7 @@ executable tapaw-todomvc
   if impl(ghcjs -any)
     ghc-options:      -dedupe
 
-  build-depends:       base >=4.11 && <4.12
+  build-depends:       base
                      , bytestring
                      , containers
                      , file-embed

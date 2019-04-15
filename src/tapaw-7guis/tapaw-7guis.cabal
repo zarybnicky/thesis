@@ -23,7 +23,7 @@ executable tapaw-7guis
     ghc-options:      -dedupe
     cpp-options:      -DGHCJS_BROWSER
 
-  build-depends:       base >=4.11 && <4.12
+  build-depends:       base
                      , array
                      , bytestring
                      , containers
