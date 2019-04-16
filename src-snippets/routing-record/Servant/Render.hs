@@ -34,7 +34,6 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Lazy.Builder as LB
-import Data.Semigroup ((<>))
 import Data.Bifunctor (first)
 import Network.HTTP.Media ((//), (/:), renderHeader)
 import Servant.API hiding (Link)
@@ -100,9 +99,6 @@ instance MimeRender Runtime a where
       script :: LB.Builder -> LB.Builder -> LB.Builder
       script s attr = mconcat ["<script language=\"javascript\" src=\"", s, "\"", attr, "></script>" ]
 
-instance MimeUnrender Runtime a where
-  mimeUnrender _ = 
-
 data AsRender (t :: *) (m :: * -> *)
 instance GenericMode (AsRender t m) where
   type AsRender t m :- api = Widgets api t m
@@ -146,7 +142,7 @@ instance (ReflectMethod method, contents ~ (c:cs), MimeUnrender c a, SupportsSer
 instance (HasRender a t m, HasRender b t m) => HasRender (a :<|> b) t m where
   type Widgets (a :<|> b) t m = Widgets a t m :<|> Widgets b t m
   type Links   (a :<|> b) t m = Links a t m :<|> Links b t m
-  render Proxy env ~(a :<|> b) = Render (widgetA <> widgetB) (\req -> linkA req :<|> linkB req)
+  render Proxy env ~(a :<|> b) = Render ((<>) widgetA widgetB) (\req -> linkA req :<|> linkB req)
     where
       Render widgetA linkA = render (Proxy @a) env a
       Render widgetB linkB = render (Proxy @b) env b
@@ -166,14 +162,14 @@ instance (KnownSymbol path, HasRender api t m) => HasRender (path :> api) t m wh
 
 instance (ToHttpApiData a, FromHttpApiData a, HasRender api t m, SupportsServantRender t m) =>
   HasRender (Capture cap a :> api) t m where
-  type Widgets (Capture cap a :> api) t m = a -> Widgets api t m
+  type Widgets (Capture cap a :> api) t m = Widgets api t m
   type Links   (Capture cap a :> api) t m = Dynamic t a -> Links api t m
   render Proxy env cb = Render widgets' links'
     where
       Render widgets links = render (Proxy @api) env cb
       widgets' uri total = case unconsPathPiece uri of
         Just (piece, rest) -> case parseUrlPiece piece :: Either T.Text a of
-          Right a      -> widgets rest total
+          Right _      -> widgets rest total
           Left failure -> Left (NotFound ("Could not parse path piece becasue: " <> failure))
         Nothing -> Left (NotFound "Url too short")
       links' req val = links (prependPathPiece (fmap (Right . toUrlPiece) val) req)

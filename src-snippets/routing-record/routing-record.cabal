@@ -22,6 +22,7 @@ executable routing-record
     ghc-options: -dedupe
     cpp-options: -DGHCJS_BROWSER
   build-depends: base
+               , aeson
                , attoparsec
                , bytestring
                , containers

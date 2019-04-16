@@ -14,7 +14,7 @@ import GHCJS.DOM.Location (getHref)
 import GHCJS.DOM.Types (MonadJSM)
 import GHCJS.DOM.Window (getHistory, getLocation)
 import GHCJS.DOM.WindowEventHandlers (popState)
-import Reflex.Class (MonadHold(..), Reflex(..), ffor)
+import Reflex.Class (MonadHold(..), Reflex(..), ffor, leftmost)
 import Reflex.Dom.Builder.Immediate (wrapDomEventMaybe)
 import Reflex.Dynamic (attachPromptlyDyn)
 import Reflex.PerformEvent.Class (PerformEvent(..))
@@ -41,4 +41,4 @@ url dAuthority us = do
     pushState history () ("" :: Text) . Just . uncurry encodeUrl
   ps <- wrapDomEventMaybe window (`on` popState) $
     either (const Nothing) (Just . snd) . parseOnly parseUrl <$> getHref loc
-  holdDyn u0 ps
+  holdDyn u0 $ leftmost [ps, us]
