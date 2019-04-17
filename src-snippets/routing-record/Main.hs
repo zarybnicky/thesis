@@ -23,6 +23,7 @@ import GHC.Generics (Generic)
 import Reflex.Dom.Core hiding (Link, Widget)
 import Servant.App
 import Servant.API
+import Servant.API.Generic
 
 main :: IO ()
 main = run 3000 $ mainWidget app
@@ -39,7 +40,7 @@ widgets = Routes
   , homeRoute = do
       appLink showUserRoute =<< (5 <$) <$> button "Go to user"
       e <- ("<>>" <$) <$> button "Go to admin"
-      appLink (adminRoute .^ listUsersRoute) e
+      appLink (adminRoute .> listUsersRoute) e
       pure ()
   , adminRoute = toServant adminWidgets
   }
