@@ -12,6 +12,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 module Servant.App
   ( Loc(..)
@@ -23,8 +24,10 @@ module Servant.App
   , serve
   , url
   , appLink
+  , (.^)
   , TupleProduct(..)
   , GenericMode(..)
+  , genericApi
   , ToServantApi
   , toServant
   ) where
@@ -38,6 +41,7 @@ import Data.List (find, partition)
 import Data.Proxy (Proxy(..))
 import Data.Text (Text)
 import qualified Data.Text as T
+import GHC.Generics (Generic, Rep)
 import GHC.TypeLits (KnownSymbol, symbolVal)
 import GHCJS.DOM (currentWindowUnchecked)
 import GHCJS.DOM.EventM (on)
@@ -47,8 +51,24 @@ import GHCJS.DOM.Types (MonadJSM)
 import GHCJS.DOM.Window (getHistory, getLocation)
 import GHCJS.DOM.WindowEventHandlers (popState)
 import Reflex.Dom.Core
-import Servant.API ((:<|>)(..), (:>), Capture, IsElem, QueryParam, QueryParams)
-import Servant.API.Generic (AsApi, GenericMode(..), GenericServant, ToServantApi, genericApi, toServant)
+import Servant.API
+  ( (:<|>)(..)
+  , (:>)
+  , Capture
+  , IsElem
+  , QueryParam
+  , QueryParams
+  )
+import Servant.API.Generic
+  ( AsApi
+  , GenericMode(..)
+  , GenericServant
+  , GServantProduct
+  , ToServantApi
+  , genericApi
+  , toServant
+  )
+import Servant.API.TypeLevel (IsSubAPI)
 import URI.ByteString
   (Query(..), URI, URIParseError, laxURIParserOptions, parseURI,
    serializeURIRef', uriFragment, uriPath, uriQuery)
@@ -300,13 +320,30 @@ safeAppLink ::
   -> Loc
 safeAppLink _ = toAppLink
 
+
+-- TODO: Figure out a real proof...
+(.^) :: forall sub eSub top e result.
+     ( IsSubAPI result (ToServantApi top)
+     , Generic (sub AsApi)
+     , GServantProduct (Rep (sub AsApi))
+     , result ~ GetSkipped (ToServantApi sub) eSub
+     )
+  => (top AsApi -> eSub)
+  -> (sub AsApi -> e)
+  -> (top AsApi -> result)
+_ .^ _ = undefined
+
+type family GetSkipped sub api where
+  GetSkipped sub (top :> notApi) = top :> GetSkipped sub notApi
+  GetSkipped sub s = s
+
 class HasAppLink api where
   type GatherLinkArgs api :: [*]
   toAppLink :: Proxy api -> Loc -> TupleProductOf (GatherLinkArgs api) -> Loc
 
 -- All links
--- instance (HasAppLink a cfg, HasAppLink b cfg) => HasAppLink (a :<|> b) cfg where
---   type GatherLinkArgs (a :<|> b) = AppLink a cfg m :<|> AppLink b cfg m
+-- instance (HasAppLink a, HasAppLink b) => HasAppLink (a :<|> b) where
+--   type GatherLinkArgs (a :<|> b) = GatherLinkArgs a :<|> GatherLinkArgs b
 --   toAppLink _ p q r f = toAppLink (Proxy @a) p q r f :<|> toAppLink (Proxy @b) p q r f
 
 instance (KnownSymbol sym, HasAppLink sub) => HasAppLink (sym :> sub) where
