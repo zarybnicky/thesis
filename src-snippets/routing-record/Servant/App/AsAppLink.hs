@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
@@ -14,7 +15,6 @@ module Servant.App.AsAppLink
   ( HasAppLink(..)
   , GetSkipped
   , appLink
-  , appLink2
   , safeAppLink
   , (.>)
   , (.>!)
@@ -32,14 +32,17 @@ import Servant.API ((:>), Capture, IsElem, QueryParam, QueryParams)
 import Servant.API.Generic
   ( AsApi
   , GServantProduct
+  , GenericMode
   , GenericServant
+  , ToServant
   , ToServantApi
   , genericApi
+  , fromServant
   )
 import Servant.API.TypeLevel (IsSubAPI)
 
 appLink ::
-     forall t m e rs.
+     forall t e rs m.
      ( EventWriter t Loc m
      , Reflex t
      , IsElem e (ToServantApi rs)
@@ -62,21 +65,34 @@ safeAppLink ::
   -> Loc
 safeAppLink _ = toAppLink
 
--- TODO: Figure out a real proof...
-(.>) :: forall sub eSub top e result.
+(.>) ::
+     forall sup sub mode e.
+     ( GenericMode mode
+     , Generic (sub mode)
+     , GServantProduct (Rep (sub mode))
+     )
+  => (sup mode -> ToServant sub mode)
+  -> (sub mode -> e)
+  -> (sup mode -> e)
+sup .> sub = \api -> sub (fromServant $ sup api :: sub mode)
+
+(.>!) ::
+     forall sub eSub top e result.
      ( IsSubAPI result (ToServantApi top)
      , Generic (sub AsApi)
      , GServantProduct (Rep (sub AsApi))
-     , result ~ GetSkipped (ToServantApi sub) eSub
+     , result ~ GetSkipped e eSub
      )
   => (top AsApi -> eSub)
   -> (sub AsApi -> e)
   -> (top AsApi -> result)
-_ .> _ = undefined
+_ .>! _ = undefined
 
 type family GetSkipped sub api where
+  GetSkipped sub sub = sub
   GetSkipped sub (top :> notApi) = top :> GetSkipped sub notApi
-  GetSkipped sub s = s
+--  GetSkipped sub (a :<|> b) = OrSkip sub (GetSkipped sub a) (GetSkipped sub b)
+
 
 class HasAppLink api where
   type GatherLinkArgs api :: [*]
