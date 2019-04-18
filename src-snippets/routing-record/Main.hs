@@ -15,6 +15,7 @@ module Main
   ( main
   ) where
 
+import Control.Monad (void)
 import Data.Proxy (Proxy(..))
 import Data.Text (Text)
 import qualified Data.Text as T

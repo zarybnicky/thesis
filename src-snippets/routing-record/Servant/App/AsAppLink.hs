@@ -12,8 +12,12 @@
 
 module Servant.App.AsAppLink
   ( HasAppLink(..)
+  , GetSkipped
   , appLink
+  , appLink2
+  , safeAppLink
   , (.>)
+  , (.>!)
   ) where
 
 import Data.Aeson (ToJSON, encode)
