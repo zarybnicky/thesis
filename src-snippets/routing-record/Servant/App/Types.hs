@@ -1,18 +1,16 @@
 module Servant.App.Types
   ( Loc(..)
   , Err(..)
-  , Context
   , App
   ) where
 
-import Data.ByteString.Lazy (ByteString)
 import Data.Text (Text)
 import URI.ByteString (URIParseError)
 
 data Loc = Loc
-  { locPath :: [ByteString]
-  , locQuery :: [(ByteString, ByteString)]
-  }
+  { locPath :: [Text]
+  , locQuery :: [(Text, Text)]
+  } deriving (Show)
 instance Semigroup Loc where
   a <> _ = a
 
@@ -25,8 +23,6 @@ data Err
   deriving (Eq, Show)
 
 data App
-
-data Context ctx t
 
 -- data Context contextTypes where
 --     EmptyContext :: Context '[]

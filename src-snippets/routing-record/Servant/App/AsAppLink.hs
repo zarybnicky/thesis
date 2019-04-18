@@ -20,15 +20,14 @@ module Servant.App.AsAppLink
   , (.>!)
   ) where
 
-import Data.Aeson (ToJSON, encode)
-import qualified Data.ByteString.Lazy.Char8 as BC
 import Data.Proxy (Proxy(..))
+import qualified Data.Text as T
 import GHC.Generics (Generic, Rep)
 import GHC.TypeLits (KnownSymbol, symbolVal)
 import Reflex.Dom.Core (Event, EventWriter, Reflex, tellEvent)
 import Servant.App.TupleProduct (TupleProduct(..), unconsT)
 import Servant.App.Types (App, Loc(..))
-import Servant.API ((:>), Capture, IsElem, QueryParam, QueryParams)
+import Servant.API ((:>), Capture, IsElem, QueryParam, QueryParams, ToHttpApiData(..))
 import Servant.API.Generic
   ( AsApi
   , GServantProduct
@@ -106,37 +105,37 @@ class HasAppLink api where
 instance (KnownSymbol sym, HasAppLink sub) => HasAppLink (sym :> sub) where
   type GatherLinkArgs (sym :> sub) = GatherLinkArgs sub
   toAppLink _ l = toAppLink (Proxy @sub) $ l
-    { locPath = locPath l ++ [BC.pack . symbolVal $ Proxy @sym]
+    { locPath = locPath l ++ [toUrlPiece . symbolVal $ Proxy @sym]
     }
 
-instance (ToJSON a, HasAppLink sub, TupleProduct (GatherLinkArgs sub)) =>
+instance (ToHttpApiData a, HasAppLink sub, TupleProduct (GatherLinkArgs sub)) =>
          HasAppLink (Capture sym a :> sub) where
   type GatherLinkArgs (Capture sym a :> sub) = a : GatherLinkArgs sub
   toAppLink _ l args =
     case unconsT (Proxy @(a : GatherLinkArgs sub)) args of
       (r, rs) ->
-        toAppLink (Proxy @sub) (l {locPath = locPath l ++ [encode r]}) rs
+        toAppLink (Proxy @sub) (l {locPath = locPath l ++ [toUrlPiece r]}) rs
 
-instance (ToJSON a, HasAppLink sub, KnownSymbol sym, TupleProduct (GatherLinkArgs sub)) =>
+instance (ToHttpApiData a, HasAppLink sub, KnownSymbol sym, TupleProduct (GatherLinkArgs sub)) =>
          HasAppLink (QueryParam sym a :> sub) where
   type GatherLinkArgs (QueryParam sym a :> sub) = Maybe a : GatherLinkArgs sub
   toAppLink _ l args =
     case unconsT (Proxy @(Maybe a : GatherLinkArgs sub)) args of
       (Nothing, rs) -> toAppLink (Proxy @sub) l rs
       (Just x, rs) ->
-        toAppLink (Proxy @sub) (l {locQuery = (sym, encode x):locQuery l}) rs
+        toAppLink (Proxy @sub) (l {locQuery = (sym, toQueryParam x):locQuery l}) rs
     where
-      sym = BC.pack . symbolVal $ Proxy @sym
+      sym = T.pack . symbolVal $ Proxy @sym
 
-instance (ToJSON a, HasAppLink sub, KnownSymbol sym, TupleProduct (GatherLinkArgs sub)) =>
+instance (ToHttpApiData a, HasAppLink sub, KnownSymbol sym, TupleProduct (GatherLinkArgs sub)) =>
          HasAppLink (QueryParams sym a :> sub) where
   type GatherLinkArgs (QueryParams sym a :> sub) = [a] : GatherLinkArgs sub
   toAppLink _ l args =
     case unconsT (Proxy @([a] : GatherLinkArgs sub)) args of
       (r, rs) ->
-        toAppLink (Proxy @sub) (l {locQuery = ((sym,) . encode <$> r) ++ locQuery l}) rs
+        toAppLink (Proxy @sub) (l {locQuery = ((sym,) . toQueryParam <$> r) ++ locQuery l}) rs
     where
-      sym = BC.pack . symbolVal $ Proxy @sym
+      sym = T.pack . symbolVal $ Proxy @sym
 
 instance HasAppLink App where
   type GatherLinkArgs App = '[]

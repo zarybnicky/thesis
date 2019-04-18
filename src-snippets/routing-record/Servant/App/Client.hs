@@ -24,23 +24,22 @@ import GHCJS.DOM.Window (getHistory, getLocation)
 import GHCJS.DOM.WindowEventHandlers (popState)
 import Reflex.Dom.Core
 import Servant.App.AsApp (HasApp(..))
-import Servant.App.Types (Err(..), Loc(..), Context)
+import Servant.App.Types (Err(..), Loc(..))
 import URI.ByteString
   (Query(..), URI, URIRef(..), laxURIParserOptions, parseURI, serializeURIRef')
 
--- error page :: (api -> AppT) -> Err -> m ()
+-- error page :: (api -> MkApp) -> Err -> m ()
 -- Think about /error?redirect=/admin/x
 
 serve ::
-     forall t m api. (HasApp api (), MonadWidget t m)
+     forall t m api. (HasApp api, MonadWidget t m)
   => Proxy api
-  -> AppT api t (EventWriterT t Loc m)
+  -> MkApp api (EventWriterT t Loc m)
   -> (Err -> EventWriterT t Loc m ())
   -> m ()
 serve api ws showError = mdo
-  let ctx = undefined :: Context () t
   dUrl <- url eUrl
-  (_, eUrl) <- runEventWriterT $ dyn $ either showError id . (route api ctx ws =<<) <$> dUrl
+  (_, eUrl) <- runEventWriterT $ dyn $ either showError id . (route api ws =<<) <$> dUrl
   pure ()
 
 url ::
@@ -66,15 +65,17 @@ url us = do
       ps <- wrapDomEvent window (`on` popState) $ fmap uri2loc . text2uri <$> getHref location
       holdDyn (Right $ uri2loc u0) (leftmost [ps, Right <$> us])
   where
+    b2s = T.pack . BC.unpack . BC.fromStrict
+    s2b = BC.toStrict . BC.pack . T.unpack
     text2uri = first Err500 . parseURI laxURIParserOptions . BC.toStrict . BC.pack . T.unpack
     uri2text = T.pack . BC.unpack . BC.fromStrict . serializeURIRef'
     uri2loc uri = Loc
-      { locPath = drop 1 . BC.split '/' . BC.fromStrict $ uriPath uri
-      , locQuery = bimap BC.fromStrict BC.fromStrict <$> queryPairs (uriQuery uri)
+      { locPath = drop 1 . T.splitOn "/" . b2s $ uriPath uri
+      , locQuery = bimap b2s b2s <$> queryPairs (uriQuery uri)
       }
     loc2uri :: URI -> Loc -> URI
     loc2uri u0 loc = u0
-      { uriPath = "/" <> BC.toStrict (BC.intercalate "/" (locPath loc))
-      , uriQuery = Query $ bimap BC.toStrict BC.toStrict <$> locQuery loc
+      { uriPath = "/" <> s2b (T.intercalate "/" $ locPath loc)
+      , uriQuery = Query $ bimap s2b s2b <$> locQuery loc
       , uriFragment = Nothing
       }
