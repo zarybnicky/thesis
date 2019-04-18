@@ -2,9 +2,10 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -16,15 +17,25 @@ module Servant.App.AsGenerator
   , HasGen(..)
   ) where
 
+import Control.Monad (void)
 import Control.Monad.Reader (Reader, MonadReader, asks, runReader)
 import Control.Monad.Writer.Strict (MonadWriter, WriterT, execWriterT, tell)
+import Data.ByteString (ByteString)
+import qualified Data.ByteString as BS
+import Data.Foldable (for_)
+import Data.List.NonEmpty (NonEmpty((:|)), cons, uncons)
+import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Proxy (Proxy(..))
+import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.TypeLits (KnownSymbol, symbolVal)
+import Reflex.Dom.Core (StaticWidget, renderStatic, el)
 import Servant.App.AsApp (AsApp, HasApp(..))
 import Servant.App.Types (App, Loc(..))
 import Servant.API ((:<|>)(..), (:>), Capture, IsElem, QueryParam, QueryParams, ToHttpApiData(..))
 import Servant.API.Generic (AsApi, ToServantApi)
+import System.Directory (createDirectoryIfMissing)
 
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -39,17 +50,82 @@ import Unsafe.Coerce (unsafeCoerce)
 --   Redex a a first = Flatten first :> a
 --   Redex a b first = Flatten (first :> b)
 
+runGen ::
+     Monad m
+  => Text
+  -> (m () -> StaticWidget x a)
+  -> StaticWidget x ()
+  -> app
+  -> GenM app m ()
+  -> IO ()
+runGen start nt hd app f = runRenderTree start nt hd (toRenderTree $ runGenM app f)
+
+data RenderTree m = RenderTree
+  { rtValue :: Maybe (m ())
+  , rtChildren :: Map Text (RenderTree m)
+  }
+
+runRenderTree ::
+     forall m x a.
+     Text
+  -> (m () -> StaticWidget x a)
+  -> StaticWidget x ()
+  -> Map Text (RenderTree m)
+  -> IO ()
+runRenderTree start nt hd = void . M.traverseWithKey (go start)
+  where
+    go :: Text -> Text -> RenderTree m -> IO ()
+    go ps p rt = do
+      for_ (rtValue rt) $ \app -> do
+        bs <- runRenderAction nt hd app
+        createDirectoryIfMissing True (T.unpack ps)
+        BS.writeFile (T.unpack $ ps <> "/" <> p ) bs
+      void $ M.traverseWithKey (go $ ps <> "/" <> p) (rtChildren rt)
+
+toRenderTree :: [RenderAction m] -> Map Text (RenderTree m)
+toRenderTree = foldr go M.empty . fmap (\ra -> (htmlify . locPath $ renderLoc ra, renderApp ra))
+  where
+    go :: (NonEmpty Text, m ()) -> Map Text (RenderTree m) -> Map Text (RenderTree m)
+    go (loc, app) = case uncons loc of
+      (p, Nothing) -> flip M.alter p $ \case
+        Nothing -> Just $ RenderTree (Just app) M.empty
+        Just rt -> Just $ rt { rtValue = Just app }
+      (p, Just ps) -> flip M.alter p $ \case
+        Nothing -> Just $ RenderTree Nothing (go (ps, app) M.empty)
+        Just rt -> Just $ rt { rtChildren = go (ps, app) (rtChildren rt) }
+
+runRenderAction ::
+     (m () -> StaticWidget x a)
+  -> StaticWidget x ()
+  -> m ()
+  -> IO ByteString
+runRenderAction nt hd app = snd <$> renderStatic (topLevel hd . (() <$) $ nt app)
+
+topLevel :: StaticWidget x () -> StaticWidget x () -> StaticWidget x ()
+topLevel hd body =
+  el "html" $ do
+    el "head" hd
+    el "body" body
+
+htmlify :: [Text] -> NonEmpty Text
+htmlify = \case
+  [] -> "index.html" :| []
+  [""] -> "index.html" :| []
+  [x] -> (x <> ".html") :| []
+  x:xs -> cons x (htmlify xs)
+
+
 newtype GenM app m a = GenM
-  { runGenM :: WriterT [(Loc, m ())] (Reader app) a
+  { unGenM :: WriterT [RenderAction m] (Reader app) a
   } deriving ( Functor
              , Applicative
              , Monad
              , MonadReader app
-             , MonadWriter [(Loc, m ())]
+             , MonadWriter [RenderAction m]
              )
 
-runGen :: Monad m => app -> GenM app m () -> [(Loc, m ())]
-runGen app f = runReader (execWriterT (runGenM f)) app
+runGenM :: app -> GenM app m () -> [RenderAction m]
+runGenM app f = runReader (execWriterT (unGenM f)) app
 
 gen ::
      forall top m e.
@@ -63,10 +139,15 @@ gen f = genR (Proxy @m) (Proxy @e) id
   (asks (unsafeCoerce f) :: GenM (top (AsApp m)) m (MkApp e m))
 
 
+data RenderAction m = RenderAction
+  { renderLoc :: Loc
+  , renderApp :: m ()
+  }
+
 class HasGen api where
   type MkRender api (m :: * -> *) (m0 :: * -> *) :: *
   genR ::
-       MonadWriter [(Loc, m ())] m0
+       MonadWriter [RenderAction m] m0
     => Proxy m
     -> Proxy api
     -> (Loc -> Loc)
@@ -107,4 +188,6 @@ instance (ToHttpApiData a, KnownSymbol sym, HasGen sub) => HasGen (QueryParams s
 
 instance HasGen App where
   type MkRender App m m0 = m0 ()
-  genR _ _ l f = tell =<< (:[]) . (l $ Loc [] [],) <$> f
+  genR _ _ l f = do
+    app <- f
+    tell [RenderAction (l $ Loc [] []) app]

@@ -13,10 +13,10 @@
 
 module Main where
 
+import Control.Monad.IO.Class (liftIO)
 import Data.Proxy (Proxy(..))
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Traversable (for)
 import Language.Javascript.JSaddle.Warp as JS (run)
 import GHC.Generics (Generic)
 import Reflex.Dom.Core hiding (Link, Widget)
@@ -24,29 +24,22 @@ import Servant.App
 import Servant.API
 import Servant.API.Generic
 
-import Servant.App.AsGenerator
-
 main :: IO ()
-main = run 3000 $ mainWidget $ do
-  let gens = runGen widgets $ do
-        gen showUserRoute 2
-        gen homeRoute
-        gen (adminRoute .> editUserRoute) "text"
+main = runGen "out" runEventWriterT appHead widgets $ do
+  gen showUserRoute 2
+  gen homeRoute
+  gen (adminRoute .> editUserRoute) "text"
 
-  _ <- runEventWriterT $ for gens $ \(loc, g) -> do
-    text $ T.pack (show loc) <> ":"
-    el "br" blank
-    g
-    el "hr" blank
-  pure ()
+appHead :: DomBuilder t m => m ()
+appHead = el "title" $ text "Static app"
 
 app :: MonadWidget t m => m ()
 app = serve (genericApi $ Proxy @Routes) (toServant widgets) errorPage
 
-errorPage :: MonadWidget t m => Err -> m ()
+errorPage :: DomBuilder t m => Err -> m ()
 errorPage = text . T.pack . show
 
-widgets :: (EventWriter t Loc m, MonadWidget t m) => Routes (AsApp m)
+widgets :: (EventWriter t Loc m, DomBuilder t m) => Routes (AsApp m)
 widgets = Routes
   { showUserRoute = \i ->
       text (T.pack $ show i)
@@ -59,7 +52,7 @@ widgets = Routes
   , adminRoute = toServant adminWidgets
   }
 
-adminWidgets :: (EventWriter t Loc m, MonadWidget t m) => AdminRoutes (AsApp m)
+adminWidgets :: (EventWriter t Loc m, DomBuilder t m) => AdminRoutes (AsApp m)
 adminWidgets = AdminRoutes
   { listUsersRoute = do
       text "users"

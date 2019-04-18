@@ -10,6 +10,7 @@ module Servant.App.Client
   , url
   ) where
 
+import Control.Monad.Fix (MonadFix)
 import Data.Bifunctor (bimap, first)
 import qualified Data.ByteString.Lazy.Char8 as BC
 import Data.Proxy (Proxy(..))
@@ -32,7 +33,17 @@ import URI.ByteString
 -- Think about /error?redirect=/admin/x
 
 serve ::
-     forall t m api. (HasApp api, MonadWidget t m)
+     forall t m api.
+     ( HasApp api
+     , TriggerEvent t m
+     , PerformEvent t m
+     , MonadHold t m
+     , MonadFix m
+     , DomBuilder t m
+     , PostBuild t m
+     , MonadJSM (Performable m)
+     , MonadJSM m
+     )
   => Proxy api
   -> MkApp api (EventWriterT t Loc m)
   -> (Err -> EventWriterT t Loc m ())
