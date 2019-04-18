@@ -16,14 +16,15 @@ module Servant.App.AsGenerator
   , HasGen(..)
   ) where
 
-import Control.Monad.Reader
-import Control.Monad.Writer.Strict
+import Control.Monad.Reader (Reader, MonadReader, asks, runReader)
+import Control.Monad.Writer.Strict (MonadWriter, WriterT, execWriterT, tell)
 import Data.Proxy (Proxy(..))
 import qualified Data.Text as T
 import GHC.TypeLits (KnownSymbol, symbolVal)
-import Servant.App
-import Servant.API
-import Servant.API.Generic
+import Servant.App.AsApp (AsApp, HasApp(..))
+import Servant.App.Types (App, Loc(..))
+import Servant.API ((:<|>)(..), (:>), Capture, IsElem, QueryParam, QueryParams, ToHttpApiData(..))
+import Servant.API.Generic (AsApi, ToServantApi)
 
 import Unsafe.Coerce (unsafeCoerce)
 
