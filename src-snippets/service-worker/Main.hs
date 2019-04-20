@@ -35,10 +35,17 @@ record = Routes
   , _index = liftIO . fmap (T.pack . BC.unpack . snd) . renderStatic $
       el "html" $ do
         el "head" $
-          el "script" $ text "navigator.serviceWorker.register('sw.js', { scope: './controlled'});"
+          el "style" . text $ mconcat
+            [ "iframe { display: block; margin: 1rem; box-shadow: 2px 2px 10px 0px #eee inset; width: 50%; }"
+            , "#comparison { display: flex; direction: row; margin-bottom: 2rem; }"
+            ]
         el "body" $ do
-          elAttr "iframe" ("src" =: "./non-controlled.html" <> "id" =: "reference") blank
-          elAttr "iframe" ("src" =: "./controlled.html" <> "id" =: "sample") blank
+          text "This demo uses code from https://serviceworke.rs/strategy-network-or-cache.html"
+          elAttr "div" ("id" =: "comparison") $ do
+            elAttr "iframe" ("src" =: "./non-controlled.html" <> "id" =: "reference") blank
+            elAttr "iframe" ("src" =: "./controlled.html" <> "id" =: "sample") blank
+          elAttr "button" ("id" =: "reload") (text "Reload")
+          el "script" $ text (jsToText appJS)
   , _control = liftIO . fmap (T.pack . BC.unpack . snd) . renderStatic $
       el "html" $
         el "body" $ elAttr "img" ("src" =: "./asset") blank
@@ -48,6 +55,26 @@ record = Routes
   , _sw = pure . jsToText $ sw "network-or-cache" ["./controlled.html", "./asset"]
   , _asset = liftIO $ BC.readFile "asset.png"
   }
+
+appJS :: JStat
+appJS = [jmacro|
+navigator.serviceWorker.register('sw.js', { scope: './controlled' });
+var referenceIframe = document.getElementById('reference');
+var sampleIframe = document.getElementById('sample');
+function reload() {
+  referenceIframe.contentWindow.location.reload();
+  sampleIframe.contentWindow.location.reload();
+}
+navigator.serviceWorker.ready.then(reload);
+document.getElementById('reload').onclick = reload;
+function fixHeight(e) {
+  var iframe = e.target;
+  var document = iframe.contentWindow.document.documentElement;
+  iframe.style.height = document.getClientRects()[0].height + 'px';
+}
+referenceIframe.onload = fixHeight;
+sampleIframe.onload = fixHeight;
+|]
 
 data HTML
 data JS
@@ -75,18 +102,26 @@ jsToText = displayTStrict . renderPretty 1 80 . renderJs
 
 sw :: String -> [String] -> JStat
 sw cacheName prefetch =
-    (if null prefetch
-     then BlockStat []
-     else handleInstall [jmacroE|function(evt) {
-       console.log('The service worker is being installed.');
-       evt.waitUntil(function () {
-         return caches.open(`(cacheName)`).then(function (cache) {
-           return cache.addAll(`(prefetch)`);
-         });
+  (if null prefetch
+   then BlockStat []
+   else handleInstall [jmacroE|function(evt) {
+     console.log('The service worker is being installed.');
+     evt.waitUntil(function () {
+       return caches.open(`(cacheName)`).then(function (cache) {
+         return cache.addAll(`(prefetch)`);
        });
-     }|])
-  <> [jmacro|
-var !fromNetwork = function(request, timeout) {
+     });
+   }|]) <>
+  handleFetch [jmacroE|function(evt) {
+    console.log('The service worker is serving the asset.');
+    evt.respondWith(fromNetwork(evt.request, 400).then(null, function () {
+      return fromCache(`(cacheName)`, evt.request);
+    }));
+  }|]
+
+fromNetwork :: JExpr
+fromNetwork = [jmacroE|
+function(request, timeout) {
   return new Promise(function (fulfill, reject) {
     var timeoutId = setTimeout(reject, timeout);
     fetch(request).then(function (response) {
@@ -94,21 +129,17 @@ var !fromNetwork = function(request, timeout) {
       fulfill(response);
     }, reject);
   });
-};
+}|]
 
-var !fromCache = function (request) {
-  return caches.open(`(cacheName)`).then(function (cache) {
+fromCache :: JExpr
+fromCache = [jmacroE|
+function (cacheName, request) {
+  return caches.open(cacheName).then(function (cache) {
     return cache.match(request).then(function (matching) {
       return matching || Promise.reject('no-match');
     });
   });
-};
-|] <> handleFetch [jmacroE|function(evt) {
-       console.log('The service worker is serving the asset.');
-       evt.respondWith(fromNetwork(evt.request, 400).then(null, function () {
-         return fromCache(evt.request);
-       }));
-     }|]
+}|]
 
 handleInstall :: JExpr -> JStat
 handleInstall fn = [jmacro|self.addEventListener('install', `(fn)`);|]
