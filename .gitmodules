@@ -1,6 +1,6 @@
 [submodule "reflex-platform"]
 	path = reflex-platform
-	url = https://github.com/reflex-frp/reflex-platform/
+	url = git@github.com/zarybnicky/reflex-platform
 [submodule "src/tapaw-hnpwa/preact-hn"]
 	path = src/tapaw-hnpwa/preact-hn
 	url = https://github.com/kristoferbaxter/preact-hn
@@ -10,3 +10,15 @@
 [submodule "src/tapaw-realworld-client/test/integration/haskell-yesod-realworld-example-app"]
 	path = src/tapaw-realworld-client/test/integration/haskell-yesod-realworld-example-app
 	url = https://github.com/tzemanovic/haskell-yesod-realworld-example-app/
+[submodule "src-snippets/service-worker/domconv-webkit"]
+	path = src-snippets/service-worker/domconv-webkit
+	url = git@github.com:zarybnicky/domconv-webkit
+[submodule "src-snippets/service-worker/webbits"]
+	path = src-snippets/service-worker/webbits
+	url = https://github.com/brownplt/webbits
+[submodule "src-snippets/service-worker/chromium"]
+	path = src-snippets/service-worker/chromium
+	url = https://github.com/chromium/chromium
+[submodule "src-snippets/service-worker/jmacro"]
+	path = src-snippets/service-worker/jmacro
+	url = git@github.com:zarybnicky/jmacro.git
