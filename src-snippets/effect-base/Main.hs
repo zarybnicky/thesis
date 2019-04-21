@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -20,13 +21,13 @@ module Main
   ( main
   ) where
 
+import Control.Applicative
 import Control.Monad.Fix (MonadFix)
-import Control.Monad.Trans (MonadTrans, lift)
 import Data.Text (Text)
 import Language.Javascript.JSaddle.Warp as JS (run)
 import Polysemy
 import Polysemy.Fixpoint
-import Polysemy.Internal (send)
+import Polysemy.Internal
 import Polysemy.Output
 import Reflex.Dom.Core
 
@@ -61,27 +62,54 @@ runStore s0 f = mdo
     Put (e :: Event t s) -> output e) f
   pure a
 
+instance (Member (Lift m) r, NotReady t m) => NotReady t (SemR t r m) where
+  notReadyUntil e = SemR $ sendM @m (notReadyUntil e)
+  notReady = SemR $ sendM @m notReady
 
-instance Applicative (SemR t r m)
-instance Monad (SemR t r m) where
-instance MonadTrans (SemR t r) where
-instance (Reflex t, Adjustable t m) => Adjustable t (SemR t r m) where
-instance NotReady t m => NotReady t (SemR t r m) where
-instance (MonadHold t m, DomBuilder t m) => DomBuilder t (SemR t r m) where
-  type DomBuilderSpace (SemR t r m) = DomBuilderSpace m
-  element = undefined
-  inputElement = undefined
-  textAreaElement = undefined
-  selectElement = undefined
-instance PerformEvent t m => PerformEvent t (SemR t r m) where
+instance (Member (Lift m) r, MonadSample t m) => MonadSample t (SemR t r m) where
+  sample b = SemR $ sendM @m (sample b)
+
+instance (Member (Lift m) r, MonadHold t m) => MonadHold t (SemR t r m) where
+  hold a e = SemR $ sendM @m (hold a e)
+  holdDyn a e = SemR $ sendM @m (holdDyn a e)
+  holdIncremental a e = SemR $ sendM @m (holdIncremental a e)
+  buildDynamic m e = SemR $ sendM @m (buildDynamic m e)
+  headE e = SemR $ sendM @m (headE e)
+
+instance (Member (Lift m) r, PerformEvent t m) => PerformEvent t (SemR t r m) where
   type Performable (SemR t r m) = Performable m
-instance PostBuild t m => PostBuild t (SemR t r m) where
-instance TriggerEvent t m => TriggerEvent t (SemR t r m) where
---instance DomSpace (DomBuilderSpace (SemR t m r)) where
+  performEvent e = SemR $ sendM @m (performEvent e)
+  performEvent_ e = SemR $ sendM @m (performEvent_ e)
 
-newtype SemR t r m a = SemR
-  { unSemR :: (Member Fixpoint r, Member (Lift m) r) => Semantic r a
-  } deriving (Functor)
+instance (Member (Lift m) r, PostBuild t m) => PostBuild t (SemR t r m) where
+  getPostBuild = SemR $ sendM @m getPostBuild
+
+instance (Member (Lift m) r, TriggerEvent t m) => TriggerEvent t (SemR t r m) where
+  newTriggerEvent = SemR $ sendM @m newTriggerEvent
+  newTriggerEventWithOnComplete = SemR $ sendM @m newTriggerEventWithOnComplete
+  newEventWithLazyTriggerWithOnComplete f = SemR $ sendM @m @r (newEventWithLazyTriggerWithOnComplete f)
+
+instance (Reflex t, Adjustable t m) => Adjustable t (SemR t r m) where
+  runWithReplace = undefined
+  traverseIntMapWithKeyWithAdjust = undefined
+  traverseDMapWithKeyWithAdjustWithMove _ _ = undefined
+
+instance (Member (Lift m) r, MonadHold t m, DomBuilder t m) => DomBuilder t (SemR t r m) where
+  type DomBuilderSpace (SemR t r m) = DomBuilderSpace m
+  inputElement cfg = SemR $ sendM @m (inputElement cfg)
+  textAreaElement cfg = SemR $ sendM @m (textAreaElement cfg)
+  selectElement = undefined
+  textNode cfg = SemR $ sendM @m (textNode cfg)
+  commentNode cfg = SemR $ sendM @m (commentNode cfg)
+  placeRawElement e = SemR $ sendM @m (placeRawElement e)
+  wrapRawElement e cfg = SemR $ sendM @m (wrapRawElement e cfg)
+  element e cfg (child :: SemR t r m a) = SemR $ sendM @m $ element e cfg undefined
+
+
+newtype SemR t r (m :: * -> *) a = SemR
+  { unSemR :: Semantic r a
+  } deriving (Functor, Applicative, Monad)
+type SemRef t r m a = (Member Fixpoint r, Member (Lift m) r) => SemR t r m a
 
 runSemR ::
      forall t m a. MonadFix m
@@ -90,8 +118,7 @@ runSemR ::
 runSemR = runM . runFixpointM runM . unSemR
 
 stripSemR ::
-     (Member (Lift m) (e : r), Member Fixpoint (e : r))
-  => (Semantic (e ': r) a -> Semantic r a)
+     (Semantic (e ': r) a -> Semantic r a)
   -> SemR t (e ': r) m a
   -> SemR t r m a
 stripSemR runner = SemR . runner . unSemR
@@ -102,7 +129,7 @@ main = JS.run 3000 $ mainWidget go
     go :: forall t m. (Typeable t, MonadWidget t m) => m ()
     go = runSemR $ stripSemR (runStore @Text @t @m "") app
 
-app :: forall t m r. (Member (Store Text t) r, MonadWidget t m) => SemR t r m ()
+app :: forall t m r. (Member (Store Text t) r, MonadWidget t m) => SemRef t r m ()
 app = do
   dynText =<< get @Text
   dText <- inputElement def
