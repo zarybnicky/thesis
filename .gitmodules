@@ -16,9 +16,6 @@
 [submodule "src-snippets/service-worker/webbits"]
 	path = src-snippets/service-worker/webbits
 	url = https://github.com/brownplt/webbits
-[submodule "src-snippets/service-worker/chromium"]
-	path = src-snippets/service-worker/chromium
-	url = https://github.com/chromium/chromium
 [submodule "src-snippets/service-worker/jmacro"]
 	path = src-snippets/service-worker/jmacro
 	url = git@github.com:zarybnicky/jmacro.git
