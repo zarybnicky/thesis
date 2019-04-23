@@ -63,12 +63,22 @@ Systems cite:obsidian. Tweag cite:tweag is working on a Haskell-to-WebAssembly
 compiler, Asterius, and QFPL cite:qfpl has created many learning materials for
 frontend Haskell.
 
-* Technologies
-We will first have a more detailed look at the technologies mentioned above - at
-what the term Progressive Web Application means and why would one want to use
-Haskell for creating browser applications.
+* Web Technologies
+As this work does not live in a vacuum, we also need to consider commonly used
+Web frameworks and platforms and decide what features to implement in. We will
+first walk through the features that frameworks today implement, describe them
+and define the relevant terms. Afterwards, we will have a brief look at the
+specifics of the JavaScript ecosystem - the most common language in Web
+development - and the of Haskell, my language of choice, and try to find the
+places where Haskell is lagging behind and especially the features that we will
+need to fill in in this work.
 
-** Progressive Web Application
+** Web Applications Today
+- TODO: Show what's necessary for today's webdev, HTML5, CSS3, ES7
+- TODO: Show expectations on a rich web application of today (UX, offline, ?),
+  use examples
+
+** Progressive Web Applications
 The term 'Progressive Web Application' is an umbrella term for several
 relatively new, closely related technologies. It continues in the general trend
 of expanding the capabilities of browser applications and of closing the gap
@@ -109,128 +119,7 @@ the major Web browsers. They are:
 Some notable examples of companies using PWAs are: Twitter cite:twitter, Uber
 cite:uber, or Flipkart cite:flipkart.
 
-** Haskell
-#+CAPTION: An example of a web server in Haskell
-#+ATTR_LATEX: :options frame=single
-#+BEGIN_SRC haskell :exports code
-  type HackageAPI =
-    "users" :> Get '[JSON] [User] :<|>
-    "user" :> Capture "login" Login :> Get '[JSON] User :<|>
-    "packages" :> Get '[JSON] [Package]
-
-  getUsers :: Handler [User]
-  getUser :: Login -> Handler User
-  getPackages :: Handler [Package]
-
-  server :: Server HackageApi
-  server = getUsers :<|> getUser :<|> getPackages
-
-  getUsers :<|> getUser :<|> getPackages =
-    client @HackageApi "http://hackage.haskell.org"
-#+END_SRC
-
-Haskell is described as a "statically typed, purely functional programming
-language with type inference and lazy evaluation" cite:jones2003haskell. It is
-originally a research language, developed as a vehicle for new research in the
-area of programming languages since 1990 cite:haskell_history. It has served as
-such, and in fact it still is the target of active research - some more
-prominent projects are Dependent Haskell cite:eisenberg2016dependent and Linear
-Haskell cite:bernardy2017linear.
-
-Only recently has it been used in commercial work, as exemplified by Facebook's
-Haskell spam filter cite:marlow2015fighting. While there are many benefits to
-using a strongly typed functional language - it eliminates entire classes of
-programming errors cite:Nanz_2015, anecdotally shown by the common saying that
-"If it compiles, it works" - it is conceptually different from languages
-commonly taught at universities.
-
-As for using Haskell in the browser, it may seem strange at first glance to want
-such a thing when JavaScript is the only language supported by Web
-browsers. There is however a growing number of languages that compile to
-JavaScript, that use it as their compile target instead of Assembly or LLVM,
-which can be done either by translating the logic of the program into JavaScript
-as is (transpiling), or by implementing an alternative runtime environment in
-JavaScript which then interprets the byte- or source-code. Another technology
-that enables languages to run in the browser is WebAssembly, an alternative
-assembly language and a runtime designed specifically for the Web.
-
-Web developers have been using JavaScript compilers for a long time -
-CoffeeScript is rather popular language announced in 2010
-cite:coffeescript. Also the new ECMAScript 6 or 7 features have only been usable
-via 'transpilers' until browsers implemented them natively, transpilers like
-Babel cite:babel. There are other, more advanced languages build with
-compilation to JavaScript in mind, e.g. TypeScript, a superset of ECMAScript 6
-cite:typescript, or Elm, a framework with its own language based on Haskell
-cite:czaplicki2012elm. The need to compile your code before running it is now
-quite accepted in the world of Web development.
-
-The currently accepted way of running Haskell in the browser is via GHCJS, a
-Haskell-to-JavaScript compiler, although there are two active projects in the
-process of creating a Haskell-to-WebAssembly compiler - WebGHC cite:webghc and
-Asterius cite:asterius.
-
-** Nix
-#+CAPTION: An example Nix derivation of GNU hello
-#+ATTR_LATEX: :options frame=single
-#+BEGIN_SRC nix :exports code
-{ stdenv, fetchurl, perl }:
-
-stdenv.mkDerivation {
-  name = "hello-2.1.1";
-  builder = ./builder.sh;
-  src = fetchurl {
-    url = ftp://ftp.nluug.nl/pub/gnu/hello/hello-2.1.1.tar.gz;
-    sha256 = "1md7jsfd8pa45z73bz1kszpp01yw6x5ljkjk2hx7wl800any6465";
-  };
-  inherit perl;
-}
-#+END_SRC
-
-One technology not yet mentioned, but upon which will stand the entire build
-system used in this work from compiling to deploying, is Nix. Nix
-cite:dolstra2006purely is a package manager with focus on reproducibility and
-isolation, described as a 'purely functional package manager' - every package is
-built in isolation by a 'pure function' without side-effects, and the result is
-immutable. When installing a package packaged in such a way, the exact versions
-of dependencies are installed and used as well (identified by a SHA-256 hash) -
-all runtime dependencies all the way up to ~libc~.
-
-Nix is a declarative build tool and a package manager, similar in purpose to
-Make and in philosophy to Haskell. There are other tools built on top of Nix
-though, the most interesting being NixOS, a declarative operating system, and
-NixOps, a cloud deployment tool cite:dolstra2008nixos. Nix shines at
-cross-compilation, which is the main reason we will use it in this work -
-compiling to JavaScript or Android/iOS is trivial after the initial setup.
-
-#+CAPTION: An example of a NixOS network
-#+ATTR_LATEX: :options frame=single
-#+BEGIN_SRC nix :exports none
-  {
-    network.description = "Web server";
-
-    webserver = { config, pkgs, ... }: {
-      services.httpd.enable = true;
-      services.httpd.adminAddr = "alice@example.org";
-      services.httpd.documentRoot =
-        "${pkgs.valgrind.doc}/share/doc/valgrind/html";
-      networking.firewall.allowedTCPPorts = [ 80 ];
-
-      deployment.targetEnv = "virtualbox";
-    };
-  }
-#+END_SRC
-
-* Research
-As this work does not live in a vacuum, we also need to consider commonly used
-Web frameworks and platforms and decide what features to implement in. We will
-first walk through the features that frameworks today implement, describe them
-and define the relevant terms. Afterwards, we will have a brief look at the
-specifics of the JavaScript ecosystem - the most common language in Web
-development - and the of Haskell, my language of choice, and try to find the
-places where Haskell is lagging behind and especially the features that we will
-need to fill in in this work.
-
-** Features of Web frameworks
+** Features of Web Frameworks
 The basis of a web framework is the *UI toolkit*, which defines the structure,
 architecture and paradigm of the rest of the application. I am intentionally
 using the now-uncommon term 'toolkit', as the UI frameworks we will see vary in
@@ -387,7 +276,9 @@ frameworks. Then there are component generators, which may include generating a
 template, a URL route and its corresponding controller, or an entire subsection
 of a website. These are less common but some frameworks also provide them.
 
-** JavaScript ecosystem
+* Web Technologies in JavaScript
+- TODO: Maybe merge with the previous section?
+
 Moving on, we will take a quick tour of the JavaScript ecosystem and what the
 library ecosystem looks there, following the same general structure as we have
 used in the section above.
@@ -433,6 +324,67 @@ tools, mobile and desktop applications - most are built into Angular, and for
 React and Vue there are dozens of options of third party libraries. In my
 investigation, I have not found a weak side to any of them - which is just what
 I expected, given that JavaScript is the native language of the Web.
+
+* Web Technologies in Haskell
+** Haskell
+#+CAPTION: An example of a web server in Haskell
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell :exports code
+  type HackageAPI =
+    "users" :> Get '[JSON] [User] :<|>
+    "user" :> Capture "login" Login :> Get '[JSON] User :<|>
+    "packages" :> Get '[JSON] [Package]
+
+  getUsers :: Handler [User]
+  getUser :: Login -> Handler User
+  getPackages :: Handler [Package]
+
+  server :: Server HackageApi
+  server = getUsers :<|> getUser :<|> getPackages
+
+  getUsers :<|> getUser :<|> getPackages =
+    client @HackageApi "http://hackage.haskell.org"
+#+END_SRC
+
+Haskell is described as a "statically typed, purely functional programming
+language with type inference and lazy evaluation" cite:jones2003haskell. It is
+originally a research language, developed as a vehicle for new research in the
+area of programming languages since 1990 cite:haskell_history. It has served as
+such, and in fact it still is the target of active research - some more
+prominent projects are Dependent Haskell cite:eisenberg2016dependent and Linear
+Haskell cite:bernardy2017linear.
+
+Only recently has it been used in commercial work, as exemplified by Facebook's
+Haskell spam filter cite:marlow2015fighting. While there are many benefits to
+using a strongly typed functional language - it eliminates entire classes of
+programming errors cite:Nanz_2015, anecdotally shown by the common saying that
+"If it compiles, it works" - it is conceptually different from languages
+commonly taught at universities.
+
+As for using Haskell in the browser, it may seem strange at first glance to want
+such a thing when JavaScript is the only language supported by Web
+browsers. There is however a growing number of languages that compile to
+JavaScript, that use it as their compile target instead of Assembly or LLVM,
+which can be done either by translating the logic of the program into JavaScript
+as is (transpiling), or by implementing an alternative runtime environment in
+JavaScript which then interprets the byte- or source-code. Another technology
+that enables languages to run in the browser is WebAssembly, an alternative
+assembly language and a runtime designed specifically for the Web.
+
+Web developers have been using JavaScript compilers for a long time -
+CoffeeScript is rather popular language announced in 2010
+cite:coffeescript. Also the new ECMAScript 6 or 7 features have only been usable
+via 'transpilers' until browsers implemented them natively, transpilers like
+Babel cite:babel. There are other, more advanced languages build with
+compilation to JavaScript in mind, e.g. TypeScript, a superset of ECMAScript 6
+cite:typescript, or Elm, a framework with its own language based on Haskell
+cite:czaplicki2012elm. The need to compile your code before running it is now
+quite accepted in the world of Web development.
+
+The currently accepted way of running Haskell in the browser is via GHCJS, a
+Haskell-to-JavaScript compiler, although there are two active projects in the
+process of creating a Haskell-to-WebAssembly compiler - WebGHC cite:webghc and
+Asterius cite:asterius.
 
 ** Haskell ecosystem
 Going on to the Haskell ecosystem, we will also walk through it using the
@@ -646,7 +598,25 @@ afterthought, with even commonly used packages having no documentation at all or
 written in such a way that a new user has no choice but to study its code to
 understand the package. In this work, I will strive to avoid this common flaw.
 
+** Reflex
+- TODO: describe Reflex philosophy/components in detail
+  - basic building blocks
+  - built-in functionality
+  - extension mechanisms, example code
+    - mtl + classes
+    - effects
+    - ReaderT + Refs
+
+* Components
+- TODO: Demonstrate the principles of components on 'src-snippets' code, where
+I will show the smallest possible code that implements that functionality
+- TODO: In each, write about the general idea and implementation options; the
+API and the relevant type theory; show basic usage
+
 ** Implementation plan
+- TODO: Mention all missing parts in Haskell (a thorough list)
+- TODO: Select a subset of libraries and show how they comprise a framework
+
 In this section, I will use the terminology used in the paper "Evolving Frameworks"
 cite:roberts1996evolving to describe the work performed in the rest of this work
 and follow-up work as well. The paper describes common stages that frameworks
@@ -722,21 +692,108 @@ proposed components, only the routing library is an "architectural" one in the
 sense that it will influence the shape of the application and its fundamental
 data types.
 
-* Components
-TODO: Demonstrate the principles of components on 'src-snippets' code, where
-I will show the smallest possible code that implements that functionality
+** Router
+- TODO: list routing options in Haskell (server-side), their pros/cons
+  - Yesod - DSL+TH, route = data constructor
+  - WebRoutes (Happstack, Snap) - sum type + TH
+  - Trasa - GADT, manual encoding/decoding
+  - Servant - golden standard now, most active ecosystem right now, type-level
+    APIs + type families, safe routing/link, most flexible
+- describe the type-level tricks (GADTs, type families)
+- my implementation and innovation
+  - App combinator
+  - client- and server-side router
+  - nested application links, (.>) combinator
+  - prerendering and static generation
+- other applications of my API
+  - static site generation
+  - JAM-stack like website
+  - AuthProtect, AuthRoleProtect
+  - route matcher for route checks (separate typeclass)
 
-** Component A
-*** Design
-*** Implementation
-*** Testing
-*** Other options, possible improvements
+** Service workers
+- compare JS generation vs Haskell worker (size, GHCJS requires a runtime!)
+- configuration API
+- config for both server and client
+- other options, possible extensions
+
+** Storage
+- my requirements (both server and client, pluggable)
+- API design vs constraints
+
+** Deploy
+- static only = bundled executable
+- executable + assets separately
+- Nix, Keter, standalone, Ansible for deployment - interoperability with classical DevOps
+*** Nix
+#+CAPTION: An example Nix derivation of GNU hello
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC nix :exports code
+{ stdenv, fetchurl, perl }:
+
+stdenv.mkDerivation {
+  name = "hello-2.1.1";
+  builder = ./builder.sh;
+  src = fetchurl {
+    url = ftp://ftp.nluug.nl/pub/gnu/hello/hello-2.1.1.tar.gz;
+    sha256 = "1md7jsfd8pa45z73bz1kszpp01yw6x5ljkjk2hx7wl800any6465";
+  };
+  inherit perl;
+}
+#+END_SRC
+
+One technology not yet mentioned, but upon which will stand the entire build
+system used in this work from compiling to deploying, is Nix. Nix
+cite:dolstra2006purely is a package manager with focus on reproducibility and
+isolation, described as a 'purely functional package manager' - every package is
+built in isolation by a 'pure function' without side-effects, and the result is
+immutable. When installing a package packaged in such a way, the exact versions
+of dependencies are installed and used as well (identified by a SHA-256 hash) -
+all runtime dependencies all the way up to ~libc~.
+
+Nix is a declarative build tool and a package manager, similar in purpose to
+Make and in philosophy to Haskell. There are other tools built on top of Nix
+though, the most interesting being NixOS, a declarative operating system, and
+NixOps, a cloud deployment tool cite:dolstra2008nixos. Nix shines at
+cross-compilation, which is the main reason we will use it in this work -
+compiling to JavaScript or Android/iOS is trivial after the initial setup.
+
+#+CAPTION: An example of a NixOS network
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC nix :exports none
+  {
+    network.description = "Web server";
+
+    webserver = { config, pkgs, ... }: {
+      services.httpd.enable = true;
+      services.httpd.adminAddr = "alice@example.org";
+      services.httpd.documentRoot =
+        "${pkgs.valgrind.doc}/share/doc/valgrind/html";
+      networking.firewall.allowedTCPPorts = [ 80 ];
+
+      deployment.targetEnv = "virtualbox";
+    };
+  }
+#+END_SRC
+
 
 * Applications
-** Workflow and tools
-TODO: describe the development flow of an app built using these tools
+- brief descriptions of tasks
+- screenshots
+- code structure
+  - domain design
+  - architecture
+  - file structure
+- comparison with JS in general
+  - feature parity
+  - ergonomics
+  - CLOC
 
-- starting out - three layer cake & esp. the inner one
+** Workflow and tools
+- TODO: describe the development flow of an app built using these tools
+
+- editor tooling
+- application structure
 - QA (tests, e2e, CI, ...), documentation
 - development tool options
 - deployment options
@@ -759,7 +816,12 @@ project but it is intended to exercise fundamental features of a framework - DOM
 manipulation, forms and validation, state management (in-memory and in
 LocalStorage), and routing.
 
+** Blog
+-- statically generated with a FRP admin interface
+
 ** HNPWA
+-- demonstrate that it works without JavaScript!
+
 HNPWA cite:hnpwa is a client for Hacker News, a technological news site. Unlike TodoMVC,
 HNPWA does not provide a rigid specification and consists only of a rough
 guideline of what to implement. The task is to create a Progressive Web
@@ -780,9 +842,23 @@ ability to post articles and comments, and to follow users and favorite articles
 * Conclusion
 TODO: return to the comparison with JS, PHP, ... frameworks
 
-TODO: describe possible follow-up work, what I will be working on - define
-specific topics and make concrete examples
+** Follow up work
+- extending the storage library capabilities, a Datascript-like query language,
+  bindings to more backends, leveraging IndexedDB capabilities
+- effects in Reflex, more flexible extension mechanism
+- CSS-in-Haskell (a la CSS-in-JS)
+- typed assets - TH to generate, then typed <img>, <link> components
+- router extensions - access gating (auth'd, per-role)
+- debugging tools to run inside the browser - variable watching, state inspecting
+- client crash reports
+- end-to-end testing tools (asserts on both back- and frontend?)
+- dynamic user-provided content - parsing a HTML alike, preregistered named
+  components, an editor
+- synchronization library
+- form library
+- GraphQL for interop with modern JS frameworks
 
+** In closing
 -- The final chapter includes an evaluation of the achieved results with a special
 emphasis on the student's own contribution. A compulsory assessment of the
 project's development will also be required, the student will present ideas
