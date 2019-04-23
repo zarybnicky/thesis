@@ -9,9 +9,12 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -21,27 +24,26 @@ module Main
   ( main
   ) where
 
-import Control.Applicative
+import qualified Control.Exception as X
 import Control.Monad.Fix (MonadFix)
+import Data.Dependent.Map (DMap)
+import qualified Data.IntSet as IS
+import Data.IntMap (IntMap)
+import Data.Proxy (Proxy(..))
 import Data.Text (Text)
 import Language.Javascript.JSaddle.Warp as JS (run)
 import Polysemy
 import Polysemy.Fixpoint
 import Polysemy.Internal
+import Polysemy.Internal.Tactics
+import Polysemy.Resource
 import Polysemy.Output
 import Reflex.Dom.Core
 
-data Store s t (m :: * -> *) a where
+data Store s (t :: *) m a where
   Get :: Store s t m (Dynamic t s)
   Put :: Event t s -> Store s t m ()
-
-get :: forall s t r m. Member (Store s t) r => SemR t r m (Dynamic t s)
-get = SemR $ send Get
-{-# INLINABLE get #-}
-
-put :: forall t s r m. Member (Store s t) r => Event t s -> SemR t r m ()
-put a = SemR $ send (Put a)
-{-# INLINABLE put #-}
+makeSemantic ''Store
 
 runStore ::
      forall s t m r a.
@@ -62,76 +64,94 @@ runStore s0 f = mdo
     Put (e :: Event t s) -> output e) f
   pure a
 
-instance (Member (Lift m) r, NotReady t m) => NotReady t (SemR t r m) where
+newtype SemR t (m :: * -> *) r a = SemR
+  { unSemR :: Semantic r a
+  } deriving (Functor, Applicative, Monad)
+
+instance (Member (Lift m) r, NotReady t m) => NotReady t (SemR t m r) where
   notReadyUntil e = SemR $ sendM @m (notReadyUntil e)
   notReady = SemR $ sendM @m notReady
 
-instance (Member (Lift m) r, MonadSample t m) => MonadSample t (SemR t r m) where
+instance (Member (Lift m) r, MonadSample t m) => MonadSample t (SemR t m r) where
   sample b = SemR $ sendM @m (sample b)
 
-instance (Member (Lift m) r, MonadHold t m) => MonadHold t (SemR t r m) where
+instance (Member (Lift m) r, MonadHold t m) => MonadHold t (SemR t m r) where
   hold a e = SemR $ sendM @m (hold a e)
   holdDyn a e = SemR $ sendM @m (holdDyn a e)
   holdIncremental a e = SemR $ sendM @m (holdIncremental a e)
   buildDynamic m e = SemR $ sendM @m (buildDynamic m e)
   headE e = SemR $ sendM @m (headE e)
 
-instance (Member (Lift m) r, PerformEvent t m) => PerformEvent t (SemR t r m) where
-  type Performable (SemR t r m) = Performable m
+instance (Member (Lift m) r, PerformEvent t m) => PerformEvent t (SemR t m r) where
+  type Performable (SemR t m r) = Performable m
   performEvent e = SemR $ sendM @m (performEvent e)
   performEvent_ e = SemR $ sendM @m (performEvent_ e)
 
-instance (Member (Lift m) r, PostBuild t m) => PostBuild t (SemR t r m) where
+instance (Member (Lift m) r, PostBuild t m) => PostBuild t (SemR t m r) where
   getPostBuild = SemR $ sendM @m getPostBuild
 
-instance (Member (Lift m) r, TriggerEvent t m) => TriggerEvent t (SemR t r m) where
+instance (Member (Lift m) r, TriggerEvent t m) => TriggerEvent t (SemR t m r) where
   newTriggerEvent = SemR $ sendM @m newTriggerEvent
   newTriggerEventWithOnComplete = SemR $ sendM @m newTriggerEventWithOnComplete
   newEventWithLazyTriggerWithOnComplete f = SemR $ sendM @m @r (newEventWithLazyTriggerWithOnComplete f)
 
-instance (Reflex t, Adjustable t m) => Adjustable t (SemR t r m) where
-  runWithReplace = undefined
-  traverseIntMapWithKeyWithAdjust = undefined
-  traverseDMapWithKeyWithAdjustWithMove _ _ = undefined
+data DomBuilderEff (t :: *) (m :: * -> *) r a where
+  SelectElementE :: SelectElementConfig er t (DomBuilderSpace m) -> r a -> DomBuilderEff t m r (SelectElement er (DomBuilderSpace m) t, a)
+  ElementE :: Text -> ElementConfig er t (DomBuilderSpace m) -> r a -> DomBuilderEff t m r (Element er (DomBuilderSpace m) t, a)
+  RunWithReplaceE :: r a -> Event t (r b) -> DomBuilderEff t m r (a, Event t b)
+  TraverseIntMapWithKeyWithAdjustE :: (IS.Key -> v -> r v') -> IntMap v -> Event t (PatchIntMap v) -> DomBuilderEff t m r (IntMap v', Event t (PatchIntMap v'))
+  TraverseDMapWithKeyWithAdjustWithMoveE :: (forall a. k a -> v a -> r (v' a)) -> DMap k v -> Event t (PatchDMapWithMove k v) -> DomBuilderEff t m r (DMap k v', Event t (PatchDMapWithMove k v'))
 
-instance (Member (Lift m) r, MonadHold t m, DomBuilder t m) => DomBuilder t (SemR t r m) where
-  type DomBuilderSpace (SemR t r m) = DomBuilderSpace m
+instance (Member (DomBuilderEff t m) r, Adjustable t m) => Adjustable t (SemR t m r) where
+  runWithReplace a eb = SemR $ send @(DomBuilderEff t m) (RunWithReplaceE (unSemR a) (fmapCheap unSemR eb))
+  traverseIntMapWithKeyWithAdjust f i e = SemR $ send @(DomBuilderEff t m) (TraverseIntMapWithKeyWithAdjustE (\k v -> unSemR (f k v)) i e)
+  traverseDMapWithKeyWithAdjustWithMove f i e = SemR $ send @(DomBuilderEff t m) (TraverseDMapWithKeyWithAdjustWithMoveE (\k v -> unSemR (f k v)) i e)
+
+instance (Member (Lift m) r, Member (DomBuilderEff t m) r, DomBuilder t m) => DomBuilder t (SemR t m r) where
+  type DomBuilderSpace (SemR t m r) = DomBuilderSpace m
   inputElement cfg = SemR $ sendM @m (inputElement cfg)
   textAreaElement cfg = SemR $ sendM @m (textAreaElement cfg)
-  selectElement = undefined
   textNode cfg = SemR $ sendM @m (textNode cfg)
   commentNode cfg = SemR $ sendM @m (commentNode cfg)
   placeRawElement e = SemR $ sendM @m (placeRawElement e)
   wrapRawElement e cfg = SemR $ sendM @m (wrapRawElement e cfg)
-  element e cfg (child :: SemR t r m a) = SemR $ sendM @m $ element e cfg undefined
+  selectElement cfg inner = SemR $ send @(DomBuilderEff t m) (SelectElementE cfg (unSemR inner))
+  element e cfg child = SemR $ send @(DomBuilderEff t m) (ElementE e cfg (unSemR child))
 
+runDomBuilder ::
+     forall t m r a. (DomBuilder t m, Member (Lift m) r)
+  => (forall x. Semantic r x -> m x)
+  -> Semantic (DomBuilderEff t m ': r) a
+  -> Semantic r a
+runDomBuilder runner = interpretH $ \case
+  ElementE e cfg child -> do
+    c <- runT child
+    sendM $ do
+      (out, fa) <- element e cfg (runner .@ runDomBuilder $ c)
+      pure $ (out,) <$> fa
+  RunWithReplaceE (a :: m1 a1) (eb :: Event t (m1 b)) -> (do
+    let runner' = runner .@ runDomBuilder :: Semantic (DomBuilderEff t m : r) z -> m z
+    ra :: m (f a1) <- runner' <$> runT a
+    reb :: Event t (m (f b1)) <- traverse (fmap runner' . runT) eb
+    sendM @m $ (runWithReplace ra reb :: m (f a1, Event t (f b1)))
+    ) :: Semantic (WithTactics (DomBuilderEff t m) f1 m1 r) (f1 (a1, Event t b1))
 
-newtype SemR t r (m :: * -> *) a = SemR
-  { unSemR :: Semantic r a
-  } deriving (Functor, Applicative, Monad)
-type SemRef t r m a = (Member Fixpoint r, Member (Lift m) r) => SemR t r m a
-
-runSemR ::
-     forall t m a. MonadFix m
-  => SemR t '[ Fixpoint, Lift m] m a
-  -> m a
-runSemR = runM . runFixpointM runM . unSemR
-
-stripSemR ::
-     (Semantic (e ': r) a -> Semantic r a)
-  -> SemR t (e ': r) m a
-  -> SemR t r m a
-stripSemR runner = SemR . runner . unSemR
+  SelectElementE cfg child -> do
+    c <- runT child
+    sendM $ do
+      (sel, fa) <- selectElement cfg (runner .@ runDomBuilder $ c)
+      pure $ (sel,) <$> fa
 
 main :: IO ()
 main = JS.run 3000 $ mainWidget go
   where
     go :: forall t m. (Typeable t, MonadWidget t m) => m ()
-    go = runSemR $ stripSemR (runStore @Text @t @m "") app
+    go = (runM .@ runFixpointM .@ runDomBuilder) . runStore @Text @t @m "" $ unSemR app
 
-app :: forall t m r. (Member (Store Text t) r, MonadWidget t m) => SemRef t r m ()
+app :: forall t m. (DomBuilder t m, PostBuild t m) => SemR t m '[Store Text t, DomBuilderEff t m, Fixpoint, Lift m] ()
 app = do
-  dynText =<< get @Text
+  x <- SemR $ get @Text @t
+  dynText x
   dText <- inputElement def
   eSave <- button "Save"
-  put (current (value dText) <@ eSave)
+  SemR $ put (current (value dText) <@ eSave)

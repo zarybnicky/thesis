@@ -23,6 +23,7 @@ executable effect-base
     cpp-options: -DGHCJS_BROWSER
   build-depends: base
                , containers
+               , dependent-map
                , dependent-sum
                , ghcjs-dom
                , lens
