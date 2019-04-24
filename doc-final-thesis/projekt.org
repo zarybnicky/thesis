@@ -599,13 +599,70 @@ written in such a way that a new user has no choice but to study its code to
 understand the package. In this work, I will strive to avoid this common flaw.
 
 ** Reflex
-- TODO: describe Reflex philosophy/components in detail
-  - basic building blocks
-  - built-in functionality
-  - extension mechanisms, example code
-    - mtl + classes
-    - effects
-    - ReaderT + Refs
+Reflex is a general /Functional Reactive Programming/ (FRP) library.
+FRP in general is a way of programming where the program consists of a network
+of time-varying values and functions combining such values.
+- TODO: More FRP intro
+
+The basic building blocks of FRP are events, objects which have a value only on
+a specific moment, and behaviors, which have a value at any point. Reflex adds
+a third primitive, a /dynamic/, which is a pair of a behavior and an event which
+fires whenever the behavior changes.
+
+Reflex is a general FRP library, to interact with the external world it needs
+bindings to read external values and translate Reflex events into external
+actions. There are several such bindings: =reflex-dom= for the browser,
+=reflex-backend-wai= for the WAI web server interface, =diagrams-reflex= for SVG
+animations, and several others. The one we will use in the rest of this work is
+=reflex-dom=, which contains the necessary building blocks for web applications -
+functions to create and animate HTML elements, listen on browser events, or
+perform HTTP requests.
+
+Reflex and Reflex-DOM provide the basic building blocks for creating
+applications, but they don't fall to a natural structure for bigger applications
+the way object-oriented frameworks do as in MVC and its variations. In fact, one
+of the most common complaints of developers exploring Reflex is the lack of a
+developed application architecture.
+
+It is possible to recreate the Elm architecture in Reflex, as well as more
+fine-grained architectures using small stateful components communicating with
+top-level application logic. Several patterns have emerged so far, but none has
+been generally accepted so far, and the one that has (Gonimo architecture, [TODO
+ref]) requires a large amount of trivial "plumbing" code.
+
+There are however several smaller structural patterns that have slowly emerged
+as 'rules of thumb'. "Dynamics as component inputs, events as outputs" is one
+such, which has been somewhat formalized as a combination of monad transformers
+(=ReaderT= and =EventWriterT=) in Reflex itself.
+
+Reflex is composed of several fine-grained typeclasses. These are abstract, and
+they are translated into a series of monad transformers and their interpreters
+on the top level.
+
+There are several common methods of formalizing application architecture in
+Haskell. Each method tries to abstract implementation details from application
+logic by identifying all side-effects that a program requires and decomposing
+them into individual effects. The methods are:
+
+- Monad transformers and MTL-like typeclasses
+- ReaderT with a top-level application state
+- Effect interpreters (free monads, freer monads)
+
+Each one has its advantages and disadvantages, and while they can be mostly
+arbitrarily intermixed, each application or library usually chooses one. The
+most popular in the Haskell community and used by the majority of libraries is
+monad transformers and MTL-like classes, which is also the method that Reflex
+uses.
+
+A signature of a component in a program structured in this way might look
+something like this:
+
+#+BEGIN_SRC haskell
+  userView ::
+       (MonadReader AppState m, MonadRouter AppRoute m, MonadWidget t m)
+    => Dynamic t User
+    -> m (Event t UserEdit)
+#+END_SRC
 
 * Components
 - TODO: Demonstrate the principles of components on 'src-snippets' code, where
@@ -693,23 +750,75 @@ sense that it will influence the shape of the application and its fundamental
 data types.
 
 ** Router
-- TODO: list routing options in Haskell (server-side), their pros/cons
-  - Yesod - DSL+TH, route = data constructor
-  - WebRoutes (Happstack, Snap) - sum type + TH
-  - Trasa - GADT, manual encoding/decoding
-  - Servant - golden standard now, most active ecosystem right now, type-level
-    APIs + type families, safe routing/link, most flexible
-- describe the type-level tricks (GADTs, type families)
-- my implementation and innovation
-  - App combinator
-  - client- and server-side router
-  - nested application links, (.>) combinator
-  - prerendering and static generation
-- other applications of my API
-  - static site generation
-  - JAM-stack like website
-  - AuthProtect, AuthRoleProtect
-  - route matcher for route checks (separate typeclass)
+A router is one of the basic components of a modern web application. There are
+several features a router is concerned with: parsing the initial URL on
+application start-up, changing it according to user navigation actions, storing
+the navigation state for the rest of the application. In types, this might be
+expressed as follows:
+
+#+BEGIN_SRC haskell
+parseRoute :: URL -> Route app
+dispatchRoute :: Route app -> m ()
+renderRoute :: Route app -> URL
+#+END_SRC
+
+There are several widely used options for a server-side router, which has mostly the same
+responsibilities as a client-side one, although the types will be a bit
+different. These options differ in several ways, the most fundamental one being
+the representation of the route, which in turns defines the basis of the client
+API.
+
+We will go through the routers of Yesod, Happstack, and Snap, all of them
+popular Haskell frameworks for server-rendered web applications, and then move
+on to Servant, a general-purpose routing solution for web services.
+
+Yesod uses a special DSL (Domain Specific Language) for its router, which is
+implemented via quasi-quoting, a specific flavor of meta-programming. In this
+way an associated type family instance is generated, together with
+implementation of the three functions mentioned above. The route itself is then
+just a plain data constructor of a large sum type.
+
+Happstack and Snap both offer two options, of using non-typed routes based on
+strings, or a type-safe routes similar to Yesod's approach above. The library
+they use for type-safe routing is =web-routes=. The approach it takes is one
+where the user defines the sum type for the route, and then uses library
+combinators to define a parser/encoder manually.
+
+Servant is newer than the above options, and it is the most popular solution for
+creating web APIs at the moment. In Servant, an API is described using a single
+large type in its entirety, created by composition using type-level operators
+(=:<|>=, =:>=). This type is then processed using type-classes to create specific
+types suitable for implementing a server or for creating type-safe links. This
+type can also be interpreted using other libraries to generate API documentation
+or clients in a variety of libraries.
+
+---
+
+Yesod uses associated type families
+
+Web-routes uses bidirectional functions in the form of a boomerang,
+
+Servant uses type-level operators interpreted by type-classes with associated
+data types.
+
+---
+
+I have decided to use Servant's approach in my work, as it seems to be the most
+flexible and extendable one.
+
+My contributions in this area are:
+- a client-side router using Reflex's FRP types
+- an extension of the server-side router to support rendering Reflex applications
+- a static site generator
+- a combinator to more easily work with servant-generic types (=.>=)
+
+---
+
+Next work:
+- static site generation
+- JAM-stack like website
+- AuthProtect, AuthRoleProtect
+- route matcher for route checks (separate typeclass)
 
 ** Service workers
 - compare JS generation vs Haskell worker (size, GHCJS requires a runtime!)
@@ -775,7 +884,6 @@ compiling to JavaScript or Android/iOS is trivial after the initial setup.
     };
   }
 #+END_SRC
-
 
 * Applications
 - brief descriptions of tasks
