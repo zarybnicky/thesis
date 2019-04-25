@@ -119,28 +119,35 @@ instance (Member (Lift m) r, Member (DomBuilderEff t m) r, DomBuilder t m) => Do
   element e cfg child = SemR $ send @(DomBuilderEff t m) (ElementE e cfg (unSemR child))
 
 runDomBuilder ::
-     forall t m r a. (DomBuilder t m, Member (Lift m) r)
+     forall t m r a. (DomBuilder t m, Member Fixpoint r, MonadHold t m, Member (Lift m) r)
   => (forall x. Semantic r x -> m x)
   -> Semantic (DomBuilderEff t m ': r) a
   -> Semantic r a
-runDomBuilder runner = interpretH $ \case
+runDomBuilder runner' = interpretH $ \case
   ElementE e cfg child -> do
     c <- runT child
     sendM $ do
-      (out, fa) <- element e cfg (runner .@ runDomBuilder $ c)
+      (out, fa) <- element e cfg (runner c)
       pure $ (out,) <$> fa
-  RunWithReplaceE (a :: m1 a1) (eb :: Event t (m1 b)) -> (do
-    let runner' = runner .@ runDomBuilder :: Semantic (DomBuilderEff t m : r) z -> m z
-    ra :: m (f a1) <- runner' <$> runT a
-    reb :: Event t (m (f b1)) <- traverse (fmap runner' . runT) eb
-    sendM @m $ (runWithReplace ra reb :: m (f a1, Event t (f b1)))
-    ) :: Semantic (WithTactics (DomBuilderEff t m) f1 m1 r) (f1 (a1, Event t b1))
+  RunWithReplaceE (a :: m1 a1) (eb :: Event t (m1 b)) -> do
+    ra :: m (f a1) <- runner <$> runT a
+    rec (resA :: f a1, resB) <- sendM @m $ runWithReplace ra (reb :: Event t (m (f (a1, b))))
+        run <- bindT runner
+        ds <- sendM @m $ holdDyn ((, undefined) <$> resA) resB
+        let reb = flip pushAlways eb $ \(b :: m1 b1) -> do
+              s :: f (a1, b) <- sample (current ds)
+              pure _ -- . sequence $ ffor b (\b' -> traverse runner $ ffor s $ \(a, _) -> (a, b'))
+    pure $ (\(a, b) -> (a, updated b)) . sequence <$> sequence ds
 
   SelectElementE cfg child -> do
     c <- runT child
     sendM $ do
-      (sel, fa) <- selectElement cfg (runner .@ runDomBuilder $ c)
+      (sel, fa) <- selectElement cfg (runner c)
       pure $ (sel,) <$> fa
+
+  where
+    runner :: Semantic (DomBuilderEff t m : r) z -> m z
+    runner = runner' .@ runDomBuilder
 
 main :: IO ()
 main = JS.run 3000 $ mainWidget go

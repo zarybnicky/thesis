@@ -23,6 +23,7 @@ executable storage-trans
     cpp-options: -DGHCJS_BROWSER
   build-depends: base
                , containers
+               , data-default
                , dependent-sum
                , ghcjs-dom
                , lens
