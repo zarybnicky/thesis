@@ -26,6 +26,7 @@ module Main
 
 import qualified Control.Exception as X
 import Control.Monad.Fix (MonadFix)
+import Control.Monad.Identity
 import Data.Dependent.Map (DMap)
 import qualified Data.IntSet as IS
 import Data.IntMap (IntMap)
@@ -35,6 +36,8 @@ import Language.Javascript.JSaddle.Warp as JS (run)
 import Polysemy
 import Polysemy.Fixpoint
 import Polysemy.Internal
+import Polysemy.Internal.Effect
+import Polysemy.Internal.Union
 import Polysemy.Internal.Tactics
 import Polysemy.Resource
 import Polysemy.Output
@@ -123,28 +126,17 @@ runDomBuilder ::
   => (forall x. Semantic r x -> m x)
   -> Semantic (DomBuilderEff t m ': r) a
   -> Semantic r a
-runDomBuilder runner' = interpretH $ \case
-  ElementE e cfg child -> do
-    c <- runT child
-    sendM $ do
-      (out, fa) <- element e cfg (runner c)
-      pure $ (out,) <$> fa
-  RunWithReplaceE (a :: m1 a1) (eb :: Event t (m1 b)) -> do
-    ra :: m (f a1) <- runner <$> runT a
-    rec (resA :: f a1, resB) <- sendM @m $ runWithReplace ra (reb :: Event t (m (f (a1, b))))
-        run <- bindT runner
-        ds <- sendM @m $ holdDyn ((, undefined) <$> resA) resB
-        let reb = flip pushAlways eb $ \(b :: m1 b1) -> do
-              s :: f (a1, b) <- sample (current ds)
-              pure _ -- . sequence $ ffor b (\b' -> traverse runner $ ffor s $ \(a, _) -> (a, b'))
-    pure $ (\(a, b) -> (a, updated b)) . sequence <$> sequence ds
-
-  SelectElementE cfg child -> do
-    c <- runT child
-    sendM $ do
-      (sel, fa) <- selectElement cfg (runner c)
-      pure $ (sel,) <$> fa
-
+runDomBuilder runner' (Semantic m) = Semantic $ \k -> m $ \u -> case decomp u of
+  Left x -> fmap runIdentity $ k $ weave (Identity ()) (fmap Identity . runDomBuilder runner' . runIdentity) x
+  Right (Yo (RunWithReplaceE a (eb :: Event t (m2 b2))) s d y) -> usingSemantic k $ do
+    let a' = runner $ d $ a <$ s
+    rec
+      ds :: Dynamic t (f (a2, b2)) <- sendM @m $ holdDyn ((, undefined) <$> ra) rab
+      let eb' = flip pushAlways eb $ \b -> do
+            s' <- sample (current ds)
+            pure (runner $ d $ (\(a, _) -> (a, b)) <$> s' :: m (f (a2, b)))
+      (ra :: f a2, rab :: Event t (f (a2, b2))) <- sendM @m $ runWithReplace a' eb'
+    pure . y $ ((\(a, b) -> (a, updated b)) . sequence <$> sequence ds)
   where
     runner :: Semantic (DomBuilderEff t m : r) z -> m z
     runner = runner' .@ runDomBuilder
