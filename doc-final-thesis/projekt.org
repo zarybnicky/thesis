@@ -38,22 +38,27 @@ the background - things previously specific to native mobile applications.
 Now additionally consider that the application server is written in Haskell, a
 statically typed, purely functional programming language. We want to reuse the
 business logic already written there to avoid duplicating code, so we search for
-a way to write a Web application in Haskell. We find a find many resources and a
+a way to write a Web application in Haskell. We find many resources and a
 quickly growing community but while creating the application, we soon step into
 the unknown. A medium-scale application needs a large number of capabilities,
 but the ecosystem of frontend Haskell is not yet big enough to support many of
 them - most libraries in the area are either exploratory, or one-off projects.
-
 In this work, we will try to fill in many such gaps for Haskell developers of
-frontend applications, with a specific focus on Progressive Web Applications. We
-will first go through what specifically is missing in the Haskell ecosystem
-(Section 2) and implement the missing pieces by hand in three separate
-applications (Section 3). From those applications, we will then design and
-extract a set of reusable components (Section 4), and then look [TODO: fill in
-after the practicals, guidelines or recommendations].
+frontend applications, with the goal of creating a framework with a specific
+focus on Progressive Web Applications.
+
+We will first go through the details of what a Progressive Web Application is
+and why it is interesting (Section 2). Next, we will have a look at what are the
+features and responsibilities of today's Web frameworks, and how JavaScript
+frameworks look (Section 3), followed by a quick introduction to Haskell and an
+evaluation of the Haskell ecosystem in the area of Web development (Section
+4). After seeing what is missing, we will design a framework and implement its
+components (Section 5), walk through how to create an application using these
+components (Section 6), and conclude with four separate case studies (Section
+7).
 
 ** Related work
-The volume of work in area of frontend Haskell is not large, as the
+The volume of work in the area of frontend Haskell is not large, as the
 Haskell-to-JavaScript compiler, GHCJS, is only available since 2013, also due to
 the fact that Haskell in general is only recently being accepted as a mainstream
 language. Academic work in this area is sparse, but there are several mature
@@ -63,7 +68,7 @@ Systems cite:obsidian. Tweag cite:tweag is working on a Haskell-to-WebAssembly
 compiler, Asterius, and QFPL cite:qfpl has created many learning materials for
 frontend Haskell.
 
-* Web Technologies
+* What is a PWA?
 ** Web Applications Today
 Web applications come in many varieties today, from plain static websites to
 rich applications with many features that would be only available in desktop
@@ -88,6 +93,10 @@ TODO: describe basic technologies: HTML, CSS, JavaScript and its recent
 advances, notable browser APIs (History, LocalStorage, ...)
 
 TODO: describe 'backendification' of the frontend, thick clients, SPAs
+
+TODO: explain basic terms: client/browser, server, full-stack, native, mobile
+and their capabilities, static site/SSG/interactive, thin/thick client, offline,
+routing, browser storage, templating (server, client, user),
 
 ** Progressive Web Applications
 The term 'Progressive Web Application' is an umbrella term for several
@@ -168,6 +177,7 @@ requirements are the Web Share API and Credentials API that expose more of the
 underlying device capabilities, sharing via other applications and the device
 credential storage.
 
+* Web frameworks of today
 ** Features of Web Frameworks
 The basis of a web framework is the *UI toolkit*, which defines the structure,
 architecture and paradigm of the rest of the application. I am intentionally
@@ -374,7 +384,7 @@ React and Vue there are dozens of options of third party libraries. In my
 investigation, I have not found a weak side to any of them - which is just what
 I expected, given that JavaScript is the native language of the Web.
 
-* Web Technologies in Haskell
+* Haskell and the Web
 ** Haskell
 #+CAPTION: An example of a web server in Haskell
 #+ATTR_LATEX: :options frame=single
@@ -647,7 +657,8 @@ afterthought, with even commonly used packages having no documentation at all or
 written in such a way that a new user has no choice but to study its code to
 understand the package. In this work, I will strive to avoid this common flaw.
 
-* Implementation
+* Designing a framework
+* Implementing the components
 An overview of what's ready and what's missing in Haskell. Ready:
 - UI toolkit
 - templating
@@ -991,6 +1002,7 @@ Next work:
 ** Service workers
 TODO: general intro
 
+*** Requirements
 The Service Worker features that we aim to support are: precaching, fetch
 control, and push notifications.
 
@@ -1041,24 +1053,167 @@ execution, and other features needed to run the entirety of Haskell in the
 browser. That means that we cannot use GHCJS to create Service Workers and need
 to generate plain JavaScript code instead.
 
-Of the options available for JavaScript generation in Haskell, only JMacro is
-suitable for this task, which uses quasi-quotation to support writing plain
-JavaScript. The library promises to support most JavaScript code without the
-need for changes, as long as it doesn't use newer JavaScript features, as JMacro
-supports only ECMAScript 3.
+*** JMacro
+Of the options available for generation of JavaScript in Haskell, only the
+library JMacro is suitable for this task, as it is the only library intended for
+this purpose, none of the other libraries are very user-friendly.
 
-TODO: describe JS generation in detail with code examples (matchers)
+JMacro allows the user to write plain JavaScript code embedded in Haskell via
+quasi-quotation, which is a method of meta-programming that makes it possible to
+transform arbitrary strings into Haskell expressions. The library supports the
+entirety of ECMAScript 3, so most existing JavaScript code can be copy-pasted
+without the need for changes, as long as it doesn't use the features of newer
+ECMAScript versions. JMacro is untyped, it recognizes two forms of JavaScript
+code, expressions and statements. It also supports injection of Haskell
+variables using anti-quotation. An example of JMacro code can be seen in ref:jmacro.
+
+#+CAPTION: An example of JMacro:jmacro
+#+BEGIN_SRC haskell
+  handleFetch :: JExpr -> JStat
+  handleFetch fn = [jmacro|self.addEventListener('fetch', `(fn)`);|]
+
+  sw :: JStat
+  sw = handleFetch [jmacroE|
+  function(evt) {
+    console.log('The service worker is serving the asset.');
+    evt.respondWith(fromNetwork(evt.request, 400).then(null, function () {
+      return fromCache(`(cacheName)`, evt.request);
+    }));
+  }|]
+#+END_SRC
+
+*** Implementation
+The three features of service workers that we want to support (prefetch, fetch
+control, push notifications)
+
+Prefetch is simple, only save the requested files into cache in the onInstall
+handler.
+
+Fetch is a bit more involved. In the onFetch handler, we need to find out if the
+outgoing request matches any of the configured filters, so we go through the
+filters in order and if a request matches, the selected cache strategy is
+executed. There are many possible behaviors with regards to caching and network
+access. We cannot cover all possible cases, but we can cover common ones. These
+are encoded as a plain sum type, which can be seen in ref:cache-strategy. Most
+strategy names are self-explanatory, I will mention only =StaleWhileRevalidate=
+and its =Notify= variation: these serve the currently cached version of a
+resource, and attempt to fetch a newer one, which will then be stored into cache
+for later requests. This strategy is often used for main application files,
+which is the reason for the =Notify= variation, which will also notify the
+application itself if there is a newer version available and the application can
+then notify the user.
+
+#+CAPTION: Cache strategies:cache-strategy
+#+BEGIN_SRC haskell
+  data CacheStrategy
+    = CacheFirst Text
+    | CacheOnly Text
+    | NetworkFirst Text
+    | NetworkOnly
+    | StaleWhileRevalidate Text
+    | StaleWhileRevalidateNotify Text
+    deriving (Eq, Ord, Show)
+#+END_SRC
+
+TODO: Talk about matchers
+
+Handling push notifications is not trivial either. While using them in the most
+basic way is as simple as calling =showNotification= on the body of the incoming
+message, it is possible to do more, like passing the notification to the
+application using =postMessage=. Like with cache strategies, it is not possible to
+cover all possible use-cases with predefined options so again, we add the common
+ones. This time, they need to be encoded as a /GADT/ (Generic Algebraic Data Type),
+an extension of Haskell data types that allows us to specialize the type of a data
+constructor, which we can use to specialize the types of sending and receiving
+functions in client and server code.
+
+The options I have selected for the library are included in
+ref:push-behaviors. =Ignore= has the type =Void= as its parameter, which is an empty
+type that can have no valid values (excluding =undefined=), which means that it is
+impossible to call a sending function in server code. =Ignore= has no handler code
+generated in the service worker. =ViewOnly= displays a notification without any
+further handling. =ViewAndOpen= and =ViewAndProcess= both add another event handler
+that listens for the user clicking on the notification, which will open the
+application if closed, and switch to the application window if open but not
+focused. =ViewAndProcess= and =ProcessOnly= will also pass the message to the
+application for further processing via =postMessage=.
+
+#+CAPTION: Push behaviors:push-behaviors
+#+BEGIN_SRC haskell
+  data PushBehavior a where
+    PushIgnore :: PushConfig Void
+    PushViewOnly :: PushConfig ()
+    PushViewAndOpen :: PushConfig ()
+    PushViewAndProcess :: FromJSON a => PushConfig a
+    PushProcessOnly :: FromJSON a => PushConfig a
+#+END_SRC
+
+The rest of the service worker generation does not contain any non-obvious code,
+so I will skip it. It is included with the rest of the source code on the
+attached data storage.
+
+The server part of this component is made up of two parts: generating and
+serving the service worker code, and sending push notifications.
+
+Serving the service worker is done by creating a new instance of the method
+=MimeRender,= which tells the server how to render a value to a binary format.
+
+The ability to send push notifications is added to handler code using a monad
+transformer and a type class containing a single method, =sendPushNotification=.
+The monad transformer contains a ReaderT containing the server VAPID keys, which
+are necessary for... This transformer uses Servant "context"
+capabilities... TODO: finish this.
+
 TODO: describe client class methods (mainly for the dependent types + interpreter)
-TODO: describe server methods (a ReaderT over keys + interpreter)
 
----
+*** Possible extensions
+The obvious follow-up work is supporting more features of service workers:
+fine-grained cache control with resource expiration based on its age or available
+storage space; or /Background Sync/, an API for queuing requests mane when the device
+was offline to be retried whenever it goes online, whether the application is
+open or closed.
 
-TODO: mention WebIDL and the possibility of code generation, show an example (onFetch $ match `then` tryCache `then` tryNetwork)
+Supporting more exotic use-cases is also possible next work, use-cases like
+communication between multiple instances of an application using the service
+worker as a relay, or using fetch control as a load balancer to dynamically
+switch between servers from which the application downloads data.
 
-Next work:
-- cache expiration
-- Background Sync (queuing, requests/results in IxDB)
-- inter-tab communication using postMessage
+However, there is another approach that would obsolete most of the work on this
+component: after creating this component, I have discovered a project trying to
+create a typed DSL (Domain-Specific Language) for generating JavaScript, =jshark=
+(TODO: ref). While I originally disregarded the approach of making a typed DSL
+instead of a library with a fixed selection of options, as the DSL would need to
+be able to represent arbitrary JavaScript logic, using this library (or a
+similar one) would allow building a hierarchy of functions hiding more and more
+of the underlying logic. However, as of the time of writing, this library is
+still unfinished, so writing a service worker builder using a typed DSL stays a
+project for the future.
+
+A hypothetical example of such approach can be seen in
+ref:jshark, which demonstrates more complex usage of fetch control, dispatching
+requests based on their destination (the originator of a request, e.g. ="style"=
+corresponds to a =<style>= tag or a CSS include).
+
+#+CAPTION: Service worker using a JavaScript DSL:jshark
+#+BEGIN_SRC haskell
+  sw :: WorkerM ()
+  sw = self `on` fetch $ \event -> do
+    dest <- event ^. request . destination
+    switch dest $ do
+      case_ "font" $
+        respondWith event cacheOnly
+      cases_ ["style", "script", "document", "image"] $
+        respondWith event networkFirst
+      default_ $
+        respondWith event networkOnly
+#+END_SRC
+
+This approach may also be combined with code generation from WebIDL, an
+interface definition language for the Web (TODO: ref) used e.g. in the Chromium
+browser, to produce an API that exactly corresponds to the underlying JavaScript
+one, only with strong types. Generating an API from WebIDL has a precedent in
+the library =ghcjs-dom=, a library that provides a strongly-typed interface to
+most browser APIs, which generates most of its code in this way.
 
 ** Storage
 A storage library can be implemented in many ways.
@@ -1086,12 +1241,34 @@ but this is sufficient for many use-cases.
 
 TODO: Refer to the [[Reflex]] section
 
-* Application development
-TODO: Describe how the above libraries fit together
+* Developing an application
+The components we created above enable a variety of use-cases:
+- compiling an interactive browser application into a small bundle
+- creating a Progressive Web Application and prerendering it on the server, so
+  that it is usable even in browsers with JavaScript disabled
+- generating a static site using data from external sources (e.g. a database)
+- combining the above to create a site with full-stack interactive
+  administration that generates a static public site
+
+TODO: Correct if I don't manage 'Blog'
+
+In this section, we will go through the tasks common to all of these use-cases
+and in the next one, we will look at the specifics of creating each one.
+
+** Development tools
+The basis of Reflex's development platform is Nix, development environment is
+nix-shell.
+
+An editor common in the Haskell world is Emacs, and most documentation on
+setting up an editor for frontend development is in fact aimed at Emacs. Other
+editors are also supported, but there is usually no or little documentation.
+
+A tool that greatly eases setting up development environment is direnv, which is
+able to load 
+
 TODO: Nix, editor integration, development process
 TODO: Prelude, code structure
 TODO: Describe component development in detail
-TODO: Animations in Reflex
 TODO: Authorization
 TODO: Tests
 TODO: Common tasks in webdev - defining entities, migrations, audit logs, defining the API
@@ -1153,7 +1330,7 @@ compiling to JavaScript or Android/iOS is trivial after the initial setup.
   }
 #+END_SRC
 
-* Applications
+* Case studies
 - brief descriptions of tasks
 - screenshots
 - code structure
