@@ -657,8 +657,8 @@ afterthought, with even commonly used packages having no documentation at all or
 written in such a way that a new user has no choice but to study its code to
 understand the package. In this work, I will strive to avoid this common flaw.
 
-* Designing a framework
-* Implementing the components
+* Implementing the framework
+** Implementation plan
 An overview of what's ready and what's missing in Haskell. Ready:
 - UI toolkit
 - templating
@@ -669,17 +669,24 @@ Missing:
 - PWA support - service workers, push notifications
 - debugging tools
 - components (forms, CSS framework bindings)
-- user-provided templating
 - authorization/authentication
 - internationalization
 - storage (TODO: mention why - not mentioned in "Elements")
 
 As the set goal of this work is to create a framework for Progressive Web
 Applications, I have selected the components that would, in my opinion, provide
-a solid basis for further expansion. Many of the components not selected are
-either tightly interwoven (internationalization and widgets, debugging tools and
-every other component) or often reimplemented on a per-project basis (widgets,
-authentication/authorization, internationalization). The components I chose are:
+a solid basis for further expansion while at the same time fulfilling the
+requirements. Implementing a framework that covers all missing features is a
+topic for a multi-year project for a team of developers, so the scope of my work
+is limited by the resources available to me, both in time and in human
+resources.
+
+Many of the components not selected are either tightly interwoven
+(internationalization with widgets, debugging tools and every other component)
+or often reimplemented on a per-project basis (widgets,
+authentication/authorization, internationalization). The components I chose are
+usable both on their own and in combination. These components are:
+
 - router
 - service worker
 - basic storage
@@ -687,8 +694,7 @@ authentication/authorization, internationalization). The components I chose are:
 TODO: Demonstrate the principles of components on 'src-snippets' code, where
 I will show the smallest possible code that implements that functionality
 
-TODO: In each, write about the general idea and implementation options; the
-API and the relevant type theory; show basic usage
+TODO: show basic usage of each component
 
 In this section, I will use the terminology used in the paper "Evolving Frameworks"
 cite:roberts1996evolving to describe the work performed in the rest of this work
@@ -1241,7 +1247,7 @@ but this is sufficient for many use-cases.
 
 TODO: Refer to the [[Reflex]] section
 
-* Developing an application
+* Application development
 The components we created above enable a variety of use-cases:
 - compiling an interactive browser application into a small bundle
 - creating a Progressive Web Application and prerendering it on the server, so
@@ -1250,23 +1256,104 @@ The components we created above enable a variety of use-cases:
 - combining the above to create a site with full-stack interactive
   administration that generates a static public site
 
-TODO: Correct if I don't manage 'Blog'
-
 In this section, we will go through the tasks common to all of these use-cases
 and in the next one, we will look at the specifics of creating each one.
 
-** Development tools
-The basis of Reflex's development platform is Nix, development environment is
-nix-shell.
+** Development approach
+While there are not yet many patterns specific to FRP or frontend applications,
+one common way to structure a Haskell application in general is the so-called
+/three layer cake [TODO: ref]/, which is as applicable to Reflex applications as
+to any other Haskell application. This architectural pattern describes three
+layers of code, where each one uses a different approach and different sort of
+types.
 
-An editor common in the Haskell world is Emacs, and most documentation on
-setting up an editor for frontend development is in fact aimed at Emacs. Other
-editors are also supported, but there is usually no or little documentation.
+The innermost layer contains only of plain data types and pure functions, it is
+the core of an application. This layer should be designed in such as way as to
+be easily testable using property-based tests or unit tests, so it should not
+interact with the outer world at all.
 
-A tool that greatly eases setting up development environment is direnv, which is
-able to load 
+The intermediate layer consists of domain-specific effects, often written using
+a DSL. In the specific case of a Reflex application it means extending the base
+monad using monad transformers, both library-provided and
+application-specific. Each function should list out only the effects it uses and
+not specialize the underlying monad transformer stack, so that it is possible to
+test such functions using other interpretations of the effects, ones that do not
+need the full environment of an application.
 
-TODO: Nix, editor integration, development process
+And finally the outermost, top-level layer contains the interpreters for the
+effects, connecting the application to the rest of the world. Testing this layer
+is usually possible via end-to-end tests, running the full application.
+
+There are as many approaches to designing a Haskell application as there are for
+any other language. One axis along which it is possible to describe possible
+approaches is bottom-up/top-down, where bottom-up development starts at the
+innermost layer, designing the entities used in an application and basic
+operations on them, and top-down, which starts from the simplest possible
+working solution (the outermost layer), slowly formalizing the effects and
+domain of an application.
+
+While I used the top-down approach when initially creating the applications
+described in the section [[Case studies]], we will walk through them the other way
+around (bottom-up), from domain design, selecting necessary effects, to their
+interpretation, as top-down development is often iterative in nature.
+
+** Tools
+Describing tools specific to the code in this project, as included on the
+attached storage.
+
+Reflex-platform is the base, which is nixpkgs, a few overlays, and project.nix
+which wraps everything else up into a nice package with shells for ghc and
+ghcjs, and compilation for packages for ghc/ghcjs with a single command. Hoogle,
+set of dependencies known to work together, plus a way to add other ones or
+override the provided versions.
+
+In such an environment, =nix-build= is used for building a package. For Haskell,
+Nix invokes Cabal to compile object code, profiled object code, haddock
+documentation, and link any executables into binary files or JavaScript bundles,
+together with any other user-specified post-processing steps like compressing the
+generated JavaScript code using =closure-compiler=. All of these steps together
+are quite slow, so there is an alternative for interactive development.
+
+The command =nix-shell= starts a terminal session with environment variables set
+in such a way that the user has can use all the tools that would be used for
+compiling in =nix-build=. This means that =ghci= or =cabal repl= are available, with
+all dependencies preconfigured.
+
+In particular, this means that it is possible to start a GHCi process that
+automatically reloads any changed code and if there are no compile errors, it
+calls a function that e.g. starts a web server. The tool that does this is
+called =direnv= (TODO: ref), and it is now so common in the Haskell community that
+some developers report that Vim and ghcid are the only two tools they use for
+development.
+
+Such a setup makes developing a lot faster, especially given that it is possible
+to run browser applications in the same way. The library =jsaddle-warp= works
+around the slow compile times of GHCJS, and sets up a specific execution model
+in which as much code as possible is executed natively in GHCi, and only the
+necessary parts are executed in a browser, using messaging via WebSockets.
+
+A tool that makes working with Nix shells even easier is =direnv= (TODO: ref),
+which is a general tool that changes the environment variables in a terminal
+according to the directory to which a user navigates. In the workflow described
+above, when a developer navigates into the project directory, a Nix shell is
+entered automatically without starting a new shell, simply by changing the
+environment of the current one. It is also possible to cache a nix-shell, which
+makes switching to a project instantaneous, as starting a new nix-shell takes a
+few seconds.
+
+The editor I use, Emacs, uses all of the components described above to provide a
+full-fledged Haskell development environment. Using =direnv-mode= and =dante-mode=,
+the editor loads the nix-shell immediately after opening a file, and starts a
+ghci process in the background to check the file for any errors or warnings,
+which are then reported on the relevant lines.
+
+It is possible to support other editors through the use of the Language Server
+Protocol and its Haskell server HIE
+
+TODO: try to set up VSCode - hie nix expression https://github.com/puffnfresh/nix-files/blob/master/carbon-x1-gen2/vscode/default.nix
+TODO: Prepare an Emacs skeleton, mention that it's available
+TODO: ghcid for running a test serve
+
 TODO: Prelude, code structure
 TODO: Describe component development in detail
 TODO: Authorization
@@ -1393,30 +1480,70 @@ ability to post articles and comments, and to follow users and favorite articles
 -- statically generated with a FRP admin interface
 
 * Conclusion
-TODO: return to the comparison with JS, PHP, ... frameworks
+In this work, I have led the reader from a general introduction to modern Web
+technologies, through an overview of the capabilities of contemporary Web
+frameworks, to an analysis of the capabilities of Haskell on the frontend and
+specifically the state of available features in its library ecosystem.
 
-** Follow up work
-- extending the storage library capabilities, a Datascript-like query language,
-  bindings to more backends, leveraging IndexedDB capabilities
-- effects in Reflex, more flexible extension mechanism
-- CSS-in-Haskell (a la CSS-in-JS)
-- typed assets - TH to generate, then typed <img>, <link> components
-- router extensions - access gating (auth'd, per-role)
-- debugging tools to run inside the browser - variable watching, state inspecting
-- client crash reports
-- end-to-end testing tools (asserts on both back- and frontend?)
-- dynamic user-provided content - parsing a HTML alike, preregistered named
-  components, an editor
-- synchronization library
-- form library
-- GraphQL for interop with modern JS frameworks
+In the second half of this work, I have designed and implemented three
+components, a router, a service worker generator with supporting libraries, and
+a key-value browser storage library, that together make a significant
+contribution to the ecosystem of Haskell on the frontend. These components don't
+comprise a framework equivalent to most popular JavaScript frameworks, but they
+enable creating Progressive Web Applications in Haskell, which was the set goal
+of this work.
 
-** In closing
--- The final chapter includes an evaluation of the achieved results with a special
-emphasis on the student's own contribution. A compulsory assessment of the
-project's development will also be required, the student will present ideas
-based on the experience with the project and will also show the connections to
-the just completed projects. cite:Pravidla
+** Next work
+The work that needs to immediately follow the submission of this thesis is
+publishing the components created here and seeking feedback from the Haskell
+community. This includes fulfilling all the formal requirements necessary for
+publishing the individual packages to Hackage, the package repository for
+Haskell, and writing up their documentation in two tiers: API documentation and
+user manuals. For the manuals and showcases, I will likely reuse some of the
+case studies presented in the previous section.
+
+I expect to spend some time adapting my work according to any feedback from the
+community: expanding documentation, creating adapters to other libraries,
+implementing more requested functionality, and other necessary work.
+
+With the libraries implemented in this work, there is however still a number of
+capabilities that Haskell lacks, compared to developing browser applications in
+JavaScript.
+
+- a palette of pre-built GUI components
+- internationalization
+- a unified command-line interface to build tools
+- code generation
+- debugging tools for the frontend, e.g. variable watching, inspecting application state
+
+There is also a number of other ideas with various usefulness that would make
+building web applications in Haskell easier. Some are natural extensions of the
+implemented components, others are independent projects that implement other
+functionality that would make building web applications in Haskell easier. What
+follows is an incomplete list of such project topics:
+
+- CSS-in-Haskell (similar to CSS-in-JS)
+- crash reports (traceback, application state) for the browser
+- end-to-end tests that run can asserts both on the client and the server
+- dynamic user-provided content - HTML-like markup that can use preregistered named
+  components, a user-friendly editor
+- typed components that use assets, like =<img>= or =<link>=
+- forms - a set of components, validation, automatic derivation from a datatype
+- a query language for browser storage, using IndexedDB
+- automatic synchronization for browser storage
+- authentication in the router: "user is logged-in", "user has role X", "user
+  can perform action Y"
+- HTTP/2 Push support on the server - sending all necessary assets together with
+  the first request
+- WebIDL and a JavaScript-generating DSL for service workers
+- effect system for Reflex, as a more flexible extension mechanism
+- serializable effects that can be interpreted both in the browser or on the
+  server if the client is missing required data
+
+To summarize this work, I have studied the current state of Haskell on the
+frontend, expanded the library ecosystem with three new additions, implemented a
+number of example applications, and suggested follow-up projects to remedy the
+remaining deficiencies compared to the features available in JavaScript.
 
 * (bibliography, start of appendix)                           :ignoreheading:
 #+BEGIN_EXPORT latex
