@@ -23,6 +23,8 @@
     mockery = if self.ghc.isGhcjs or false then null else super.mockery;
     generic-lens = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) super.generic-lens;
     extra = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) super.extra;
+    http-date = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) super.http-date;
+    jsaddle-warp = if self.ghc.isGhcjs or false then self.callHackage "jsaddle-warp" "0.9.6.0" {} else super.jsaddle-warp;
 
     servant-reflex = doJailbreak super.servant-reflex;
     polysemy = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) (super.callCabal2nix "polysemy" (pkgs.fetchFromGitHub {
