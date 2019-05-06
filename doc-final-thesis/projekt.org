@@ -27,125 +27,124 @@ Imagine you are building an application for an event your company is
 organizing. There will not be reliable internet connection in the area of the
 event, so it needs to work offline. You are on a tight budget, so implementing
 one version for each platform is not feasible, but it needs to work reliably
-across all mobile platforms and ideally in the browser as well. What's the
+across all mobile platforms and ideally in the browser as well. What is the
 easiest way to accomplish that?
 
-This situation is exactly where a rather new concept of a 'Progressive Web
-Application' (PWA) is the best solution. Generally said, a PWA is website
+This situation is exactly where a rather new concept of a Progressive Web
+Application (PWA) is the best solution. Generally said, a PWA is website
 capable of running offline, using mobile notifications, or synchronizing data in
-the background - things previously specific to native mobile applications.
+the background, things previously specific to native mobile applications.
 
-Now additionally consider that the application server is written in Haskell, a
+Moreover, consider that the application server is written in Haskell, a
 statically typed, purely functional programming language. We want to reuse the
 business logic already written there to avoid duplicating code, so we search for
 a way to write a Web application in Haskell. We find many resources and a
 quickly growing community but while creating the application, we soon step into
 the unknown. A medium-scale application needs a large number of capabilities,
 but the ecosystem of frontend Haskell is not yet big enough to support many of
-them - most libraries in the area are either exploratory, or one-off projects.
-In this work, we will try to fill in many such gaps for Haskell developers of
-frontend applications, with the goal of creating a framework with a specific
-focus on Progressive Web Applications.
+them, many libraries in the area are either exploratory, or one-off projects.
+In this work, we will try to fill in many such gaps, with the goal of creating a
+framework for creating Progressive Web Applications in Haskell.
 
 We will first go through the details of what a Progressive Web Application is
-and why it is interesting (Chapter 2). Next, we will have a look at what are the
-features and responsibilities of today's Web frameworks, and how JavaScript
-frameworks look (Chapter 3), followed by a quick introduction to Haskell and an
-evaluation of the Haskell ecosystem in the area of Web development (Chapter
-4). After seeing what is missing, we will design a framework and implement its
-components (Chapter 5), walk through how to create an application using these
+(Chapter 2) and what features are common in today's Web frameworks (Chapter 3),
+followed by a quick introduction to Haskell and an evaluation of the Haskell
+ecosystem in the area of Web development (Chapter 4). After seeing what is
+missing, we will walk through the implementation of several libraries in the
+area (Chapter 5), have a look at how to create an application using these
 components (Chapter 6), and conclude with four separate case studies (Chapter
 7).
 
 ** Related work
 The volume of work in the area of frontend Haskell is not large, as the
-Haskell-to-JavaScript compiler, GHCJS, is only available since 2013, also due to
-the fact that Haskell in general is only recently being accepted as a mainstream
-language. Academic work in this area is sparse, but there are several mature
-projects - mainly commercially sponsored ones - under active development. Reflex
-and Obelisk are a UI framework and a deployment tool respectively, from Obsidian
-Systems cite:obsidian. Tweag cite:tweag is working on a Haskell-to-WebAssembly
-compiler, Asterius, and QFPL cite:qfpl has created many learning materials for
-frontend Haskell.
+Haskell-to-JavaScript compiler GHCJS is only available since 2013, and also due
+to the fact that Haskell in general is only recently becoming as a mainstream
+language and used in commercial projects. Academic work in this area is sparse,
+but there are several mature projects under active development, usually
+commercially sponsored. Reflex and Obelisk are two projects from Obsidian
+Systems cite:obsidian, a UI framework and a deployment tool respectively. Tweag
+cite:tweag is working on a Haskell-to-WebAssembly compiler, Asterius, and QFPL
+cite:qfpl has created many learning materials for frontend Haskell.
 
 * What is a PWA?
-** Web Applications Today
-Web applications are more than just static HTML markup styled by CSS.
+** Web Development Trends
+Today, web pages are more than just static HTML markup. We have moved from
+the Web without JavaScript where any interactions needed to be processed by the
+server, to using JavaScript for animations and small ease-of-use features, to
+building entire applications in JavaScript that only talk to servers in the
+background.
 
-We have moved through lightweight /thin clients/, frontends to server-side
-applications driven by CGI scripts written in PHP or Perl, or by compiled HTML
-servers in Java or C (TODO: server-side templating), which at the time were seen
-as a big step forward compared to heavyweight /thick clients,/ desktop
-applications needed to be downloaded and installed.
+When JavaScript received the ability to execute HTTP requests and get or save
+data in the background, then called AJAX, it was only used for small pieces of
+functionality. Only later came the concept of Single Page Applications (SPA),
+where the application was only loaded once at the beginning and only
+communicated in JSON or XML afterwards. This brought new challenges to
+JavaScript developers, challenges like like rendering templates in the browser,
+managing application state or routing (the mapping between application state and
+the URL displayed in the address bar of a browser).
 
-With AJAX and XMLHttpRequest, the functionality available to JavaScript in the
-browser quickly grew and later, the clients growing more capable and
-interactive, and with History API came the concept of Single Page Applications
-(TODO: routing, client-side templating), which needed to be only loaded once and then be fully
-interactive, communicating with the server in the background. This was another
-milestone in "thickening" the browser client, and the server could shrink just
-to an API.
+Not only was the Web developing, but also mobile devices and their applications,
+also called native applications today (as opposed to web applications). These
+applications had access to the full capabilities of the devices they were
+running on and could, at the start, do a lot more than a web application
+could.
 
-Mobile applications were a competitor to the web though, as capable as desktop
-applications - fast, could work offline, ...
+This meant that a company that wanted to reach as many users as possible had to
+develop many versions of the same application: for the web, desktop, and also
+for several varieties of mobile devices. Later came projects like Cordova
+and Electron that made it possible to use JavaScript and other web technologies
+not only in the browser but also in native mobile and desktop applications, but
+the ambition of making the web the universal application platform stayed there.
 
-With Node.js, and later Cordova and Electron, it became possible to use
-JavaScript and other web technologies not only in the browser, but also as an
-alternative to native mobile and desktop applications.
+Under the umbrella of the Web Platform project, many new JavaScript extensions
+were developed, interfaces that gave JavaScript access to many facets of the
+device on which the browser runs. Some examples are the Location API that gives
+access to the GPS location of a device, or the Screen Capture API that enables a
+website to capture the screen of the browser or another application.
 
-The trend today is that of blending between native and web applications, with
-the browser becoming a runtime platform. The Web Platform project is the
-... TODO: browser storage
-
-An example of the capabilities of the web today is Google Docs, which for many
-businesses replaces any need for desktop office software entirely. Another
-example would be Facebook Messenger, which provides text, voice and video
-communications, all in the browser.
-
-Not all websites need to be interactive applications though, and not all
-browsers support every API or technology. /Isomorphic JavaScript/ or /server-side
-rendering/ that can render an application either on the server or in the
-browser. Static site generators and /headless CMS/ are another related concept,
-where an interactive application generates a website according to ...
+Given that the device type most often for browsing the Web is a mobile device
+and has been for a few years already cite:mobile-stats, the effort to equalize
+the capabilities of web and mobile applications is still ongoing, and a large
+step towards this goal is the concept of a Progressive Web Application.
 
 ** Progressive Web Applications
-The term 'Progressive Web Application' is an umbrella term for several
-relatively new, closely related technologies. It continues in the general trend
-of expanding the capabilities of browser applications and of closing the gap
-between browser and native mobile applications. While many of these technologies
-are useful also on desktop, the main target audience are mobile Web browsers.
+The term Progressive Web Application (PWA) is an umbrella term for several relatively
+new, closely related technologies. While many of them are useful on all devices,
+the main target audience are mobile Web browsers.
 
-The focus of web development is shifting to the mobile, as the percentage of
-mobile devices compared to desktop devices is steadily increasing (TODO: ref).
+The goal of the PWA project is to enable developers to create Web applications
+that are equal in functionality to native ones in many domains like shopping or
+productivity. The technologies that comprise the term PWA allow applications to
+be installable directly from a web browser to the device, to become capable of
+working offline, to use some background services of the device, all features
+formerly only available to mobile applications. To use the marketing terms,
+converting a web application into a PWA improves user experience and brings
+higher user engagement and retention.
 
-Installable browser applications, push, offline - very similar to the
-capabilities of native applications, user engagement, ...
+The term PWA has an exact specification in a checklist created by Google
+cite:pwa_checklist, which describes two levels of PWAs, a Baseline PWA and an
+Exemplary PWA. The defining characteristics of a Baseline PWA are, as quoted
+directly from the checklist:
 
-The term Progressive Web Applications has an exact specification in a checklist
-created by cite:pwa_checklist, which describes two levels of PWAs, a 'Baseline
-PWA' and an 'Exemplary PWA'. The defining characteristics of a Baseline PWA are:
-
-- Pages are responsive on tablets & mobile devices
-- All app URLs load while offline
-- Metadata provided for Add to Home screen
-- Page transitions do not feel like they block on the network
-- Each page has a URL
-- Pages use the History API
+- Pages are responsive on tablets and mobile devices
+- All application URLs load while offline
 - Site uses cache-first networking
+- Page transitions do not feel like they block on the network
+- Pages use the History API
+- Each page has a URL
+- Metadata provided for "Add to Home screen"
 - Site appropriately informs the user when they are offline
 - Push notifications (consists of several related requirements)
 
-While there are several more requirements for an Exemplary PWA, it is just the
-baseline ones that we will focus on. The technologies used to fulfill these
+While there are several more requirements for an Exemplary PWA, we will focus
+mostly on the Baseline PWA ones. The technologies used to fulfill these
 requirements are relatively recent developments, but they are supported in all
-major Web browsers. They are:
+major Web browsers. The technologies are the following:
 
 - Service Workers
 - Web App Manifest
 - IndexedDB
 - Web Platform APIs
-
-TODO: add more details and specific examples - expected use, applications
 
 A service worker is a JavaScript program that an application can request to
 install. It is functionally a configurable network proxy cite:mdn_svcwrk that can
@@ -153,23 +152,27 @@ intercept outgoing requests from the browser and that has access to a browser
 cache which, among other things, enables applications to become available
 offline. The service worker may also handle push notifications and background
 synchronization, two new features that were traditionally available only to
-native applications. Push notifications are short messages sent by the
-application server to any client using browser-specific channels (e.g. Firebase
-Cloud Messaging for Chrome and Android browsers, Apple Push Notification for
-Apple browsers), that are shown to the user as a popup or a notification
-regardless of whether the application is open or closed on the device. The
-Background Sync API enables the service worker to retry requests made while
+native applications.
+
+Push notifications are short messages sent by the application server to any
+client using browser-specific channels (e.g.~Firebase Cloud Messaging for Chrome
+and Android browsers, Apple Push Notification for Apple browsers), that are
+shown to the user as a popup or a notification regardless of whether the
+application is open or closed on the device.
+
+The Background Sync API enables the service worker to retry requests made while
 the application was offline as soon as the device goes online even when the
 application is not open at that moment, which also enables some degree of
-offline capabilities - any data updates can be queued and eventually executed in
+offline capabilities, as any data updates can be queued and eventually executed in
 batch at some point in the future.
 
-The Web App Manifest is a W3C standardized JSON file [TODO: ref] that contains
-the metadata that describe an application - its name, icons, splash screen or
-language. If a page contains a link to a manifest, it indicates to the browser
-that the page is a part of an application and that the application can be
-installed on a device locally. For the user this means that the application can
-request to be installed via a dialog window asking them to "Add to Home Screen".
+The Web App Manifest is a W3C-standardized JSON file cite:webapp-manifest that
+contains the metadata that describe an application: its name, icons, splash
+screen or locale. If a page contains a link to a manifest, it indicates to the
+browser that the page is a part of an application and that the application can
+be installed on a device locally. For the user this means that the application
+can request to be installed via a dialog window asking them to "Add to Home
+Screen".
 
 IndexedDB is the only browser storage that is accessible to both the browser and
 the service worker. It is a document store that supports transactions, schema
@@ -178,92 +181,91 @@ state with the server even when it is closed, using the Background Sync API of
 the service worker.
 
 The Web Platform is a set of APIs that expose capabilities of the underlying
-system - examples include geolocation or audio/video capture
+system. Examples include geolocation or audio/video capture
 cite:what_web_can_do. Of the many APIs that comprise the Web Platform, it is the
-History API and Network Information API that is necessary for a PWA. The History
-API is the feature that enables the so-called /single page applications/, where
-the application is loaded only once despite the user being able to navigate
-between different URLs. This is achieved via artificial /navigation actions/ and
-intercepting user navigation actions like "Go to previous page". The Network
-Information API is what enables the application to find out whether the it can
-currently access the Internet. Other APIs mentioned in the /Exemplary PWA/
+History API and Network Information API that are necessary for a PWA. The
+History API is the feature that enables the so-called /single page applications/,
+where the application is loaded only once despite the user being able to
+navigate between different URLs. This is achieved via artificial /navigation
+actions/ and intercepting user navigation actions like "Go to previous page". The
+Network Information API is what enables the application to find out whether the
+it can currently access the Internet. Other APIs mentioned in the /Exemplary PWA/
 requirements are the Web Share API and Credentials API that expose more of the
 underlying device capabilities, sharing via other applications and the device
 credential storage.
 
 * Web frameworks of today
-TODO: intro
-
 ** Features of Web Frameworks
-The basis of a web framework is the *UI toolkit*, which defines the structure,
+The basis of a web framework is the /UI toolkit/, which defines the structure,
 architecture and paradigm of the rest of the application. I am intentionally
-using the now-uncommon term 'toolkit', as the UI frameworks we will see vary in
-their scope - e.g. React is just a library with a small API, whereas Angular
+using the now-uncommon term toolkit, as the UI frameworks we will see vary in
+their scope, e.g.~React is just a library with a small API, whereas Angular
 provides a quite opinionated platform. Individual frameworks are quite
 disparate, with large differences in the size of their community, maturity,
-developer friendliness and the breadth of features or available libraries.
+developer friendliness, and the breadth of features or available libraries.
 
 Frameworks usually have one defining feature they are built around (virtual DOM
 for React or event streams for Angular), but there are many other concerns that
-a framework needs to take care of. *Templating* is one of the essential ones. It
+a framework needs to take care of. /Templating/ is one of the essential ones. It
 is a way of composing the HTML that makes up an application which also usually
-includes some 'view logic' and variable interpolation. In some frameworks the
+includes some "view logic" and variable interpolation. In some frameworks the
 whole program is a template (purely functional React), some have templates in
 separate files and pre-compile them during the build process or even in the
-browser (Angular). Templates may also contain CSS as well - see the new
+browser (Angular). Templates may also contain CSS as well as in the recent
 CSS-in-JS trend.
 
-The second defining feature of frameworks is *state management*. This rather vague
+The second defining feature of frameworks is /state management/. This rather vague
 concept may include receiving input from the user, displaying the state back to
 the user, communicating with APIs and caching the responses, etc. While state
 management is simple at a small scale, there are many problems that appear only
 in larger applications with several developers. Some approaches include: a
-'single source of the truth' and immutable data (Redux), local state in
+"single source of the truth" and immutable data (Redux), local state in
 hierarchical components (Angular), or unidirectional data flow with several
 entity stores (Flux).
 
-Another must-have feature of a framework is *routing*, which means manipulating
+Another must-have feature of a framework is /routing/, which means manipulating
 the displayed URL using the History API, and changing it to reflect the
 application state and vice-versa. It also includes switching the application to
 the correct state on start-up. While the router is usually a rather small
-component, it is fundamental to the application in the same way the previous two
-items are.
+component, it is as fundamental to the application in the same way as the previous two
+items.
 
-A component where frameworks differ a lot is a *forms* system. There are a few
+A component where frameworks differ a lot is a /forms/ system. There are a few
 layers of abstraction at which a framework can decide to implement forms,
 starting at raw DOM manipulation, going on to data containers with validation
 but manual rendering, all the way up to form builders using domain-specific
-languages. The topic of 'forms' includes rendering a form and its data,
+languages. The topic of forms includes rendering a form and its data,
 accepting data from the user and validating it, and sometimes even submitting it
 to an API.
 
-There are other features that a framework can provide - authentication,
-standardized UI components, and others - but frameworks usually leave these to
-third party libraries. There is one more topic I would like to mention that is
-usually too broad to cover in the core of a framework, but important to consider
-when developing an application. *Accessibility* is an area concerned with removing
-barriers that would prevent any user from using a website. It has many parts to
-it - while the focus is making websites accessible to screen-readers, it also
-includes supporting other modes of interaction, like keyboard-only
-interaction. Shortening *load times* on slow connections also makes a website
+There are other features that a framework can provide, like authentication or
+standardized UI components, but frameworks usually leave these to third party
+libraries. There is one more topic I would like to mention that is usually too
+broad to cover in the core of a framework, but important to consider when
+developing an application. /Accessibility/ is an area concerned with removing
+barriers that would prevent any user from using a website. There are many parts
+to it, and while the focus is making websites accessible to screen-readers, it
+also includes supporting other modes of interaction, like keyboard-only
+interaction. Shortening /load times/ on slow connections also makes a website
 accessible in parts of the world with slower Internet connections, and
-supporting *internationalization* removes language and cultural barriers.
+supporting /internationalization/ removes language barriers.
 
 Accessibility is something that requires framework support on several
 levels. Making a site accessible requires considerations during both design
-(e.g. high color contrast) and implementation (semantic elements and ARIA
-attributes), and that is usually left up to application code and accessibility
+(e.g.~high color contrast) and implementation (semantic elements and ARIA
+attributes), and that is usually left to application code and accessibility
 checklists, with the exception of some specialized components like keyboard
-focus managers. There are however tools like aXe-core that check how accessible
-a finished framework is, and these can be integrated into the build process.
+focus managers. There are, however, tools like aXe-core that check how
+accessible a finished framework is, and these can be integrated into the build
+process.
 
-*Internationalization* is somewhat easier to support in a framework, as it does
-include so many cross-cutting concerns. At the most basic level, it means simple
-string translations, perhaps with pluralization and word order. Going further,
-it may also mean supporting RTL scripts, different date/time formats, currency,
-or time zones.
+/Internationalization/ is somewhat easier to support in a framework, as it
+includes so many cross-cutting concerns. At the most basic level, it means
+simple string translations, perhaps with pluralization and word order. Going
+further, it may also mean supporting RTL scripts, different date/time formats,
+currency, or time zones.
 
-As for *load times*, there are many techniques frameworks use to speed up the
+As for /load times/, there are many techniques frameworks use to speed up the
 initial load of an application. We can talk about the first load, which can be
 sped up by compressing assets (CSS, fonts, fonts or scripts) and removing
 redundant ones, or by preparing some HTML that can be displayed to the user
@@ -273,24 +275,24 @@ cached, so loading will be faster. One of the requirements of a PWA is using the
 Service Worker for instantaneous loading after the first load.
 
 There are two patterns of preparing the HTML that is shown while the rest of the
-application is loading - so called *prerendering*. One is called 'app shell',
-which is a simple static HTML file that contains the basic structure of the
-application's layout. The other is 'server-side rendering', and it is a somewhat
+application is loading, so called /prerendering/. One is called /app shell/, which
+is a simple static HTML file that contains the basic structure of the
+application's layout. The other is server-side rendering, and it is a somewhat
 more advanced technique where the entire contents of the requested URI is
 rendered on the server including the data of the first page, and the browser
 part of the application takes over only afterwards, without the need to fetch
-any more data. There is another variant of 'server-side rendering' called the
-'JAM stack' pattern cite:jamstack, where after application state changes, the
-HTML of the entire application, of all application URLs is rendered all at once
-and saved so that the server does not need to render the HTML for every
-request. These techniques are usually part of a framework's *supporting tools*,
+any more data. There is another variant of server-side rendering called the "JAM
+stack" pattern (cite:jamstack, "JavaScript, APIs, Markup"), where after application state changes, the HTML of
+the entire application, of all application URLs is rendered all at once and
+saved so that the server does not need to render the HTML for every
+request. These techniques are usually part of a framework's /supporting tools/,
 about which we will talk now.
 
 Developers from different ecosystems have wildly varying expectations on their
 tools. A Python developer might expect just a text editor and an interpreter,
 whereas a JVM or .NET developer might not be satisfied with anything less than a
-full-featured IDE. We will start with the essentials, with *build
-tools*. Nowadays, even the simplest JavaScript application usually uses a build
+full-featured IDE. We will start with the essentials, with /build
+tools/. Nowadays, even the simplest JavaScript application usually uses a build
 step that packages all its source code and styles into a single bundle for
 faster loading. A framework's tool-chain may range from a set of conventions on
 how to use the compiler that might get formalized in a Makefile, through a CLI
@@ -298,31 +300,31 @@ tool that takes care of building, testing and perhaps even deploying the
 application, to the way of the IDE, where any build variant is just a few clicks
 away.
 
-*Debugging tools* are the next area. After building an application, trying it out,
+/Debugging tools/ are the next area. After building an application, trying it out,
 and finding an error, these tools help in finding the error. There are generic
-language-specific tools - a stepping debugger is a typical example - and there
-are also framework-specific tools, like an explorer of the component hierarchy
+language-specific tools, a stepping debugger is a typical example, and there are
+also framework-specific tools, like an explorer of the component hierarchy
 (React) or a time-traveling debugger (Redux). In the web world, all modern
-browsers provide basic debugging tools inside the 'DevTools' - a stepping
+browsers provide basic debugging tools inside the "DevTools": a stepping
 debugger and a profiler. Some frameworks build on that and provide an extension
 to DevTools that interacts with the application in the current window, some
 provide debugging tools integrated into the application itself.
 
 When building or maintaining a large application with several developers, it is
 necessary to ensure good practices in all steps of the development
-process. There are two general categories in *quality assurance* tools - testing
+process. There are two general categories in /quality assurance tools/: testing
 (dynamic analysis) tools and static analysis tools. In the commonly used
 variants, tests are used either as an aid while writing code (test-driven
 development), or to prevent regressions in functionality (continuous integration
 using unit tests and end-to-end tests). Static analysis tools are, in the
 general practice, used to ensure a consistent code style and prevent some
-categories of errors ('linters'). Frameworks commonly provide pre-configured
-sets of tools of both types. If necessary - e.g. in integration testing where
-the burden of set up is bigger - they also provide utility libraries to ease the
-initial set up. Some frameworks also use uncommon types of tests like 'marble
-tests' used in functional reactive programming systems.
+categories of errors ("linters"). Frameworks commonly provide pre-configured
+sets of tools of both types. If necessary, e.g.~in integration testing where the
+burden of set up is bigger, they also provide utility libraries to ease the
+initial set up. Some frameworks also use uncommon types of tests like /marble
+tests/ used in functional reactive programming systems.
 
-*Editor integration* is also important in some ecosystems. This includes common
+/Editor integration/ is also important in some ecosystems. This includes common
 features of Integrated Development Environments like auto-completion or
 refactoring tools. Recently the Language Server Protocol (LSP) cite:lsp project
 played a big role in allowing editors to support a wide variety of languages by
@@ -332,8 +334,8 @@ can be framework-specific like supporting an embedded domain-specific language
 or integrating framework-specific debugging tools.
 
 While we were talking about Web frameworks so far, some of them support not only
-running inside the browser but also being packaged as a *mobile app* for Android
-or iOS, or as a *native desktop application* for the many desktop operating
+running inside the browser but also being packaged as a /mobile app/ for Android
+or iOS, or as a /native desktop application/ for the many desktop operating
 systems. For mobile support, frameworks often provide wrappers around Apache
 Cordova, which is a thin wrapper around a regular website exposing some extra
 capabilities of the device. Some, however, go even further and support fully
@@ -344,61 +346,38 @@ just running it inside a browser are performance (they are usually faster to
 load and to use), access to device-specific capabilities (direct access to the
 file system), or branding.
 
-The last point in this chapter is *code generators*. of which there are two
-variants: project skeleton generators, which create all files necessary for a
-project to compile and run, and which are provided in a large majority of
-frameworks. Then there are component generators, which may include generating a
-template, a URL route and its corresponding controller, or an entire subchapter
-of a website. These are less common but some frameworks also provide them.
+The last point to mention is /code generation/. of which there are two variants:
+project skeleton generators, which create all files necessary for a project to
+compile and run, and which are provided in a large majority of frameworks. Then
+there are component generators, which may include generating a template, a URL
+route and its corresponding controller, or an entire subchapter of a
+website. These are less common but some frameworks also provide them.
 
-** Web Technologies in JavaScript
-- TODO: Maybe merge with the previous chapter?
+** Web Frameworks in JavaScript
+The features we just went through are features that are widely available in
+JavaScript and its frameworks. We will now go through some of them to see how
+they approach the implementation of these features.
 
-Moving on, we will take a quick tour of the JavaScript ecosystem and what the
-library ecosystem looks there, following the same general structure as we have
-used in the chapter above.
+The most popular JavaScript frameworks of today are React and Angular
+cite:frontend-cmp. Vue.js is close behind them, a relatively new framework that
+is quickly gaining popularity.
 
-The most popular *UI toolkits* in JavaScript are currently Angular cite:angular
-and React cite:react. Vue.js cite:vuejs is another, a relatively new but quickly
-growing one. Of these, Angular is the framework closest to traditional
-frameworks where it tries to provide everything you might need to create an
-application. React and Vue are both rather small libraries but with many
-supporting tools and libraries that together also create a platform, although
-they are much less cohesive than Angular's platform.
+Angular is an integrated framework that covers many common use cases with many
+supported features in the base framework. On the other hand, React and Vue are
+both rather small libraries, and most of the features described in the previous
+section are implemented only as third-party libraries or tools. While React and
+Vue are sometimes called frameworks as well, they mostly serve as the central
+library of an ecosystem built around them.
 
-There are fundamental architectural differences between them. Angular uses plain
-HTML as a base for its templates, and uses explicit event stream manipulation
-for its data flow. React uses a functional approach where a component is (de
-facto) just a function producing a JavaScript object, in combination with an
-event-driven data flow. Vue uses HTML, CSS and JavaScript separately for its
-templates, and its data flow is a built-in reactive engine.
-
-The most common complaint about the JavaScript ecosystem in general is that it
-is a 'jungle'. There are dozens or hundreds of small libraries doing the same
-thing, most however incomplete or unmaintained, with no good way to decide
-between them. Frameworks avoid this problem by having a recommended set of
-libraries for common use cases. A different but related complaint is called the
-'JavaScript fatigue'. The trends change quickly in the JavaScript ecosystem,
-libraries come and go each year, a common belief is that if you are not learning
-at least one new framework per year, you are missing out on opportunities.
-
-As for the individual frameworks mentioned above: Angular is an integrated
-framework that covers many common use cases in the basic platform. To some
-though, it is too opinionated, too complex to learn easily, or with too much
-abstraction to understand.
-
-React and Vue are rather small libraries which means they are very flexible and
-customizable. There are many variants of libraries for each feature a web
-application might need, which also means that it is easy to get stuck deciding
-on which library to pick out of the many options. There are React and Vue
-'distributions', however, that try to avoid this by picking a set of libraries
-and build tools that works together well.
-
-As for the topics mentioned in the previous chapter - routing, forms, build
-tools, mobile and desktop applications - most are built into Angular, and for
-React and Vue there are dozens of options of third party libraries. In my
-investigation, I have not found a weak side to any of them - which is just what
-I expected, given that JavaScript is the native language of the Web.
+As for the topics mentioned in the previous chapter like routing, forms, or
+build tools: most of them are built into Angular, while React and Vue do not
+include them and thus users need to use third-party libraries instead. This ties
+into the most common complaint about the JavaScript ecosystem: there are dozens
+of small libraries that accomplish very similar things, many are, however,
+incomplete or unmaintained, and there is no good way to decide between
+them. There are several projects that attempt to alleviate this problem by
+combining a set of libraries into a more cohesive framework that closer to the
+Angular.
 
 * Haskell and the Web
 ** Haskell
@@ -423,62 +402,63 @@ Haskell is described as a "statically typed, purely functional programming
 language with type inference and lazy evaluation" cite:jones2003haskell. It is
 originally a research language, developed as a vehicle for new research in the
 area of programming languages since 1990 cite:haskell_history. It has served as
-such, and in fact it still is the target of active research - some more
-prominent projects are Dependent Haskell cite:eisenberg2016dependent and Linear
-Haskell cite:bernardy2017linear.
+such, and in fact it still is the target of active research. Some more prominent
+projects are Dependent Haskell cite:eisenberg2016dependent and Linear Haskell
+cite:bernardy2017linear.
 
 Only recently has it been used in commercial work, as exemplified by Facebook's
 Haskell spam filter cite:marlow2015fighting. While there are many benefits to
-using a strongly typed functional language - it eliminates entire classes of
+using a strongly typed functional language (it eliminates entire classes of
 programming errors cite:Nanz_2015, anecdotally shown by the common saying that
-"If it compiles, it works" - it is conceptually different from languages
-commonly taught at universities. An example of Haskell code is included in
+"If it compiles, it works") it is conceptually different from languages commonly
+taught at universities. An example of Haskell code is included in
 ref:ex-haskell, a snippet containing a web server whose API is completely
 defined by the type =HackageAPI,= from which the types of the server and client
 functions are determined using type-level functions.
 
-As for using Haskell in the browser, it may seem strange at first glance to want
-such a thing when JavaScript is the only language supported by Web
-browsers. There is however a growing number of languages that compile to
-JavaScript, that use it as their compile target instead of Assembly or LLVM,
-which can be done either by translating the logic of the program into JavaScript
+As for using Haskell in the browser, it may seem strange at a first glance to
+want such a thing when JavaScript is the only language supported by Web
+browsers. There is, however, a growing number of languages that compile to
+JavaScript, which use it as their compile target instead of Assembly or LLVM,
+that can be done either by translating the logic of the program into JavaScript
 as is (transpiling), or by implementing an alternative runtime environment in
-JavaScript which then interprets the byte- or source-code. Another technology
+JavaScript, which then interprets the byte- or source-code. Another technology
 that enables languages to run in the browser is WebAssembly, an alternative
 assembly language and a runtime designed specifically for the Web.
 
-Web developers have been using JavaScript compilers for a long time -
+Web developers have been using JavaScript compilers for a long time.
 CoffeeScript is rather popular language announced in 2010
 cite:coffeescript. Also the new ECMAScript 6 or 7 features have only been usable
-via 'transpilers' until browsers implemented them natively, transpilers like
-Babel cite:babel. There are other, more advanced languages build with
-compilation to JavaScript in mind, e.g. TypeScript, a superset of ECMAScript 6
-cite:typescript, or Elm, a framework with its own language based on Haskell
-cite:czaplicki2012elm. The need to compile your code before running it is now
-quite accepted in the world of Web development.
+via compilation until browsers implemented them natively. There are other, more
+advanced languages built with compilation to JavaScript in mind,
+e.g.~TypeScript, a superset of ECMAScript 6 cite:typescript, or Elm, a framework
+with its own language based on Haskell cite:czaplicki2012elm. The need to
+compile your code before running it is now quite accepted in the world of Web
+development.
 
 The currently accepted way of running Haskell in the browser is via GHCJS, a
 Haskell-to-JavaScript compiler, although there are two active projects in the
-process of creating a Haskell-to-WebAssembly compiler - WebGHC cite:webghc and
+process of creating a Haskell-to-WebAssembly compiler: WebGHC cite:webghc and
 Asterius cite:asterius.
 
-** Haskell ecosystem
-Going on to the Haskell ecosystem, we will also walk through it using the
-structure from the 'Features' chapter. There is significant focus on the
-semantics of libraries in the Haskell community, e.g. writing down mathematical
-laws for the foundational types of a library and using them to prove correctness
-of the code, so UI libraries have mostly used Functional Reactive Programming
-(FRP) or its derivatives like 'the Elm architecture' cite:loder2018web as their
-basis, as traditional imperative event-based programming does not fit those
-criteria well.
+** Haskell Ecosystem for the Web
+We will now go through Haskell libraries for Web development, using the same
+structure as we did in the chapter describing general Web framework features.
 
-There are five production-ready UI toolkits for the Web that I have found. Of
+There is significant focus on the semantics of libraries in the Haskell
+community, e.g.~writing down mathematical laws for the foundational types of a
+library and using them to prove correctness of the code, so UI libraries have
+mostly used Functional Reactive Programming (FRP) or similar approaches like
+the /Elm architecture/ cite:loder2018web as their basis, as traditional
+imperative event-based programming does not fit those criteria well.
+
+There are five production-ready /UI toolkits/ for the Web that I have found. Of
 these five, React-flux and Transient are unmaintained, and Reflex, Miso, and
-Concur are actively developed and ready for production use. Each one uses a
-conceptually different approach to the problem of browser user interfaces, and
+Concur are under active development and ready for production use. Each one uses
+a conceptually different approach to the problem of browser user interfaces, and
 they differ in their maturity and the size of their community as well.
 
-*Reflex* cite:reflex (and Reflex-DOM cite:reflex-dom, its DOM bindings) looks like
+/Reflex/ cite:reflex (and Reflex-DOM cite:reflex-dom, its DOM bindings) looks like
 the most actively maintained and developed one. Reflex is also sponsored by
 Obsidian Systems cite:obsidian and is the most popular frontend framework in the
 Haskell community, so its future seems promising. Reflex follows the traditional
@@ -497,12 +477,12 @@ of an integer.
     display dCount
 #+END_SRC
 
-*Miso* cite:miso is a re-implementation of the 'Elm architecture' in Haskell,
-which means that is uses strictly uni-directional data-flow with a central data
-store on the one side, and the view as a pure function that takes the state and
+/Miso/ cite:miso is a re-implementation of the /Elm architecture/ in Haskell, which
+means that is uses strictly uni-directional data-flow with a central data store
+on the one side, and the view as a pure function that takes the state and
 creates a view on the other, where the view can change the state using strictly
 defined events. The ecosystem of Miso is not as well developed as Reflex's, and
-the overall architecture is very limiting - which I consider a large
+the overall architecture is very limiting, which I consider a large
 disadvantage. You can see an example of Miso code in ref:ex-miso, in which all
 local variables from the =where= clause are bound in the expression =App {..}=. In
 particular, you can see the =Action=, the =model= (a simple integer), the =update=
@@ -531,11 +511,11 @@ function, and the =view=, which together form the basis of the application.
         ]
 #+END_SRC
 
-*Concur* cite:concur tries to explore a different paradigm by combining 'the best
-of' the previous two approaches. The developers have so far been focusing on
+/Concur/ cite:concur tries to explore a different paradigm by combining the best
+of the previous two approaches. The developers have so far been focusing on
 exploring how this paradigm fits into browser, desktop or terminal applications,
 so it has a quite small range of features. It is a technology I intend to
-explore in the future when it is more mature, which however does not seem
+explore in the future when it is more mature, which, however, does not seem
 suitable for a large application so far, at least compared to its
 competitors. An example is included in ref:ex-concur, where you can see the
 operator =<|>= used for combining widgets inside =main= and =>>= for sequencing in
@@ -556,51 +536,51 @@ operator =<|>= used for combining widgets inside =main= and =>>= for sequencing 
         lift $ el_ E.div [] $ text $ show count ++ " clicks"
 #+END_SRC
 
-In all of these frameworks, *templating* is a feature that has been side-stepped
+In all of these frameworks, /templating/ is a feature that has been side-stepped
 by creating a domain-specific language for HTML mixed with control flow. There
 have been attempts at creating a more HTML-like language embedded into Haskell
 or external templates, though there is no such project that is both
-feature-complete and actively maintained. It is however possible to reuse
+feature-complete and actively maintained. It is, however, possible to reuse
 existing JavaScript components using the foreign function interface (FFI)
 between Haskell and JavaScript, and that it exactly what one of the unmaintained
 frameworks did to use React as its backend (react-flux).
 
-*State management* is where the frameworks differ the most. Miso follows the Elm
+/State management/ is where the frameworks differ the most. Miso follows the Elm
 architecture strictly with a central data store that can be only changed by
 messages from the view, whereas Reflex and Concur are more flexible, allowing
 both centralized and component-local state. A common complaint regarding Reflex
-is that there is no recommended application architecture - it errs on the
-other side of the flexibility vs. best practices spectrum.
+is that there is no recommended application architecture. It errs on the other
+side of the flexibility vs. best practices spectrum.
 
-As for *routing*, Miso has routing built into its base library. There are several
+As for /routing/, Miso has routing built into its base library. There are several
 attempts at a routing library in Reflex, though the situation is the same as
 with templating libraries. Concur with its small ecosystem does not have routing
 at all, it would be necessary to implement form scratch for a production-ready
 application.
 
-In *forms* - and UI components in general - the selection is not good. There
-are several components collections for Reflex which use popular CSS frameworks
+In /forms/ and UI components in general, the selection is not good. There are
+several components collections for Reflex which use popular CSS frameworks
 (Bootstrap, Semantic UI), though each has many missing pieces and they lack
-components that need to be re-implemented anew in each application - forms in
+components that need to be re-implemented anew in each application, forms in
 particular. Miso and Concur do not have any publicly available UI component
 libraries, or at least none that I was able to find.
 
-*Accessibility* as a whole has not been a focus of Web development in Haskell. It
-is possible to reuse JavaScript accessibility testing tools however, though I
+/Accessibility/ as a whole has not been a focus of Web development in Haskell. It
+is possible to reuse JavaScript accessibility testing tools, however, though I
 have not seen any sort of automated testing done on any of the publicly
 available Haskell applications. The only area with continued developer focus is
-*loading speed*, as the size of build artifacts was a problem for a long
-time. That has been ameliorated to the level of a common JavaScript application
-however, so that is not a critical concern. *Prerendering* is also supported by
+/loading speed/, as the size of build artifacts was a problem for a long
+time. That has been ameliorated to the level of a common JavaScript application,
+however, so that is not a critical concern. /Prerendering/ is also supported by
 Miso and Reflex, which helps speed up load times as well.
 
-Moving on to the topic of *build tools*: there are three main options in Haskell -
-Cabal v2 cite:cabal, Stack cite:stack, and Nix. There are also other options -
+Moving on to the topic of /build tools/: there are three main options in Haskell:
+Cabal v2 cite:cabal, Stack cite:stack, and Nix. There are also other options.
 Snack cite:snack, aiming for the best of these three but not yet ready for
 production use, or Mafia cite:mafia, which is not too popular in the community
 at large. Cabal is the original Haskell build tool which gained a bad reputation
-for some of its design decisions (the so-called 'Cabal hell'), though most of
-them were fixed in 'Cabal v2' which puts it on par with its main competitor,
+for some of its design decisions (the so-called "Cabal hell"), though most of
+them were fixed in "Cabal v2" which puts it on par with its main competitor,
 Stack. Stack tried to bring Haskell closer to other mainstream programming
 language by introducing several new features like automatic download of the
 selected compiler or a curated subset of the main Haskell package repository,
@@ -610,7 +590,7 @@ is a general-purpose build tool and not a Haskell-specific one. It has very good
 cross-compilation capabilities, however, which is the reason it is especially
 used for frontend Haskell.
 
-Glasgow Haskell Compiler (GHC) is the main Haskell *compiler* used for the
+Glasgow Haskell Compiler (GHC) is the main Haskell /compiler/ used for the
 creation of native binaries. Compilation to JavaScript, as required for frontend
 development, is supported by a separate compiler, GHCJS, which uses GHC as a
 library. Setting up a GHCJS development environment with Cabal is not a trivial
@@ -628,11 +608,11 @@ with modern JavaScript framework, the former is harder to improve though, and
 GHCJS applications are still within a factor of 3 of native JavaScript ones
 cite:nanda_bench. However, this should be improved soon by compiling to
 WebAssembly instead of JavaScript. There are two projects trying to create a
-Haskell-to-WebAssembly compiler in parallel - Asterius cite:asterius, and WebGHC
+Haskell-to-WebAssembly compiler in parallel : Asterius cite:asterius and WebGHC
 cite:webghc. They are so far in alpha, but I expect them to be production-ready
 by the end of 2019.
 
-Moving on to the topic of *debugging tools*, this is where Haskell on the frontend
+Moving on to the topic of /debugging tools/, this is where Haskell on the frontend
 is lacking the most. While it is possible to use the browser's built-in DevTools
 and their debugger and profiler, the compiled output of GHCJS does not
 correspond to the original Haskell code too much, which makes using the debugger
@@ -640,26 +620,26 @@ quite hard. There are no other debugging tools, though in my experience I did
 not ever feel the need to use anything else than writing debugging output to the
 console.
 
-In contrast, there are many *quality assurance* tools available for Haskell in
+In contrast, there are many /quality assurance/ tools available for Haskell in
 general, of which almost all are available for use in frontend
 development. Starting with static quality assurance, Hlint is the standard
-'linter' for Haskell, well-supported and mature. There are several code
+"linter" for Haskell, well-supported and mature. There are several code
 formatters, Hindent is the most widely used one, which enforces a single style
-of code as is common in other contemporary languages (e.g. gofmt for Go). As for
+of code as is common in other contemporary languages (e.g.~gofmt for Go). As for
 test frameworks, there are many options. HSpec or HUnit are examples of unit- or
 integration-testing frameworks, property-based testing is also common in
 Haskell, with QuickCheck cite:claessen2011quickcheck being the most well-known
 example. For end-to-end testing in the browser, there are libraries that
 integrate with Selenium.
 
-Haskell has a quite bad reputation for the lack of *editor integration*. The
+Haskell has a quite bad reputation for the lack of /editor integration/. The
 situation is better with the recent Language Server Protocol project, where
 haskell-ide-engine, Haskell's language server, enables users to write Haskell in
 contemporary editors like Atom easily. The language server supports
 type-checking, linting and formatting, and also common IDE features like
-'go-to-definition' or 'type-at-point'.
+"Go to definition" or "Type at point".
 
-Compiling applications as *mobile or desktop apps* is well-supported in Reflex,
+Compiling applications as /mobile or desktop apps/ is well-supported in Reflex,
 though not in Miso or Concur. Using the scaffolding of reflex-platform makes
 supporting different platforms almost automatic, as Nix takes care of switching
 between compilers: GHCJS for the Web, regular GHC for the desktop and
@@ -667,7 +647,7 @@ cross-compiling GHC for iOS or Android. Bundling the compiled applications for
 distribution for each platform is a bit more involved, though there are efforts
 to automate even that.
 
-*Code generators* are quite limited in Haskell. Stack has a templating system for
+/Code generators/ are quite limited in Haskell. Stack has a templating system for
 new project initialization, though there are no templates for frontend
 development so far. Cabal comes with a single standard template for a blank
 project but lacks customization options for creating framework-specific
@@ -676,126 +656,72 @@ far is to make copy of a repository containing the basics, edit project-specific
 details, and use that as a base for a new project. I have not found any attempts
 at component generation in Haskell.
 
-The last point I want to mention is *documentation*. It is generally agreed that
-it is Haskell's weakest point - despite having a standardized
-high-quality tool for creating API documentation (haddock), writing it is often an
-afterthought, with even commonly used packages having no documentation at all or
-written in such a way that a new user has no choice but to study its code to
-understand the package. In this work, I will strive to avoid this common flaw.
+In summary, while there are several UI toolkits available for browser
+applications in Haskell, individual components that are required for easy
+application development are either not available at all or not too well
+developed.
 
 * Implementing the framework
 ** Implementation plan
-An overview of what's ready and what's missing in Haskell. Ready:
-- UI toolkit
-- templating
-- prerender
+In the previous chapter, I presented my research into Haskell and its library
+ecosystem for browser applications. Now it is time to select which components
+need to be created to fulfill the goal of this thesis, of creating a framework
+for development of Progressive Web Applications. Here are the requirements for a
+Basic PWA reiterated:
 
-Missing:
-- routing integrated with prerender
-- PWA support - service workers, push notifications
-- debugging tools
-- components (forms, CSS framework bindings)
-- authorization/authentication
-- internationalization
-- storage (TODO: mention why - not mentioned in "Elements")
-
-As the set goal of this work is to create a framework for Progressive Web
-Applications, I have selected the components that would, in my opinion, provide
-a solid basis for further expansion while at the same time fulfilling the
-requirements. Implementing a framework that covers all missing features is a
-topic for a multi-year project for a team of developers, so the scope of my work
-is limited by the resources available to me, both in time and in human
-resources.
-
-Many of the components not selected are either tightly interwoven
-(internationalization with widgets, debugging tools and every other component)
-or often reimplemented on a per-project basis (widgets,
-authentication/authorization, internationalization). The components I chose are
-usable both on their own and in combination. These components are:
-
-- router
-- service worker
-- basic storage
-
-TODO: Demonstrate the principles of components on 'src-snippets' code, where
-I will show the smallest possible code that implements that functionality
-
-TODO: show basic usage of each component
-
-In this chapter, I will use the terminology used in the paper "Evolving Frameworks"
-cite:roberts1996evolving to describe the work performed in the rest of this work
-and follow-up work as well. The paper describes common stages that frameworks
-take as they develop. While is uses terminology from object-oriented frameworks,
-most of the concepts apply just as well In Haskell.
-
-#+CAPTION: The timeline of patterns as described in Evolving Patterns
-[[./obrazky-figures/evolving-frameworks.jpg]]
-
-To briefly describe the terms and how they relate to this work:
-- *"Three Examples"* are three applications from which the framework will
-  draw common themes and architecture, so that it fulfills real-world needs. This
-  is what we will go through in the next chapter, where we take three existing
-  application specifications and build a Haskell version of it.
-- In a *"White Box Framework"*, the architecture is extracted into a separate
-  library and expanded or re-implemented in further applications. The author
-  emphasizes 'programming-by-difference', where the programmer extends library
-  code and later factors out commonly repeated patterns into the library. In
-  this work, this is the approach taken after implementing the "Three Examples"
-  to create the basics of the shared libraries.
-- The next patterns, "*Component Library*", "*Hot Spots*", and
-  "*Pluggable/Fine-grained Objects*" are all an extension of the above, focusing
-  on extracting concrete components and restructuring the architecture to
-  improve developer experience in specific ways. This level, nor the further
-  ones are not implemented in this work.
-- Skipping a "*Visual Builder*", which is not a common pattern in Web frameworks,
-  there are some basic "*Language Tools*" implemented as a part of creating the
-  libraries, namely a debugging console for watching specific values and an
-  inspector of the application storage. [TODO: specify after implementing]
-
-Not mentioned as a part of the patterns but also an essential part of framework
-development is thorough documentation and guides, as well as test coverage of
-library code, which is also done as a part of the work on libraries in the
-latter parts of this work.
-
-The above is a quite general description, so we will now enumerate the specifics of the
-implementation plan, starting with a reiteration of the requirements of a PWA
-from the introduction, which is the end goal of this work.
-
-- Pages are responsive on tablets & mobile devices
-- All app URLs load while offline
-- Metadata provided for Add to Home screen
-- Page transitions do not feel like they block on the network
-- Each page has a URL
-- Pages use the History API
+- Pages are responsive on tablets and mobile devices
+- All application URLs load while offline
 - Site uses cache-first networking
+- Page transitions do not feel like they block on the network
+- Pages use the History API
+- Each page has a URL
+- Metadata provided for "Add to Home screen"
 - Site appropriately informs the user when they are offline
 - Push notifications (consists of several related requirements)
 
-There are, however, several components missing in the Haskell ecosystem that
-need to be created from scratch:
-- A full-featured browser routing library. While there are some existing
-  implementations, they are either incomplete or long abandoned.
-- A wrapper around ServiceWorkers
-- A push notifications library. This will need to be both a server-side library,
-  for creating them, and a client-side consumer, to parse them.
-- A way to prerender the application - either just the HTML "app shell" or all
-  pages on the site.
-- An offline storage library for the client. Here are several possible variants,
-  in the order of difficulty:
-  - plain storage datatype with LocalStorage, SessionStorage, and IndexedDB backends
-  - a storage including a transparent cache integrated with the network layer
-  - a storage with an invalidation or auto-refresh functionality, using an event
-    stream from the server
-  - a storage with offline-capable synchronization capabilities
+We will go through them one by one to see which components already exist and
+which are left to be implemented.
 
-These components do not comprise a fully integrated framework in the sense of
-e.g. Angular, such frameworks are quite uncommon in the Haskell ecosystem. More
-common are collections of libraries that play well together, where one library
-provides the fundamental datatype - the "architecture" of the application - and
-other libraries fill in the functionality, which is what we will work on. Of the
-proposed components, only the routing library is an "architectural" one in the
-sense that it will influence the shape of the application and its fundamental
-data types.
+Responsiveness is accomplished via CSS and is therefore out of scope, we are
+focusing on the JavaScript part only. The next two requirements (offline,
+cache-first networking) need to be implemented in a service worker, which is not
+covered by any existing library. Non-blocking page transitions and the use of
+History API are similar requirements that can today be implemented manually, but
+a routing component is desirable to remove the large amounts of boilerplate code
+necessary and to fulfill the next requirement of each page having a URL. The
+metadata for "Add to Home screen" need to be specified in the Web App Manifest,
+which is currently not supported by any existing library, but can be created
+manually as well. Indication of online/offline status is supported by the basic
+DOM interaction library. Push notifications require three components: in the
+browser, in the service worker, and on the server. Only the server-side
+component is available in Haskell currently.
+
+There some features that are beneficial for a PWA but not included in the
+explicit list of requirements, one of them is being able to provide at least
+basic functionality even offline. Doing that requires either API caching (using
+a service worker) or offline storage, neither are supported by an existing
+library, however.
+
+I have selected the components that would, in my opinion, provide a solid basis
+for further expansion while fulfilling our requirements. Implementing a
+framework that covers all features missing in frontend Haskell is a topic for a
+multi-year project for a team of developers, so the scope of my work is limited
+by the available resources, both in time and in human resources. The selected
+components are:
+
+- A full-featured browser routing library
+- A service worker generator and push notification support for the client and
+  the server.
+- Web App Manifest generator
+- A basic key-value storage library with backends for both the browser and
+  server (to support prerendering)
+
+These components will be usable both on their own and in combination, as a
+framework. While I developed these components incrementally, extracting common
+patterns from applications written without them, I will not describe the
+individual iterations but instead walk through the design choices made in the
+process and some interesting parts of the implementations, as I believe that
+will make for a more concise and informative presentation.
 
 ** Routing
 A router is one of the basic components of a modern web application. There are
@@ -853,23 +779,23 @@ be intimidating to developers looking beneath the user-facing API, at least
 compared to the simplicity of the other two approaches which use plain functions
 and simple sum types at their core.
 
-TODO: Yesod, Web-routes, Servant-generic examples
-
 *** Servant
 Servant is a general type-level DSL (Domain-Specific Language) in the domain of
 web routing. An API defined using Servant is merely a type, a tree of type-level
 terms composed using type operators. This API type is then interpreted using
-type-level functions into value-level functions, e.g. routers.
+type-level functions into value-level functions, e.g.~routers.
 
 #+CAPTION: Servant API definition label:servant-api
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
-  type GetUsers = "users" :> QueryParam "sortby" SortBy :> Get '[JSON] [User]
-  type CreateUser = "users" :> ReqBody '[JSON] User :> Post '[JSON] UserId
-
+  data (:>) (a :: Type) (b :: k)
+  data (:<|>) (a :: Type) (b :: Type)
+     = (:<|>) a b
   data QueryParam (name :: Symbol) (a :: Type)
 
-  type UserAPI = GetUsers :<|>CreateUser
+  type GetUsers = "users" :> QueryParam "sortby" SortBy :> Get '[JSON] [User]
+  type CreateUser = "users" :> ReqBody '[JSON] User :> Post '[JSON] UserId
+  type UserAPI = GetUsers :<|> CreateUser
 
   server :: Server UserAPI
   server = (\sortBy -> return [users]) :<|> (\user -> saveUser user)
@@ -880,18 +806,18 @@ type-level functions into value-level functions, e.g. routers.
       (f :<|> _) = client (Proxy @UserAPI)
 #+END_SRC
 
-A single Servant endpoint is shown in ref:servant-api. It is a composition of
-symbols (type-level strings) and so-called /combinators/ like =QueryParam= and =Get=,
-which are usually defined as data types without any constructors as shown in the
-second part of the snippet. These endpoints are then composed together using a
-type-level alternation ("or") operator, =:<|>=, as shown in the third part of the
-snippet.
+In ref:servant-api, we can see that a single Servant endpoint =GetUsers= is a
+composition of type-level strings and so-called /combinators/ like =QueryParam= and
+=Get=, which are usually defined as data types without any constructors as shown
+in the first part of the snippet. These endpoints are then composed together
+using type-level operators "then", =:>=, and "and", =:<|>=, as shown in the first part
+of the snippet.
 
 A server implementing such an API is defined in a very similar way, the handlers
 for individual endpoints are composed together using the value-level operator
-=:<|>=, as can be seen in the middle of the snippet. A client for the API is not
-created by composition but by decomposition of the =:<|>= constructor as shown in
-the last part of the snippet.
+=:<|>= (a constructor of the type =:<|>=), as can be seen in the definition of
+=server=. A client for the API is not created by composition but by decomposition
+of the =:<|>= constructor as shown in the last part of the snippet.
 
 #+CAPTION: Servant Generic API definition label:servant-generic-api
 #+ATTR_LATEX: :options frame=single
@@ -915,20 +841,21 @@ the last part of the snippet.
 
 An alternative approach to defining an API is using records. This approach uses
 Haskell's support for datatype-generic programming to convert between a record
-and a tree that uses =:<|>= on both the type-level and value-level. It is easier
-to work with larger APIs in this way and it makes for easier-to-read type
+into a tree that uses =:<|>= on both the type- and value-level. It is easier to
+work with larger APIs in this way and it makes for easier-to-read type
 errors. It is also possible to refer to individual endpoints using record
 accessors, instead of (de)composition of the entire server or client. The code
 in ref:servant-generic-api is functionally equivalent to the previous snippet,
 
-The interpretation of an API type is done via type classes, a language feature
-that is commonly compared to interfaces in object-oriented languages, but in
-this case its use is a bit more involved. The API type is interpreted
-recursively from the top, one combinator at a time starting from the outermost
-=:<|>=. In the case of a server, the API type is also translated into the type of
-the handler using an associated type family. Despite its name, a type family
-defines a type-level function - given a type of an endpoint, find the type of a
-handler.
+The interpretation of an API type into values is done via type classes, a
+language feature that is often compared to interfaces in object-oriented
+languages, but in this case its use is a bit more involved. The API tree is
+traversed recursively from the top along the =:<|>= and =:>= operators, one
+combinator at a time starting from the outermost =:<|>=. In the case of a server,
+the API type of each endpoint is also translated into the type of the handler
+function using an associated type family. Despite its name, a type family
+defines a type-level function: "given a type of an endpoint, find the type of a
+handler" in this case.
 
 We will see this process in more detail in a later chapter, when defining an
 entirely new interpretation of an API type in the creation of a client router,
@@ -941,16 +868,13 @@ the basics of Reflex, as its philosophy and building blocks constrain the
 shape of any function we design.
 
 As mentioned in the introductory chapters, Reflex is a general /Functional
-Reactive Programming/ (FRP) library.
-
-FRP in general is a way of programming where the program consists of a network
-of time-varying values and functions combining such values.
-
-- TODO: More FRP intro
+Reactive Programming/ (FRP) library. FRP in general is a way of programming where
+the program consists of a network of time-varying values and functions combining
+such values.
 
 The basic building blocks of FRP are events, objects which have a value only on
-a specific moment, and behaviors, which have a value at any point. Reflex adds
-a third primitive, a /dynamic/, which is a pair of a behavior and an event which
+a specific moment, and behaviors, which have a value at any point. Reflex adds a
+third primitive, a /dynamic/, which is a pair of a behavior and an event which
 fires whenever the behavior changes.
 
 Reflex is a general FRP library, to interact with the external world it needs
@@ -958,24 +882,25 @@ bindings to read external values and translate Reflex events into external
 actions. There are several such bindings: =reflex-dom= for the browser,
 =reflex-backend-wai= for the WAI web server interface, =diagrams-reflex= for SVG
 animations, and several others. The one we will use in the rest of this work is
-=reflex-dom=, which contains the necessary building blocks for web applications -
+=reflex-dom=, which contains the necessary building blocks for web applications:
 functions to create and animate HTML elements, listen on browser events, or
 perform HTTP requests.
 
 Reflex and Reflex-DOM provide the basic building blocks for creating
-applications, but they don't fall to a natural structure for bigger applications
+applications, but they do not fall to a natural structure for bigger applications
 the way object-oriented frameworks do as in MVC and its variations. In fact, one
 of the most common complaints of developers exploring Reflex is the lack of a
 developed application architecture.
 
-It is possible to recreate the Elm architecture in Reflex, as well as more
-fine-grained architectures using small stateful components communicating with
-top-level application logic. Several patterns have emerged so far, but none has
-been generally accepted so far, and the one that has (Gonimo architecture, [TODO
-ref]) requires a large amount of trivial "plumbing" code.
+It is possible to recreate patterns like the Elm architecture in Reflex, as well
+as more fine-grained architectures that use smaller stateful components
+communicating each other using top-level application logic. Several patterns
+have emerged so far, but none has been generally accepted so far, and the most
+accepted one (Gonimo architecture cite:gonimo) requires a large amount of
+trivial "plumbing" code.
 
-There are however several smaller structural patterns that have slowly emerged
-as 'rules of thumb'. "Dynamics as component inputs, events as outputs" is one
+There are, however, several smaller structural patterns that have slowly emerged
+as "rules of thumb". "Dynamics as component inputs, events as outputs" is one
 such, which has been somewhat formalized as a combination of monad transformers
 (=ReaderT= and =EventWriterT=) in Reflex itself.
 
@@ -1004,6 +929,7 @@ executed using the function =runApp=, with the remaining =MonadWidget= being
 executed by the top-level rendering function.
 
 #+CAPTION: MTL-based API label:mtl-api
+#+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   userView ::
        (MonadReader AppState m, MonadRouter AppRoute m, MonadWidget t m)
@@ -1014,77 +940,264 @@ executed by the top-level rendering function.
 #+END_SRC
 
 *** Implementation
-
 I have decided to use Servant's approach in my work, as it seems to be the most
 flexible and extendable one.
 
 My contributions in this area are:
-- a client-side router using Reflex's FRP types
-- an extension of the server-side router to support rendering Reflex applications
-- a static site generator
-- JAM-stack-like web
-- a combinator to more easily work with servant-generic types (=.>=)
+- a client-side router using Reflex's FRP types composed of a dispatch component
+  and in-application links
+- an extension to the server-side Servant router that supports rendering Reflex
+  applications
 
-TODO: demonstrate client router approach (a few type class instances and the
-top-level router)
-TODO: demonstrate in-app links
-TODO: demonstrate App instance of HasServer
+I have also created a proof-of-concept of a static site generator using these
+components, as well as a combinator that allows easier manipulation with
+record-based Servant types that I will contribute to the main Servant
+repository.
+
+We will start with the client-side router, defining the routes type and the
+handlers. This is where we will see how to create a new interpretation of a
+Servant API type.
+
+A regular Servant type has endpoints that end with the terminator =Verb=, which
+represents a HTTP verb like GET or POST and the return type of the
+handler. Given that a Reflex application does not have a value that it can
+return, we will define a new terminator =App=. An API type containing an =App= will
+then be interpreted by a type class =HasApp=, as we can see in ref:router-hasapp.
+
+In that snippet, we can see what it looks like to interpret a Servant type. The
+type family =MkApp= will produce the type of a route handler when evaluated. The
+result of the =MkApp= of a single endpoint is a function, whereas applying =MkApp=
+to the API type will result in a tree of route handlers, which can then be
+converted to/from a record of handlers.
+
+The function =route= is the actual function used for choosing a handler based on
+the current location: a recursive function that will either produce an error or
+the handler to run when given a tree of handlers and the current location.
+
+The first instance, =a :<|> b=, is the branch instance. The =route= function uses
+the monoid instance of the type =Either=, effectively running the left branch and
+running the right branch only if it fails.
+
+The next instance, =Capture sym a=, is an example of a decision instance, where
+the =route= function processes a single segment of the URL, parses it, passes the
+parsed value to the handler function, and recurses. The =MkApp= instance declares
+this explicitly: the handler for a =Capture= needs to accept a value of type =a=.
+
+The =App= instance is the end of the recursion chain, where neither =MkApp= nor
+=route= recurse anymore. The =MkApp= type declares the handler of an =App= to be an
+action, and the =route= function only checks that we have parsed the entire URL,
+and returning the final handler.
+
+#+CAPTION: Router: API types label:router-hasapp
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell
+  data App :: Type
+
+  class HasApp api where
+    type MkApp api (m :: Type -> Type) :: Type
+    route :: Proxy api -> MkApp api m -> Loc -> Either Err (m ())
+
+  instance (HasApp a, HasApp b) => HasApp (a :<|> b) where
+    type MkApp (a :<|> b) m = MkApp a m :<|> MkApp b m
+    route _ (a :<|> b) = route (Proxy @a) a <> route (Proxy @b) b
+
+  instance (FromHttpApiData a, HasApp s) => HasApp (Capture sym a :> s) where
+    type MkApp (Capture s a :> sub) m = a -> MkApp s m
+    route _ f loc = case locPath loc of
+      [] -> Left Err404
+      x:xs -> case parseUrlPiece x of
+        Right p -> route (Proxy @sub) (f p) (loc { locPath = xs })
+        Left _ ->
+          let s = T.pack $ symbolVal (Proxy @sym)
+          in Left Err400
+
+  instance HasApp App where
+    type MkApp App m = m ()
+    route _ f loc = case locPath loc of
+      [] -> Right f
+      [""] -> Right f
+      _ -> Left Err404
+#+END_SRC
+
+This, in summary, is what it looks like to interpret a Servant type. As for the
+server part of a router, I will not include the relevant code here, however, as
+the Servant server uses special machinery to run a series of optimizations that
+preprocess a tree of handlers. The resulting code is not too readable, so I do
+not think it is worth including it here. I will sketch what the code does, at least:
+
+For the server part, we only need to implement a single instance, the instance
+of =HasServer= for our =App= type. It will be different from the client instances,
+not only for the above-mentioned reasons, but also due to the fact that while we
+have a handler action, we cannot run it directly, but we need to render it into
+a HTML string before sending it to the client. The Servant server uses an
+additional type parameter, a context using which it is possible to pass values
+to API combinators. The =App= instance reads a rendering function from the
+context, runs the route handler using it, and returns the result.
+
+Back to the client-side router: while we have a =route= function that will return
+either an error or a widget, we need to connect it to the browser in some way.
+To do that, we need a component for manipulating the URL, either using the
+Location API or hash fragment changes, and when we have it, we can write the
+router itself.
+
+In the snippet ref:router-url, we have a simplified version of the library
+router. In there, we have a function that takes a tree of handlers, a URL
+manipulation component, and an action to show possible routing errors, and
+produces a piece of dynamically changing content. The function uses /recursive do/
+to make it possible to refer to variable before they are defined (the =rec=
+keyword). Reading from the top, we obtain a dynamic containing the current
+location, use it to run our =route= function defined above, rendering any errors,
+and finally run this dynamically changing piece of content to get the event that
+changes the current URL.
+
+#+CAPTION: Router: URL binding label:router-url
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell
+  runRouter ::
+       forall t m api. _
+    => Proxy api
+    -> MkApp api (EventWriterT t Loc m)
+    -> (Event t Loc -> m (Dynamic t Loc))
+    -> (Err -> EventWriterT t Loc m ())
+    -> m ()
+  runRouter api handlers url showError = do
+    rec
+      dUrl <- url eUrl
+      let widget = case route api handlers <$> dUrl of
+            Left err -> showError err
+            Right f -> f
+      ((), eUrl) <- runEventWriterT (dyn widget)
+    pure ()
+
+#+END_SRC
+
+The second part of the router are links from one part of the application to
+another. To do that, we need another interpretation of the API type, as we need
+to process a dynamically changing input into a link, and not produce an action
+given a static list of parameters.
+
+The types here are slightly more complex as I wanted to achieve an easy-to-use
+user interface that can be seen in the first part of ref:router-link which just
+needs an event with a tuple of all required parameters of the route. To achieve
+that, we first need to collect all route parameters, collecting them to a
+type-level list using the =GatherLinkArgs= type family, convert it to a tuple
+using the =TupleProduct= type family, and only then can we use it. The
+=toAppLink= function is again recursive, and it builds up a URL from the endpoint
+type and from the provided arguments, starting from an empty URL.
+
+#+CAPTION: Router: in-application links label:router-link
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell
+  viewUserItemsLink :: Event t (UserId, ItemType) -> m ()
+  viewUserItemsLink = appLink viewUserItemsRoute
+
+  appLink ::
+       forall t e rs m. _
+    => (rs AsApi -> e)
+    -> Event t (TupleProduct (GatherLinkArgs e))
+    -> m ()
+  appLink _ args =
+    tellEvent $
+    safeAppLink (genericApi (Proxy @rs)) (Proxy @e) (Loc [] []) <$> args
+
+  class HasAppLink api where
+    type GatherLinkArgs api :: [*]
+    toAppLink :: Proxy api -> Loc -> TupleProduct (GatherLinkArgs api) -> Loc
+
+  instance (KnownSymbol sym, HasAppLink sub) => HasAppLink (sym :> sub) where
+    type GatherLinkArgs (sym :> sub) = GatherLinkArgs sub
+    toAppLink _ l = toAppLink (Proxy @sub) $ l
+      { locPath = locPath l ++ [toUrlPiece . symbolVal $ Proxy @sym]
+      }
+
+  instance HasAppLink App where
+    type GatherLinkArgs App = '[]
+    toAppLink _ l _ = l
+#+END_SRC
+
+TODO: A complete example of a router: type, handlers, links
 
 *** Possible extensions
-Next work:
-- AuthProtect, AuthRoleProtect
-- route matcher for route checks (separate typeclass)
+There are several possible directions in which to expand this router. One idea
+available in server-side API routes is encoding authentication constraints in
+the endpoint type itself using a combinator like =AuthProtect User=. I would like
+to be able to encode not only authentication checks but authorization checks in
+the endpoint type as well, perhaps =AuthProtectRole User 'RoleAdmin=.
 
-** Service workers
-TODO: general intro
+It would be possible to expand the proof-of-concept of a static site generator
+that uses the routing component created here into a fully fledged library, and
+it would also be a continuation of the theme "Reflex everywhere" that seems to
+pervade the Reflex ecosystem, not only Reflex in interactive browser
+applications and on the server, but also static sites generated using Reflex.
+
+A harder problem but possible more beneficial: instead of using a special =App=
+combinator to render Reflex applications, it might be possible accomplish the
+same using a special content type. This would allow one endpoint to return
+e.g.~JSON data or a HTML file on the same endpoint, depending on the request
+headers. I tried this approach at the start but did not succeed, so I moved on
+to other approaches, but I expect that a more skilled Servant developer would
+find a way.
+
+** Service Workers
+To reiterate the description of a service worker from the introductory chapters:
+it is a JavaScript script that can, among other things, intercept requests
+initiated by the application that installed it and respond to them from cache,
+redirect them to another domain, or modify their response. The worker can also
+listen for incoming push notifications and display them to the user, or save
+requests that the application made while offline and retry them whenever the
+device goes online, regardless of whether the application is running or not
+(Background Sync API).
 
 *** Requirements
 The Service Worker features that we aim to support are: precaching, fetch
-control, and push notifications.
+control, and push notifications, keeping Background Sync for a possible
+extension of this library.
 
 Precaching means storing the files essential for the application into cache as
-soon as the Service Worker starts. This way, the application is able to run
-offline. These files usually include =index.html=, the application entrypoint;
+soon as the Service Worker starts. This way, the application prepares to run
+offline. These files usually include =index.html=, the application entry point;
 =bundle.js= (or similar), the JavaScript bundle containing the entire application,
-and =bundle.css=, a bundle with all application styles. Application icons and
+and =bundle.css=, a file with all application stylesheets. Application icons and
 fonts are usually included as well, as are analytics libraries for usage
 tracking.
 
 Fetch control in this context means intercepting all outgoing requests from the
 application, and deciding what to do with them based on the URL or method. This
-feature has many use-cases, e.g. using the precached application files when
+feature has many use-cases, e.g.~using the precached application files when
 offline, checking for a new version of the application and notifying the user;
 storing external fetched resources into cache to save data, or storing outgoing
 analytics requests into a queue when offline and only sending them when the user
 later connects to the Internet.
 
 Push notifications are the feature for which service workers are most well
-known. They allow a web application to send notifications to any of its clients,
-where the application can choose to arbitrarily process the notification.
+known. They allow the server of a web application to send notifications to any
+of its clients, where the application can choose to arbitrarily process the
+notification.
 
 The basis of the implementation is a single dependently typed record that
 contains the entire configuration of the worker. This record is then used in
 three different contexts: to generate the worker JavaScript and serve it over
-HTTP, in the client for any interactions with the worker (e.g. to subscribe to
+HTTP, in the client for any interactions with the worker (e.g.~to subscribe to
 push notifications), and on the server for sending the notifications, as
 illustrated by ref:service-worker-api.
 
 #+CAPTION: Service Worker API label:service-worker-api
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
-generateWorker :: ServiceWorker push -> ByteString
-runServiceWorkerClientT :: ServiceWorker push -> ServiceWorkerClientT push m a -> m a
-runPushServerT :: ServiceWorker push -> PushT push m a -> m a
+  generateWorker :: ServiceWorker push -> ByteString
+  runServiceWorkerClientT ::
+    ServiceWorker push -> ServiceWorkerClientT push m a -> m a
+  runPushServerT :: ServiceWorker push -> PushT push m a -> m a
 #+END_SRC
 
-While I'd originally intended to create the service worker using GHCJS and the
-JavaScript FFI (Foreign Function Interface), there is an obstacle that prevents
-that: service workers do not run in the same way that a regular browser
-application does. A browser can terminate a service worker at any time to save
-computing resources, and restarts it when it is needed to process application
-events, so a service worker is expected to contain mostly just event handlers.
+While I had originally intended to write the service worker directly in Haskell
+and compile it using the GHCJS, there is an obstacle that prevents that: service
+workers do not run in the same way that a regular browser application does. A
+browser can terminate a service worker at any time to save computing resources,
+and restarts it when it is needed to process application events, as a service
+worker is expected to contain mostly just event handlers.
 
-This is however at odds with the GHCJS execution model which relies on
+This is, however, at odds with the GHCJS execution model which relies on
 =setTimeout= or =requestAnimationFrame= to support multiple threads, asynchronous
 execution, and other features needed to run the entirety of Haskell in the
 browser. That means that we cannot use GHCJS to create Service Workers and need
@@ -1099,7 +1212,7 @@ JMacro allows the user to write plain JavaScript code embedded in Haskell via
 quasi-quotation, which is a method of meta-programming that makes it possible to
 transform arbitrary strings into Haskell expressions. The library supports the
 entirety of ECMAScript 3, so most existing JavaScript code can be copy-pasted
-without the need for changes, as long as it doesn't use the features of newer
+without the need for changes, as long as it does not use the features of newer
 ECMAScript versions. JMacro is untyped, it recognizes two forms of JavaScript
 code, expressions and statements. It also supports injection of Haskell
 variables using anti-quotation. An example of JMacro code can be seen in ref:jmacro.
@@ -1121,25 +1234,37 @@ variables using anti-quotation. An example of JMacro code can be seen in ref:jma
 #+END_SRC
 
 *** Implementation
-The three features of service workers that we want to support (prefetch, fetch
-control, push notifications)
+Of the three features of service workers that we want to support (prefetch,
+fetch control, push notifications), prefetch is the simplest. It only requires
+adding a bit of code to the =install= event listener in which we add the required
+files into cache, as can be seen in ref:prefetch.
 
-Prefetch is simple, only save the requested files into cache in the onInstall
-handler.
+#+CAPTION: Service Worker: prefetch label:prefetch
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell
+  generatePrefetch :: Text -> [Text] -> JStat
+  generatePrefetch cacheName urls = [jmacro|
+    return caches.open(`(cacheName)`).then(function (cache) {
+      return cache.addAll(`(urls)`);
+    });
+  |]
+#+END_SRC
 
 Fetch is a bit more involved. In the onFetch handler, we need to find out if the
 outgoing request matches any of the configured filters, so we go through the
 filters in order and if a request matches, the selected cache strategy is
-executed. There are many possible behaviors with regards to caching and network
-access. We cannot cover all possible cases, but we can cover common ones. These
-are encoded as a plain sum type, which can be seen in ref:cache-strategy. Most
-strategy names are self-explanatory, I will mention only =StaleWhileRevalidate=
-and its =Notify= variation: these serve the currently cached version of a
-resource, and attempt to fetch a newer one, which will then be stored into cache
-for later requests. This strategy is often used for main application files,
-which is the reason for the =Notify= variation, which will also notify the
-application itself if there is a newer version available and the application can
-then notify the user.
+executed.
+
+There are many possible behaviors with regards to caching and network access. We
+cannot cover all possible cases, but we can cover the most common ones. These
+are encoded as a plain sum type ref:cache-strategy. Most strategy names are
+self-explanatory, I will mention only =StaleWhileRevalidate= and its =Notify=
+variation: these serve the currently cached version of a resource, and attempt
+to fetch a newer one, which will then be stored into cache for later
+requests. This strategy is often used for main application files, which is the
+reason for the =Notify= variation, which will also notify the application itself
+if there is a newer version available so that the application can then notify
+the user.
 
 #+CAPTION: Cache strategies label:cache-strategy
 #+ATTR_LATEX: :options frame=single
@@ -1154,7 +1279,15 @@ then notify the user.
     deriving (Eq, Ord, Show)
 #+END_SRC
 
-TODO: Talk about matchers
+The encoding for request matchers that I chose is not a complex one: a request
+is matched on its method, path, and query string. The method matcher accepts
+three values, any method, a specific method or a list of possible ones. There
+are two types of path matchers: a regular expression matcher and a path
+component-based one, in which e.g.~the path =/article/5= is matched using the
+matcher =matchPath "article" ./ matchInteger=. The query string matcher is a list
+of key-value matchers. While this is not the most expressive or fluent encoding
+of a request matcher, it suffices for common use-cases of fetch control, as with
+the limited palette of cache strategies.
 
 Handling push notifications is not trivial either. While using them in the most
 basic way is as simple as calling =showNotification= on the body of the incoming
@@ -1188,23 +1321,68 @@ application for further processing via =postMessage=.
     PushProcessOnly :: FromJSON a => PushConfig a
 #+END_SRC
 
-The rest of the service worker generation does not contain any non-obvious code,
-so I will skip it. It is included with the rest of the source code on the
-attached data storage.
+The rest of the service worker generation code consists of mostly boilerplate so
+I will skip it. The interested reader can find it on the attached data storage.
 
 The server part of this component is made up of two parts: generating and
 serving the service worker code, and sending push notifications.
 
-Serving the service worker is done by creating a new instance of the method
-=MimeRender,= which tells the server how to render a value to a binary format.
+Serving the service worker is done by extending the Servant code for rendering
+values into transport formats where we create a new content type =JS= and specify
+how to render a service worker into =JS=. The code is quite simple and is included in
+ref:sw-server.
 
-The ability to send push notifications is added to handler code using a monad
-transformer and a type class containing a single method, =sendPushNotification=.
-The monad transformer contains a ReaderT containing the server VAPID keys, which
-are necessary for... This transformer uses Servant "context"
-capabilities... TODO: finish this.
+#+CAPTION: Service Worker: serving the JavaScript label:sw-server
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell
+  data JS
+  instance Accept JS where
+    contentType _  = "application" // "javascript"
 
-TODO: describe client class methods (mainly for the dependent types + interpreter)
+  instance MimeRender JS (ServiceWorker p) where
+    mimeRender _ v = generateServiceWorker v
+#+END_SRC
+
+Adding the ability to send push notifications is slightly more complex. The
+capability of sending a notification is specified by a type-class =PushNotify=
+with a single method, =sendPushNotification=. This type-class is then implemented
+by a =ReaderT= monad transformer that contains required configuration information
+like signing keys and push server URLs.
+
+The code that demonstrates this is included in ref:sw-server-push. The
+=PushNotification= type is slightly simplified, there are more elements in the
+real type. The type class =HasPushConfig= contains one value, a lens, which can be
+described as a combined getter and a setter. It is used here because an
+application usually has only a single =ReaderT= with the entire application
+runtime context, so a lens is used as a getter to fetch the =PushConfig= from the
+context.
+
+#+CAPTION: Service Worker: push notifications on the server label:sw-server-push
+#+BEGIN_SRC haskell
+  data PushNotification a = PushNotification
+    { pnTitle :: Text
+    , pnDescription :: Maybe Text
+    , pnData :: a
+    }
+
+  class PushNotify a m | m -> a where
+    sendPushNotification :: PushProvider -> PushNotification a -> m ()
+
+  class HasPushConfig a where
+    pushConfig :: Lens a PushConfig
+
+  instance (MonadReader cfg m, HasPushConfig cfg) => PushNotify a m where
+    sendPushNotification p x = do
+      pushConfig <- views pushConfig
+      sendPushNotificationImpl pushConfig p x
+#+END_SRC
+
+The browser part that receives push notifications from the service worker
+is very simple: we listen to the =postMessage= event and if the incoming message
+has the right type, we attempt to deserialize the JSON value into its Haskell
+equivalent, and then trigger a Reflex event.
+
+TODO: include browser implementation snippet
 
 *** Possible extensions
 The obvious follow-up work is supporting more features of service workers:
@@ -1221,7 +1399,7 @@ switch between servers from which the application downloads data.
 However, there is another approach that would obsolete most of the work on this
 component: after creating this component, I have discovered a project trying to
 create a typed DSL (Domain-Specific Language) for generating JavaScript, =jshark=
-(TODO: ref). While I originally disregarded the approach of making a typed DSL
+cure:jshark. While I originally disregarded the approach of making a typed DSL
 instead of a library with a fixed selection of options, as the DSL would need to
 be able to represent arbitrary JavaScript logic, using this library (or a
 similar one) would allow building a hierarchy of functions hiding more and more
@@ -1250,42 +1428,69 @@ corresponds to a =<style>= tag or a CSS include).
 #+END_SRC
 
 This approach may also be combined with code generation from WebIDL, an
-interface definition language for the Web (TODO: ref) used e.g. in the Chromium
+interface definition language for the Web cite:webidl used e.g.~in the Chromium
 browser, to produce an API that exactly corresponds to the underlying JavaScript
 one, only with strong types. Generating an API from WebIDL has a precedent in
 the library =ghcjs-dom=, a library that provides a strongly-typed interface to
 most browser APIs, which generates most of its code in this way.
-
 ** Storage
-A storage library can be implemented in many ways.
+A storage library can be implemented in many ways, from the simplest variations
+that store single values or key-value maps, all the way to a full-fledged
+database and query engine.
 
-TODO: describe possible options, all the way to PouchDB and Datascript
+On this scale, we are aiming to create only the most basic storage library that
+is able to work with a map of key-value pairs of a single type, merely a
+building block for further expansion. This storage can then implement multiple
+backends: a simple in-memory map, a LocalStorage-backed store, or a set of
+bindings to a database.
 
-In this regard, I am not looking to build a library with many features but
-merely a building block that can serve basic purposes. The goal of this chapter
-is to build an in-memory key-value store synchronized with the LocalStorage
-browser API. The API of the store interface is simple, as shown by
-ref:storage-api, but it can serve not only as a simple cache, but also as a way
-to prerender data into HTML directly on the server, which would also enable
-using Reflex as a static site generator.
+The API of this storage is simple, as shown by ref:storage-api, but it can serve
+several purposes: as a cache, as an offline storage, or as a way to directly
+access a database when rendering a Reflex application on the server.
 
 #+CAPTION: Storage API label:storage-api
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
-get :: Behavior t (Key e) -> m (Dynamic t (Maybe e))
-getAll :: m (Dynamic t (Map (Key e) e))
-put :: Event t (Key e, Maybe e) -> m ()
-putAll :: Event t (Map (Key e) e) -> m ()
+  class MonadKVStore t e m where
+    get :: Dynamic t (Key e) -> m (Dynamic t (Maybe e))
+    getAll :: m (Dynamic t (Map (Key e) e))
+    put :: Event t (Key e, Maybe e) -> m ()
+    putAll :: Event t (Map (Key e) e) -> m ()
 #+END_SRC
 
-There are several ways of extending the API like adding expiration (automatic
-or manual) so that it can better serve as a cache (e.g. function =getOrFetch=),
-but this is sufficient for many use-cases.
+Implementing an instance for such a type is not complicated. To
+bind to a database backend on the server, we can run arbitrary code in the
+underlying monad, so if we have a function to execute database
+queries available e.g.~using a =ReaderT= monad, we can sequentially construct the
+query, run it and wait for the result, and then return a =Dynamic= with the
+query's result.
 
-TODO: Refer to the [[Reflex]] chapter
+On the frontend, we can use a combination of a =ReaderT=, to
+make the underlying map available for reading from anywhere, and an
+=EventWriterT=, to collect all =put= events.
 
-TODO: How to implement the class? Pure in-memory binding, localStorage backed storage,
-database (for prerender) handler.
+The code is very similar to the code we saw in the implementation of the router,
+so I will not include it here. There are three implemented variants on the
+attached data storage: client-side bindings using an in-memory map or persisted
+using LocalStorage, and a single serve-side binding to the Persistent database library.
+
+TODO: include snippet demonstrating basic usage
+
+There are several ways to extend this storage library. The first one is simply
+adding more backends, e.g.~to support IndexedDB in the browser or other database
+engines on the backend.
+
+The storage can also be specialized to work as a cache, which would mean
+extending the API e.g.~with expiration, automatic or manual, so that it can
+support other use-cases like a function =getCachedOrFetch.=
+
+Another option would be to expand the API to support more complicated SQL-like
+queries, so that it can better serve as a client-side database.
+
+** Web App Manifest
+This component does not require much description. It only contains several data
+types, transcribed almost line for line from the official manifest specification
+cite:webapp-manifest, and the functions to serialize it to and from JSON.
 
 * Application development
 In this chapter we will go through some principles and techniques that I used
@@ -1295,7 +1500,7 @@ be applied to developing Reflex applications in general.
 ** Design
 While there are not yet many patterns specific to FRP or frontend applications,
 one common way to structure a Haskell application in general is the so-called
-/three layer cake [TODO: ref]/, which is as applicable to Reflex applications as
+/three layer cake/ cite:three-layer, which is as applicable to Reflex applications as
 to any other Haskell application. This architectural pattern describes three
 layers of code, where each one uses a different approach and different sort of
 types.
@@ -1340,14 +1545,14 @@ experience when writing React.js applications in JavaScript.
 What follows is a description of the specific tooling used in the creation of
 this thesis, both the libraries and applications described here. While all of
 this information is still valid as of the time of writing, there are some tools
-created after I started creating this thesis: Obelisk (TODO: ref), a
+created after I started creating this thesis: Obelisk cite:obelisk, a
 command-line tool that wraps =nix-build=, =nix-shell=, and =ghcid= for easier
-onboarding experience, or Lorri (TODO: ref) which wraps =nix-shell= and =direnv=. I
+onboarding experience, or Lorri cite:lorri which wraps =nix-shell= and =direnv=. I
 did not take the time to incorporate these tools into my workflow, but both are
 mostly a formalization of best practices, and so would not likely change much.
 
 The central tool of this workflow is Nix cite:dolstra2006purely, described as a
-'purely functional package manager' with focus on reproducibility and
+purely functional package manager with focus on reproducibility and
 isolation. Packages built using Nix are compiled in a sandbox and immutable
 afterwards. Dependencies are tracked per-package, multiple versions of a shared
 library can be safely used in parallel. There are other tools built on top of
@@ -1364,7 +1569,7 @@ builds all dependencies and build tools, and starts a terminal session with
 specially crafted environment variables that has all tools and dependencies
 available.
 
-Nix has a large repository of package definitions called =nixpkgs= (TODO: ref),
+Nix has a large repository of package definitions called =nixpkgs= cite:nixpkgs,
 which among other contains the definitions of several versions the GHC compiler
 including GHCJS and of most Haskell packages. It is possible, among other
 things, to build a single packages using multiple versions of the compiler by
@@ -1376,9 +1581,8 @@ Reflex-platform is a set of extensions to =nixpkgs=, which includes a set of
 overrides that work together well for building a single package for the Web and
 mobile (Android and iOS), as well as a set of Nix functions for working with
 multi-package projects (=project.nix=). These functions also make it easy to start
-a =nix-shell= with additional build tools. One notable example is Hoogle (TODO:
-ref), an API search engine for Haskell that indexes all dependencies used in a
-project.
+a =nix-shell= with additional build tools. One notable example is Hoogle, an API
+search engine for Haskell that indexes all dependencies used in a project.
 
 To be more specific, a project will contain one file =default.nix= that calls the
 =project.nix= function of reflex-platform with all Haskell packages in the project
@@ -1388,7 +1592,7 @@ used by all Nix commands invoked in the directory that contains it.
 
 A command like =nix-build -A ghcjs.my-project= will then produce a directory
 =result/= with the result of the Nix build recipe, a set of JavaScript files and a
-file =index.html= in the case of GHCJS. Calling =nix-build= however runs many steps
+file =index.html= in the case of GHCJS. Calling =nix-build,= however, runs many steps
 by default: compiling object code and profiled object code, generating API
 documentation, and linking any executables into binary files or JavaScript
 bundles, together with any other user-specified post-processing steps like
@@ -1404,10 +1608,11 @@ than compiling the entire package from scratch.
 We can go a step further and set up a background process that watches the source
 code for a project for any changes and reloads them whenever any file changes,
 and optionally calls a function if the files load without any compile
-errors. This means we can have e.g. a development web server that is always
+errors. This means we can have e.g.~a development web server that is always
 running the latest code. This functionality is implemented in a tool called
-=ghcid= (TODO: ref, GHCi daemon), and it is now so common in the Haskell community
-that some developers report that Vim and ghcid are the only two tools they need.
+=ghcid= (cite:ghcid, "GHCi daemon"), and it is now so common in the Haskell
+community that some developers report that Vim and ghcid are the only two tools
+they need.
 
 Such a setup makes developing a lot faster, especially given that it is possible
 to run browser applications in the same way using the library =jsaddle-warp=. It
@@ -1416,7 +1621,7 @@ using a specific execution model in which as much code as possible is executed
 natively in GHCi, and only the necessary parts are executed in a browser which
 is connected to the server running in GHCi by WebSockets.
 
-A tool that makes working with Nix shells easier is =direnv= (TODO: ref), which is
+A tool that makes working with Nix shells easier is =direnv= cite:direnv, which is
 a general tool that changes the environment variables in a terminal according to
 the directory into which a user navigates. In a Nix project specifically, is the
 file =.envrc= with the contents =use nix= exists at the root of the project, a
@@ -1440,29 +1645,29 @@ extend using project-specific rules/suggestions; hoogle for easy access
 to the correct versions of API doc.
 
 ** Workflow
-When starting a project, create a project skeleton - *.cabal file, default.nix
-and possibly a submodule of reflex-platform, .envrc for direnv support, and
-source code stubs (src/Main.hs).
+TODO: When starting a project, create a project skeleton - *.cabal file,
+default.nix and possibly a submodule of reflex-platform, .envrc for direnv
+support, and source code stubs (src/Main.hs).
 
 TODO: include a snippet of src/default.nix for a multi-package
 TODO: include a =$ tree= of a project directory of full-stack app (src-bin/main x
 src/Project.hs (main)
 
-ghcid + cabal new-repl for testing localhost server, included as the script
-ghcid-here in =src-snippets/ghcid-here/=.
+TODO: ghcid + cabal new-repl for testing localhost server, included as the
+script ghcid-here in =src-snippets/ghcid-here/=.
 
-If external services are necessary, use the orchestration service needed - NixOS
-containers, NixOps machines, Docker containers - according to the deployment
-strategy. It is also possible to run a database without a container, SQLite or
-gargoyle for postgres.
+TODO: If external services are necessary, use the orchestration service needed -
+NixOS containers, NixOps machines, Docker containers - according to the
+deployment strategy. It is also possible to run a database without a container,
+SQLite or gargoyle for postgres.
 
-Regarding code structure:
+TODO: Regarding code structure:
 - splitting frontend, common, backend packages
 - common = entities and logic, inner layer of 3layer + API definition, routes, ...
 - src-bin/main.hs only a redirect to src/Project.hs (main)
 - project-specific Prelude
 
-Components:
+TODO: Components:
 - sketch HTML, then animate/bind events
 - prefer top-down data flow, do not often use top-level storage/... constraints
   => more reusable components
@@ -1472,8 +1677,6 @@ Components:
 - limit recursive-do blocks, they lead to hard-to-debug errors ("causality loop")
 
 ** Deployment
-TODO: intro - deploying the server for a full-stack app
-
 The options for deploying a Haskell program are generally the same as deploying
 programs in any other compiled language that does not use intermediate object
 code like Java.The two most popular options in the Haskell community, not
@@ -1499,7 +1702,7 @@ ref:nixops-deploy.
 
 #+CAPTION: NixOps deployment label:nixops-deploy
 #+ATTR_LATEX: :options frame=single
-#+BEGIN_SRC nix :exports none
+#+BEGIN_SRC nix
   {
     network.description = "Web server";
 
@@ -1562,7 +1765,7 @@ some of them are variants of the same framework though.
 
 We will start with TodoMVC as it is the simplest of the three. TodoMVC is, as
 the name hints, a web application for managing a to-do list. It is not a complex
-project but it is intended to exercise fundamental features of a framework - DOM
+project but it is intended to exercise fundamental features of a framework: DOM
 manipulation, forms and validation, state management (in-memory and in
 LocalStorage), and routing.
 
@@ -1605,26 +1808,26 @@ interesting, the interested reader can look them up in the attached files
 (=src-demo/todomvc/src/Main.hs=).
 
 The HTML structure of the application is given by the specification, and
-contains three natural chapters: an input for creating new tasks at the top, a
+contains three natural sections: an input for creating new tasks at the top, a
 task list for editing or deleting existing tasks, and a navigation bar at the
 bottom.
 
-TODO: say that we'll go through an example Reflex component in this app
-
-The component =newTaskBox= is included in the snippet ref:new-task-box, where we
-can see what a simple GUI component in Reflex might look like. The functions =el= and
-=elClass= generate static HTML elements, the =inputElement= function generates an
-=<input>=, and the last line prepares the return value of the function, an event
-containing the current value of the text box whenever the Enter key is pressed
-in it. The =rec= mark the beginning of a /recursive-do/ block where it is possible
-to use variables before they are bound, which is translated into a fixpoint
-computation by the compiler (in the form of =fix (\out -> do ...; return
-out')=. This is necessary as the text box needs to be emptied when we press Enter
-in it, as can be seen on the last but one line of the snippet.
+As this the first application we are going through, we can look at a single
+component in more detail: the component =newTaskBox= is included in the snippet
+ref:new-task-box, where we can see what a simple GUI component in Reflex might
+look like. The functions =el= and =elClass= generate static HTML elements, the
+=inputElement= function generates an =<input>=, and the last line prepares the
+return value of the function, an event containing the current value of the text
+box whenever the Enter key is pressed in it. The =rec= mark the beginning of a
+/recursive-do/ block where it is possible to use variables before they are bound,
+which is translated into a fixpoint computation by the compiler (in the form of
+=fix (\out -> do ...; return out')=. This is necessary as the text box needs to be
+emptied when we press Enter in it, as can be seen on the last but one line of
+the snippet.
 
 The next component, =taskListItem=, is slightly more complicated. According to the
-specification, double-clicking on a list item switches it to /edit mode/, which is
-however not captured anywhere in the global application state. When in edit
+specification, double-clicking on a list item switches it to /edit mode/, which is,
+however, not captured anywhere in the global application state. When in edit
 mode, the component may revert to previous state when the Escape key is pressed,
 or update the task with new contents of the text box when Enter is pressed
 instead. This is achieved by adding a small piece of state in the component, a
@@ -1692,11 +1895,11 @@ e.g. =http://localhost/#!/active=). The storage needs to be persisted from and t
 LocalStorage, so we do not use the simple in-memory interpreter, but
 =runLocalStorageT= instead.
 
-TODO: placeholder image
+TODO: screenshot
 
 This concludes the TodoMVC application, implemented according to its
 specification. If compiled using GHCJS, we get a bundle of JavaScript files and
-an =index.html= which is the entry point. As described in the chapter [[Deploy]], we
+an =index.html= which is the entry point. As described in the chapter [[Deployment]], we
 can add a post-compile step that compresses these files and adds any necessary
 assets like CSS or icons. It is possible to go a step further and include a
 service worker using the service worker component implemented in this work, but
@@ -1710,37 +1913,55 @@ Application that displays information from a given API. This application has 42
 implementations, a smaller number than the number of implementations of TodoMVC
 but it still provides a good comparison for a frontend framework for PWAs.
 
-TODO: describe functionality (a browser for HN, show item list per filter, show
-item with comments, show user).
+To describe the functionality of the application more, we will be fetching data
+from the official Hacker News API and displaying it. We need to display article
+lists, article details with comments, and user details.
 
-Specification is very imprecise, we use the HTML structure and CSS styles from
-one of the example applications (PreactHN).
+The specification of the application is not as well defined, is only consists of
+a text document describing the desired functionality. In particular, it does not
+include the HTML structure and CSS styles of the application unlike TodoMVC, so
+I have used the HTML and CSS from one existing implementation of HNPWA, PreactHN
+cite:preacthn.
 
-As for entities, the official API has an API description including JSON
-structure descriptions - User, Item, ItemType, FilterType.
+Moving on to the actual implementation of the application, we will again start
+with the entities and operations on them. The official API from which we will be
+fetching data has a textual description of the entities, which describes only
+two entities, a user, and an "item" that can represent either a top-level
+post or a comment. The items form a tree that we will need to traverse and
+recursively fetch.
 
-We do not use the storage component in this application, and instead we rely on
-the ServiceWorker cache, clearing the cached entry after every POST/PUT.
+Some implementations of the HNPWA assignment have included their own server
+preprocessed the data from the official API, as it is not too suitable for
+direct consumption: we need to fetch an item before we know what are its
+children. While that would be unusable in a production application, it is not
+such a big problem in a demonstration application.
 
-The official API is rather impractical to use directly, fetch items one by
-one. In a real application, we would implement a separate server that saves
-every fetched item into database.
+We will put only a single layer between the application and the API, and that is
+the service worker cache. We can cache all responses to the API requests and
+return the previously fetched response on repeated requests. The service worker
+iwill also be used for prefetching and caching the core application files, so
+that is fulfills the assignment requirements and is available offline.
 
-We use the service worker for prefetch and for caching of any fetched items.
+As for the other components, we will use multiple stores again (for item lists,
+items, and users), and also the web app manifest generator and the router, this
+time the Location API-based interpreter.
 
-The router as well, this time including application assets (sw.js) and using the
-Location API.
-TODO: application shell
+There is not much else to write about the application's component structure as
+it is very similar to the structure in TodoMVC, there are again larger
+components that work with the top-level application state and small components
+with dynamics as their inputs and events as outputs.
 
-Monad transformer stack similar to previous app, but with ServiceWorkerT instead
-of storage.
+TODO: screenshot
 
-TODO: Placeholder screenshot
+The resulting application is a valid PWA that works offline, showing cached
+data. Its only major deficiency is that it uses the official hierarchical API
+and therefore it loads content gradually and not as fast as it could if it had a
+dedicated server that preprocessed the data into a more suitable format.
 
-TODO: summarize, does it meet the spec? how good is it?
-TODO: include info about prerendering - if we had a server, we could render the
-HTML directly from DB using e.g. the Persistent wrapper for the StorageT effect,
-so it would work for browsers without support for JavaScript,
+If we had a server, we could also implement another feature, prerendering. By
+using the server instance of the storage component, we would be able to generate
+fully filled-out HTML in such a way that even browsers without JavaScript
+support would be able to interact with the application without obstacle.
 
 ** RealWorld
 RealWorld cite:realworld is the most complex of the comparison projects. It is a
@@ -1754,44 +1975,39 @@ communication channels between them and thus cannot use other backend
 implementations.
 
 The task is split into a backend component that is defined by an API
-specification, and a frontend component defined by a number of /user stories/ and
-a HTML structure. There is a number of features that the application needs to
-support, namely: JWT (JSON Web Token) authentication with registration and user
-management, the ability to post articles and comments, and to follow users and
-favorite articles.
+specification, and a frontend component defined by a number of tasks that it
+needs to support and a HTML structure. There is a number of features that the
+application must have: JWT (JSON Web Token) authentication with registration and
+user management, the ability to post articles and comments, and to follow users
+and favorite articles.
 
 One implementation note: while the specification includes an API specification
 in the form of an OpenAPI file, I did not find a server that fulfills it exactly
 so I chose the Scotty server written in Haskell and adapted the frontend to its
 inaccuracies.
 
-Entities generated from Swagger-generator - Many types (Comment, Article, User,
-Login, Profile), not all are strictly necessary - request and response types,
-but we can use them to make client requests more explicit.
+A large benefit of having a machine-readable API specification is that we can
+use it to generate the client for it. Using the tool =swagger-generator=, we can
+get the definitions of all entities and API endpoints, In this application we do
+not need to change any entities, so this suffices for out purposes.
 
-TODO: interesting components
+Moving on to the capabilities the application requires, we need to persist the
+user access token if the user is currently logged in. While the storage
+component is a key-value storage not really meant for single values, we can use
+a map with text keys and text values instead. If we wanted to, we could use two
+more stores for articles and comments, but considering the scale of the
+application, using only the service worker cache is an easier approach.
 
-API queries uses servant-reflex - while adding HTTP requests to the router would
-not be too hard, there is not much reason to reimplement something that works...
+The routing and service worker components are the same as in the HNPWA
+application, rouing using Location API and caching requests to the API.
 
-API however consists of 10+ components joined by (:<|>) (auto-generated,
-remember!), so I've abstracted it using a typeclass HasRealWorldClient.
+TODO: interesting components?
+TODO: screenshot
 
-Routing as usual, Location API, serving SW and HTML app shell.
-
-We use a storage component for login/password (settings, Map Text Text).
-We use another storage component for articles, and another for comments -
-stalewhilerevalidate, we trigger a request but update the storage only if we
-receive a successful response.
-
-Monad transformer stack is quite large, three separate storage components (we
-could combine them using a different storage type Map -> DMap, but likely not
-necessary?) and a router.
-
-TODO: placeholder image
-
-TODO: summarize the app, does it meet the spec? how good is it?
-TODO: frontend tests
+The created application fulfills all requirements of the specification and of
+the PWA checklist. As with HNPWA, it would be possible to improve the
+application by using a custom server for prerendering and for unifying the
+Servant types of the API and the application into a single large type.
 
 * Conclusion
 In this work, I have led the reader from a general introduction to modern Web
@@ -1802,7 +2018,7 @@ specifically the state of available features in its library ecosystem.
 In the second half of this work, I have designed and implemented three
 components, a router, a service worker generator with supporting libraries, and
 a key-value browser storage library, that together make a significant
-contribution to the ecosystem of Haskell on the frontend. These components don't
+contribution to the ecosystem of Haskell on the frontend. These components do not
 comprise a framework equivalent to most popular JavaScript frameworks, but they
 enable creating Progressive Web Applications in Haskell, which was the set goal
 of this work.
@@ -1820,7 +2036,7 @@ I expect to spend some time adapting my work according to any feedback from the
 community: expanding documentation, creating adapters to other libraries,
 implementing more requested functionality, and other necessary work.
 
-With the libraries implemented in this work, there is however still a number of
+With the libraries implemented in this work, there is, however, still a number of
 capabilities that Haskell lacks, compared to developing browser applications in
 JavaScript.
 
@@ -1828,7 +2044,7 @@ JavaScript.
 - internationalization
 - a unified command-line interface to build tools
 - code generation
-- debugging tools for the frontend, e.g. variable watching, inspecting application state
+- debugging tools for the frontend, e.g.~variable watching, inspecting application state
 
 There is also a number of other ideas with various usefulness that would make
 building web applications in Haskell easier. Some are natural extensions of the
@@ -1842,12 +2058,12 @@ follows is an incomplete list of such project topics:
 - dynamic user-provided content - HTML-like markup that can use preregistered named
   components, a user-friendly editor
 - typed components that use assets, like =<img>= or =<link>=
-- forms - a set of components, validation, automatic derivation from a datatype
+- forms: a set of components, validation, automatic derivation from a datatype
 - a query language for browser storage, using IndexedDB
 - automatic synchronization for browser storage
 - authentication in the router: "user is logged-in", "user has role X", "user
   can perform action Y"
-- HTTP/2 Push support on the server - sending all necessary assets together with
+- HTTP/2 Push support on the server: sending all necessary assets together with
   the first request
 - WebIDL and a JavaScript-generating DSL for service workers
 - effect system for Reflex, as a more flexible extension mechanism
