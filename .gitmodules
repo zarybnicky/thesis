@@ -1,14 +1,14 @@
 [submodule "reflex-platform"]
 	path = reflex-platform
 	url = git@github.com/zarybnicky/reflex-platform
-[submodule "src/tapaw-hnpwa/preact-hn"]
-	path = src/tapaw-hnpwa/preact-hn
+[submodule "src-demo/tapaw-hnpwa/preact-hn"]
+	path = src-demo/tapaw-hnpwa/preact-hn
 	url = https://github.com/kristoferbaxter/preact-hn
-[submodule "src/tapaw-hnpwa/vue-hackernews-2.0"]
-	path = src/tapaw-hnpwa/vue-hackernews-2.0
+[submodule "src-demo/tapaw-hnpwa/vue-hackernews-2.0"]
+	path = src-demo/tapaw-hnpwa/vue-hackernews-2.0
 	url = https://github.com/vuejs/vue-hackernews-2.0
-[submodule "src/tapaw-realworld-client/test/integration/haskell-yesod-realworld-example-app"]
-	path = src/tapaw-realworld-client/test/integration/haskell-yesod-realworld-example-app
+[submodule "src-demo/tapaw-realworld-client/test/integration/haskell-yesod-realworld-example-app"]
+	path = src-demo/tapaw-realworld-client/test/integration/haskell-yesod-realworld-example-app
 	url = https://github.com/tzemanovic/haskell-yesod-realworld-example-app/
 [submodule "src-snippets/service-worker/domconv-webkit"]
 	path = src-snippets/service-worker/domconv-webkit
