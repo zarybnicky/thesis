@@ -9,6 +9,7 @@
 module Main (main) where
 
 import Control.Lens
+import Control.Monad.IO.Class (liftIO)
 import Data.Bool (bool)
 import Data.FileEmbed (embedFile)
 import Data.Map (Map)
@@ -28,6 +29,7 @@ import GHCJS.DOM.Types (JSString, MonadJSM, liftJSM, uncheckedCastTo)
 import Language.Javascript.JSaddle.Warp (run)
 import Text.Read (readMaybe)
 import Reflex.Dom.Core
+import System.Environment (getArgs)
 
 
 data TaskFilter
@@ -42,7 +44,13 @@ taskFilter FilterActive = M.filter (not . fst)
 taskFilter FilterCompleted = M.filter fst
 
 main :: IO ()
-main = run 3000 $ mainWidgetWithCss $(embedFile "src/index.css") $ do
+main = run 3000 $ do
+  args <- liftIO getArgs
+  liftIO $ print args
+  mainWidgetWithCss $(embedFile "src/index.css") app
+
+app :: MonadWidget t m => m ()
+app = do
   window <- DOM.currentWindowUnchecked
   storage <- DOM.getLocalStorage window
   iFilter <- liftJSM $ fromMaybe FilterAll . readFilter <$> (DOM.getHash =<< DOM.getLocation window)
@@ -51,11 +59,12 @@ main = run 3000 $ mainWidgetWithCss $(embedFile "src/index.css") $ do
   iTasks <- readTasks storage
 
   elClass "section" "todoapp" $ do
-    eNewItem <- inputBox
+    eNewItem <- fmap (False,) <$> inputBox
     dFilter <- holdDyn iFilter (fromMaybe FilterAll . readFilter <$> eFilter)
     rec
+      let bNextIdx = (+ 1) . M.foldlWithKey (\a b _ -> max a b) (-1) <$> current dTasks
       dTasks <- foldDyn ($) iTasks $ leftmost
-        [ M.insert <$> (getNextIdx <$> current dTasks) <@> ((False,) <$> eNewItem)
+        [ M.insert <$> bNextIdx <@> eNewItem
         , toggleAll <$ eToggleAll
         , (\(k, mv) -> M.update (const mv) k) <$> eEdit
         , M.filter (not . fst) <$ eClearCompleted
@@ -78,11 +87,6 @@ saveTasks st m = DOM.setItem st ("todosReflex" :: JSString) (show $ M.toList m)
 
 readTasks :: MonadJSM m => DOM.Storage -> m (Map Int (Bool, Text))
 readTasks st = maybe M.empty M.fromList . (readMaybe =<<) <$> DOM.getItem st ("todosReflex" :: JSString)
-
-getNextIdx :: Map Int a -> Int
-getNextIdx m
-  | M.null m = 0
-  | otherwise = maximum (M.keys m) + 1
 
 toggleAll :: Map Int (Bool, Text) -> Map Int (Bool, Text)
 toggleAll m =
@@ -200,14 +204,13 @@ inputBox :: MonadWidget t m => m (Event t Text)
 inputBox =
   elClass "header" "header" $ do
     el "h1" (text "todos")
-    rec textbox <- inputElement $ def
-          & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
-            ("class" =: "new-todo" <>
-             "autofocus" =: "autofocus" <>
-             "placeholder" =: "What needs to be done?")
-          & inputElementConfig_setValue .~ ("" <$ keypress Enter textbox)
-    let eAdd = current (value textbox) <@ keypress Enter textbox
-    pure $ fmapMaybe (\(T.strip -> x) -> bool (Just x) Nothing (T.null x)) eAdd
+    rec
+      textbox <- inputElement $ def
+        & inputElementConfig_elementConfig . elementConfig_initialAttributes .~
+          ("class" =: "new-todo" <> "autofocus" =: "autofocus" <>
+           "placeholder" =: "What needs to be done?")
+        & inputElementConfig_setValue .~ ("" <$ keypress Enter textbox)
+    pure . ffilter T.null $ T.strip <$> current (value textbox) <@ keypress Enter textbox
 
 infoFooter :: MonadWidget t m => m ()
 infoFooter =
