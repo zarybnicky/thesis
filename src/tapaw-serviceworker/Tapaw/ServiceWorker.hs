@@ -23,6 +23,9 @@ module Tapaw.ServiceWorker
   , renderValueMatcher
   , renderCacheStrategy
   , renderPushBehavior
+  , matchPath
+  , matchSegment
+  , matchNumeric
   ) where
 
 import Data.Aeson (FromJSON)
@@ -37,7 +40,7 @@ import Language.Javascript.JMacro
 import Text.PrettyPrint.Leijen.Text (displayTStrict, renderPretty)
 
 data ServiceWorker push = ServiceWorker
-  { swPrecache :: (Text, [Text])
+  { swPrecache :: [Text]
   , swFetch :: [(RequestMatcher, CacheStrategy)]
   , swPush :: PushBehavior push
   }
@@ -45,8 +48,8 @@ data ServiceWorker push = ServiceWorker
 generateWorker :: ServiceWorker push -> ByteString
 generateWorker ServiceWorker{..} = BC.pack . T.unpack . displayTStrict . renderPretty 1 80 . renderJs $ [jmacro|
   self.addEventListener('install', \e -> e.waitUntil(function () {
-    return caches.open(`(fst swPrecache)`).then(function (cache) {
-      return cache.addAll(`(snd swPrecache)`);
+    return caches.open('precache').then(function (cache) {
+      return cache.addAll(`swPrecache`);
     });
   }));
   self.addEventListener('fetch', function (e) {
@@ -65,6 +68,15 @@ data RequestMatcher = RequestMatcher
   , rmQuery :: QueryMatcher
   , rmPath :: PathMatcher
   }
+
+matchPath :: PathComponentMatcher -> RequestMatcher
+matchPath = RequestMatcher MethodAny (QueryMatcher []) . PathComponentMatcher
+
+matchSegment :: Text -> PathComponentMatcher -> PathComponentMatcher
+matchSegment x = PathComponent (MatchStatic x)
+
+matchNumeric :: PathComponentMatcher -> PathComponentMatcher
+matchNumeric = PathComponent MatchNumeric
 
 renderFetchMatchers :: (JExpr, JExpr) -> (JExpr, JExpr, JExpr) -> [(RequestMatcher, CacheStrategy)] -> JStat
 renderFetchMatchers (evt, req) (method, path, qs) = mconcat . fmap (\(RequestMatcher{..}, strategy) -> [jmacro|
