@@ -79,15 +79,14 @@ data in the background, then called AJAX, it was only used for small pieces of
 functionality. Only later came the concept of Single Page Applications (SPA),
 where the application was only loaded once at the beginning and only
 communicated in JSON or XML afterwards. This brought new challenges to
-JavaScript developers, challenges like like rendering templates in the browser,
+JavaScript developers, challenges like rendering templates in the browser,
 managing application state or routing (the mapping between application state and
 the URL displayed in the address bar of a browser).
 
 Not only was the Web developing, but also mobile devices and their applications,
 also called native applications today (as opposed to web applications). These
 applications had access to the full capabilities of the devices they were
-running on and could, at the start, do a lot more than a web application
-could.
+running on and could, at the start, do a lot more than a web application.
 
 This meant that a company that wanted to reach as many users as possible had to
 develop many versions of the same application: for the web, desktop, and also
@@ -155,7 +154,7 @@ synchronization, two new features that were traditionally available only to
 native applications.
 
 Push notifications are short messages sent by the application server to any
-client using browser-specific channels (e.g.~Firebase Cloud Messaging for Chrome
+client using browser-specific channels (e.g.\nbsp{}Firebase Cloud Messaging for Chrome
 and Android browsers, Apple Push Notification for Apple browsers), that are
 shown to the user as a popup or a notification regardless of whether the
 application is open or closed on the device.
@@ -199,7 +198,7 @@ credential storage.
 The basis of a web framework is the /UI toolkit/, which defines the structure,
 architecture and paradigm of the rest of the application. I am intentionally
 using the now-uncommon term toolkit, as the UI frameworks we will see vary in
-their scope, e.g.~React is just a library with a small API, whereas Angular
+their scope, e.g.\nbsp{}React is just a library with a small API, whereas Angular
 provides a quite opinionated platform. Individual frameworks are quite
 disparate, with large differences in the size of their community, maturity,
 developer friendliness, and the breadth of features or available libraries.
@@ -252,7 +251,7 @@ supporting /internationalization/ removes language barriers.
 
 Accessibility is something that requires framework support on several
 levels. Making a site accessible requires considerations during both design
-(e.g.~high color contrast) and implementation (semantic elements and ARIA
+(e.g.\nbsp{}high color contrast) and implementation (semantic elements and ARIA
 attributes), and that is usually left to application code and accessibility
 checklists, with the exception of some specialized components like keyboard
 focus managers. There are, however, tools like aXe-core that check how
@@ -319,7 +318,7 @@ development), or to prevent regressions in functionality (continuous integration
 using unit tests and end-to-end tests). Static analysis tools are, in the
 general practice, used to ensure a consistent code style and prevent some
 categories of errors ("linters"). Frameworks commonly provide pre-configured
-sets of tools of both types. If necessary, e.g.~in integration testing where the
+sets of tools of both types. If necessary, e.g.\nbsp{}in integration testing where the
 burden of set up is bigger, they also provide utility libraries to ease the
 initial set up. Some frameworks also use uncommon types of tests like /marble
 tests/ used in functional reactive programming systems.
@@ -346,7 +345,7 @@ just running it inside a browser are performance (they are usually faster to
 load and to use), access to device-specific capabilities (direct access to the
 file system), or branding.
 
-The last point to mention is /code generation/. of which there are two variants:
+The last point to mention is /code generation/, of which there are two variants:
 project skeleton generators, which create all files necessary for a project to
 compile and run, and which are provided in a large majority of frameworks. Then
 there are component generators, which may include generating a template, a URL
@@ -373,11 +372,10 @@ As for the topics mentioned in the previous chapter like routing, forms, or
 build tools: most of them are built into Angular, while React and Vue do not
 include them and thus users need to use third-party libraries instead. This ties
 into the most common complaint about the JavaScript ecosystem: there are dozens
-of small libraries that accomplish very similar things, many are, however,
-incomplete or unmaintained, and there is no good way to decide between
-them. There are several projects that attempt to alleviate this problem by
-combining a set of libraries into a more cohesive framework that closer to the
-Angular.
+of small libraries that accomplish similar things, many are, however, incomplete
+or unmaintained, and there is no good way to decide between them. There are
+several projects that attempt to alleviate this problem by combining a set of
+libraries into a more cohesive framework closer in scope to Angular.
 
 * Haskell and the Web
 ** Haskell
@@ -431,7 +429,7 @@ CoffeeScript is rather popular language announced in 2010
 cite:coffeescript. Also the new ECMAScript 6 or 7 features have only been usable
 via compilation until browsers implemented them natively. There are other, more
 advanced languages built with compilation to JavaScript in mind,
-e.g.~TypeScript, a superset of ECMAScript 6 cite:typescript, or Elm, a framework
+e.g.\nbsp{}TypeScript, a superset of ECMAScript 6 cite:typescript, or Elm, a framework
 with its own language based on Haskell cite:czaplicki2012elm. The need to
 compile your code before running it is now quite accepted in the world of Web
 development.
@@ -446,7 +444,7 @@ We will now go through Haskell libraries for Web development, using the same
 structure as we did in the chapter describing general Web framework features.
 
 There is significant focus on the semantics of libraries in the Haskell
-community, e.g.~writing down mathematical laws for the foundational types of a
+community, e.g.\nbsp{}writing down mathematical laws for the foundational types of a
 library and using them to prove correctness of the code, so UI libraries have
 mostly used Functional Reactive Programming (FRP) or similar approaches like
 the /Elm architecture/ cite:loder2018web as their basis, as traditional
@@ -464,7 +462,7 @@ Obsidian Systems cite:obsidian and is the most popular frontend framework in the
 Haskell community, so its future seems promising. Reflex follows the traditional
 FRP approach with events and behaviors, adding /dynamics/, and building a rich
 combinator library on top of them. There is an example of Reflex code in
-ref:ex-reflex, wheŕe =eClick= is an event of unit values and =dCount= is a dynamic
+ref:ex-reflex, where =eClick= is an event of unit values and =dCount= is a dynamic
 of an integer.
 
 #+CAPTION: An example of Reflex code (a counter) label:ex-reflex
@@ -482,7 +480,7 @@ means that is uses strictly uni-directional data-flow with a central data store
 on the one side, and the view as a pure function that takes the state and
 creates a view on the other, where the view can change the state using strictly
 defined events. The ecosystem of Miso is not as well developed as Reflex's, and
-the overall architecture is very limiting, which I consider a large
+the overall architecture is quite limiting, which I consider to be a large
 disadvantage. You can see an example of Miso code in ref:ex-miso, in which all
 local variables from the =where= clause are bound in the expression =App {..}=. In
 particular, you can see the =Action=, the =model= (a simple integer), the =update=
@@ -625,7 +623,7 @@ general, of which almost all are available for use in frontend
 development. Starting with static quality assurance, Hlint is the standard
 "linter" for Haskell, well-supported and mature. There are several code
 formatters, Hindent is the most widely used one, which enforces a single style
-of code as is common in other contemporary languages (e.g.~gofmt for Go). As for
+of code as is common in other contemporary languages (e.g.\nbsp{}gofmt for Go). As for
 test frameworks, there are many options. HSpec or HUnit are examples of unit- or
 integration-testing frameworks, property-based testing is also common in
 Haskell, with QuickCheck cite:claessen2011quickcheck being the most well-known
@@ -661,7 +659,7 @@ applications in Haskell, individual components that are required for easy
 application development are either not available at all or not too well
 developed.
 
-* Implementing the framework
+* Creating the framework
 ** Implementation plan
 In the previous chapter, I presented my research into Haskell and its library
 ecosystem for browser applications. Now it is time to select which components
@@ -783,7 +781,7 @@ and simple sum types at their core.
 Servant is a general type-level DSL (Domain-Specific Language) in the domain of
 web routing. An API defined using Servant is merely a type, a tree of type-level
 terms composed using type operators. This API type is then interpreted using
-type-level functions into value-level functions, e.g.~routers.
+type-level functions into value-level functions, e.g.\nbsp{}routers.
 
 #+CAPTION: Servant API definition label:servant-api
 #+ATTR_LATEX: :options frame=single
@@ -845,7 +843,7 @@ into a tree that uses =:<|>= on both the type- and value-level. It is easier to
 work with larger APIs in this way and it makes for easier-to-read type
 errors. It is also possible to refer to individual endpoints using record
 accessors, instead of (de)composition of the entire server or client. The code
-in ref:servant-generic-api is functionally equivalent to the previous snippet,
+in ref:servant-generic-api is functionally equivalent to the previous snippet.
 
 The interpretation of an API type into values is done via type classes, a
 language feature that is often compared to interfaces in object-oriented
@@ -1133,7 +1131,7 @@ applications and on the server, but also static sites generated using Reflex.
 A harder problem but possible more beneficial: instead of using a special =App=
 combinator to render Reflex applications, it might be possible accomplish the
 same using a special content type. This would allow one endpoint to return
-e.g.~JSON data or a HTML file on the same endpoint, depending on the request
+e.g.\nbsp{}JSON data or a HTML file on the same endpoint, depending on the request
 headers. I tried this approach at the start but did not succeed, so I moved on
 to other approaches, but I expect that a more skilled Servant developer would
 find a way.
@@ -1163,7 +1161,7 @@ tracking.
 
 Fetch control in this context means intercepting all outgoing requests from the
 application, and deciding what to do with them based on the URL or method. This
-feature has many use-cases, e.g.~using the precached application files when
+feature has many use-cases, e.g.\nbsp{}using the precached application files when
 offline, checking for a new version of the application and notifying the user;
 storing external fetched resources into cache to save data, or storing outgoing
 analytics requests into a queue when offline and only sending them when the user
@@ -1177,7 +1175,7 @@ notification.
 The basis of the implementation is a single dependently typed record that
 contains the entire configuration of the worker. This record is then used in
 three different contexts: to generate the worker JavaScript and serve it over
-HTTP, in the client for any interactions with the worker (e.g.~to subscribe to
+HTTP, in the client for any interactions with the worker (e.g.\nbsp{}to subscribe to
 push notifications), and on the server for sending the notifications, as
 illustrated by ref:service-worker-api.
 
@@ -1283,7 +1281,7 @@ The encoding for request matchers that I chose is not a complex one: a request
 is matched on its method, path, and query string. The method matcher accepts
 three values, any method, a specific method or a list of possible ones. There
 are two types of path matchers: a regular expression matcher and a path
-component-based one, in which e.g.~the path =/article/5= is matched using the
+component-based one, in which e.g.\nbsp{}the path =/article/5= is matched using the
 matcher =matchPath "article" ./ matchInteger=. The query string matcher is a list
 of key-value matchers. While this is not the most expressive or fluent encoding
 of a request matcher, it suffices for common use-cases of fetch control, as with
@@ -1358,6 +1356,7 @@ runtime context, so a lens is used as a getter to fetch the =PushConfig= from th
 context.
 
 #+CAPTION: Service Worker: push notifications on the server label:sw-server-push
+#+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   data PushNotification a = PushNotification
     { pnTitle :: Text
@@ -1386,10 +1385,10 @@ TODO: include browser implementation snippet
 
 *** Possible extensions
 The obvious follow-up work is supporting more features of service workers:
-fine-grained cache control with resource expiration based on its age or available
-storage space; or /Background Sync/, an API for queuing requests mane when the device
-was offline to be retried whenever it goes online, whether the application is
-open or closed.
+fine-grained cache control with resource expiration based on its age or
+available storage space; or /Background Sync/, an API for retrying requests made
+when the device was offline whenever it goes online again, whether the
+application is open or closed.
 
 Supporting more exotic use-cases is also possible next work, use-cases like
 communication between multiple instances of an application using the service
@@ -1409,7 +1408,7 @@ project for the future.
 
 A hypothetical example of such approach can be seen in
 ref:jshark, which demonstrates more complex usage of fetch control, dispatching
-requests based on their destination (the originator of a request, e.g. ="style"=
+requests based on their destination (the originator of a request, e.g.\nbsp{}\ ="style"=
 corresponds to a =<style>= tag or a CSS include).
 
 #+CAPTION: Service worker using a JavaScript DSL label:jshark
@@ -1428,7 +1427,7 @@ corresponds to a =<style>= tag or a CSS include).
 #+END_SRC
 
 This approach may also be combined with code generation from WebIDL, an
-interface definition language for the Web cite:webidl used e.g.~in the Chromium
+interface definition language for the Web cite:webidl used e.g.\nbsp{}in the Chromium
 browser, to produce an API that exactly corresponds to the underlying JavaScript
 one, only with strong types. Generating an API from WebIDL has a precedent in
 the library =ghcjs-dom=, a library that provides a strongly-typed interface to
@@ -1461,7 +1460,7 @@ access a database when rendering a Reflex application on the server.
 Implementing an instance for such a type is not complicated. To
 bind to a database backend on the server, we can run arbitrary code in the
 underlying monad, so if we have a function to execute database
-queries available e.g.~using a =ReaderT= monad, we can sequentially construct the
+queries available e.g.\nbsp{}using a =ReaderT= monad, we can sequentially construct the
 query, run it and wait for the result, and then return a =Dynamic= with the
 query's result.
 
@@ -1477,11 +1476,11 @@ using LocalStorage, and a single serve-side binding to the Persistent database l
 TODO: include snippet demonstrating basic usage
 
 There are several ways to extend this storage library. The first one is simply
-adding more backends, e.g.~to support IndexedDB in the browser or other database
+adding more backends, e.g.\nbsp{}to support IndexedDB in the browser or other database
 engines on the backend.
 
 The storage can also be specialized to work as a cache, which would mean
-extending the API e.g.~with expiration, automatic or manual, so that it can
+extending the API e.g.\nbsp{}with expiration, automatic or manual, so that it can
 support other use-cases like a function =getCachedOrFetch.=
 
 Another option would be to expand the API to support more complicated SQL-like
@@ -1608,7 +1607,7 @@ than compiling the entire package from scratch.
 We can go a step further and set up a background process that watches the source
 code for a project for any changes and reloads them whenever any file changes,
 and optionally calls a function if the files load without any compile
-errors. This means we can have e.g.~a development web server that is always
+errors. This means we can have e.g.\nbsp{}a development web server that is always
 running the latest code. This functionality is implemented in a tool called
 =ghcid= (cite:ghcid, "GHCi daemon"), and it is now so common in the Haskell
 community that some developers report that Vim and ghcid are the only two tools
@@ -1640,7 +1639,7 @@ The interested reader can try editing Haskell in a preconfigured Emacs or Visual
 Studio Code using the Nix expressions in the directories
 =src-snippets/editor-emacs/= or =src-snippets/editor-vscode/= in the included files.
 
-Niceties: hlint for code style and avoiding dumb errors, it is possible to
+TODO: Niceties: hlint for code style and avoiding dumb errors, it is possible to
 extend using project-specific rules/suggestions; hoogle for easy access
 to the correct versions of API doc.
 
@@ -1679,7 +1678,7 @@ TODO: Components:
 ** Deployment
 The options for deploying a Haskell program are generally the same as deploying
 programs in any other compiled language that does not use intermediate object
-code like Java.The two most popular options in the Haskell community, not
+code like Java. The two most popular options in the Haskell community, not
 including Nix, are: deploying a statically linked executable file, and using
 Docker containers.
 
@@ -1733,10 +1732,10 @@ but we can also bundle them into the same package using an additional Nix build
 recipe.
 
 For a GHCJS application, such a post-processing step is nearly mandatory, as the
-JavaScript files produced by the compiler are rather large (over 5.9~MB for a
+JavaScript files produced by the compiler are rather large (over 5.9\nbsp{}MB for a
 simple Reflex application), but processing them with a minification tool like
 =closure-compiler= and further shrinking them with a GZIP compressor reduces the
-size to a reasonable size (1.9~MB minified and 350~kB compressed for the same
+size to a reasonable size (1.9\nbsp{}MB minified and 350\nbsp{}kB compressed for the same
 application).
 
 * Case studies
@@ -1891,7 +1890,7 @@ unwrap the =AppT= from the outside, starting from the newtype wrapper, running t
 router, and running the storage last. The router does not use the default
 interpreter that uses the Location API as, according to the specification, we
 need to route using the hash fragment only (the part after =#= in
-e.g. =http://localhost/#!/active=). The storage needs to be persisted from and to
+e.g.\nbsp{}\ =http://localhost/#!/active=). The storage needs to be persisted from and to
 LocalStorage, so we do not use the simple in-memory interpreter, but
 =runLocalStorageT= instead.
 
@@ -1917,7 +1916,7 @@ To describe the functionality of the application more, we will be fetching data
 from the official Hacker News API and displaying it. We need to display article
 lists, article details with comments, and user details.
 
-The specification of the application is not as well defined, is only consists of
+The specification of the application is not as well defined, it only consists of
 a text document describing the desired functionality. In particular, it does not
 include the HTML structure and CSS styles of the application unlike TodoMVC, so
 I have used the HTML and CSS from one existing implementation of HNPWA, PreactHN
@@ -1939,8 +1938,8 @@ such a big problem in a demonstration application.
 We will put only a single layer between the application and the API, and that is
 the service worker cache. We can cache all responses to the API requests and
 return the previously fetched response on repeated requests. The service worker
-iwill also be used for prefetching and caching the core application files, so
-that is fulfills the assignment requirements and is available offline.
+will also be used for prefetching and caching the core application files, so
+that it fulfills the assignment requirements and is available offline.
 
 As for the other components, we will use multiple stores again (for item lists,
 items, and users), and also the web app manifest generator and the router, this
@@ -1999,7 +1998,7 @@ more stores for articles and comments, but considering the scale of the
 application, using only the service worker cache is an easier approach.
 
 The routing and service worker components are the same as in the HNPWA
-application, rouing using Location API and caching requests to the API.
+application, routing using Location API and caching requests to the API.
 
 TODO: interesting components?
 TODO: screenshot
@@ -2044,7 +2043,7 @@ JavaScript.
 - internationalization
 - a unified command-line interface to build tools
 - code generation
-- debugging tools for the frontend, e.g.~variable watching, inspecting application state
+- debugging tools for the frontend, e.g.\nbsp{}variable watching, inspecting application state
 
 There is also a number of other ideas with various usefulness that would make
 building web applications in Haskell easier. Some are natural extensions of the
@@ -2054,7 +2053,7 @@ follows is an incomplete list of such project topics:
 
 - CSS-in-Haskell (similar to CSS-in-JS)
 - crash reports (traceback, application state) for the browser
-- end-to-end tests that run can asserts both on the client and the server
+- end-to-end tests that can run assertions on both the client and server
 - dynamic user-provided content - HTML-like markup that can use preregistered named
   components, a user-friendly editor
 - typed components that use assets, like =<img>= or =<link>=
@@ -2102,5 +2101,3 @@ remaining deficiencies compared to the features available in JavaScript.
 * Contents of the attached data storage
 TODO: fill in
 
-* Poster
-TODO: fill in
