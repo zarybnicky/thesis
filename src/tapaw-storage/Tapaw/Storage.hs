@@ -4,15 +4,19 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Tapaw.Storage
-  (
+  ( MonadKVStore(..)
+  , StoreKey
+  , KVStoreT(..)
+  , KVStoreRequest(..)
+  , runKVStoreReqests
+  , runKVStoreTPure
+  , runKVStoreTStorage
   ) where
 
 import Control.Monad.Fix (MonadFix)
@@ -26,26 +30,8 @@ import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHCJS.DOM.Storage (Storage, getItem, setItem)
-import Language.Javascript.JSaddle (MonadJSM, liftJSM, fromJSVal, maybeNullOrUndefined)
-import Language.Javascript.JSaddle.Warp (run)
+import Language.Javascript.JSaddle (MonadJSM, liftJSM)
 import Reflex.Dom.Core hiding (Error, Value)
-
-main :: IO ()
-main = run 3000 $ mainWidget $ runKVStoreTPure (UserId 6 =: User) $ do
-  pb <- getPostBuild
-  putKV ((UserId 5, Just User) <$ pb)
-  el "hr" blank
-  display =<< getKVAll @User
-
-data User = User
-  deriving Show
-
-newtype UserId = UserId
-  { unUserId :: Int
-  } deriving (Eq, Ord, Show)
-
-type instance StoreKey User = UserId
-
 
 type family StoreKey k = r | r -> k
 
@@ -115,6 +101,7 @@ runKVStoreTPure ini f = do
   pure a
 
 runKVStoreTStorage ::
+     forall k t m a.
      ( PerformEvent t m
      , MonadHold t m
      , MonadFix m

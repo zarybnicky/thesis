@@ -24,17 +24,15 @@ library
                    , bytestring
                    , containers
                    , data-default
-                   , dependent-sum
                    , ghcjs-dom
-                   , lens
                    , jsaddle
-                   , jsaddle-warp
                    , mtl
                    , reflex-dom-core
                    , text
 
-executable storage-trans
-  main-is:           Main.hs
+executable storage-test
+  hs-source-dirs:    src-bin
+  main-is:           StorageTest.hs
   default-language:  Haskell2010
   ghc-options:      -Wall
                     -Wcompat
@@ -50,11 +48,11 @@ executable storage-trans
 
   build-depends:     base
                    , tapaw-storage
+                   , aeson
+                   , bytestring
                    , containers
                    , data-default
-                   , dependent-sum
                    , ghcjs-dom
-                   , lens
                    , jsaddle
                    , jsaddle-warp
                    , mtl
