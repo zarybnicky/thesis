@@ -15,5 +15,6 @@
   ];
   overrides = with pkgs.haskell.lib; self: super: {
     parseargs = dontCheck super.parseargs;
+    jsaddle-warp = if self.ghc.isGhcjs or false then self.callHackage "jsaddle-warp" "0.9.6.0" {} else super.jsaddle-warp;
   };
 })

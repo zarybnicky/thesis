@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -6,6 +8,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
 
@@ -21,13 +24,19 @@ module Tapaw.ServiceWorker.Client
   , fetchPushSubscription
   , fetchPushPermissionState
   , showNotificationImpl
+  , vapidKeyToArray
+
+  , module Tapaw.ServiceWorker.Client.Types
   ) where
 
-import Control.Lens ((^.))
+import Control.Lens ((^.), itraverse_)
 import Control.Monad.Reader
 import Data.Aeson (Result(Success), Value(Null), fromJSON, toJSON)
+import Data.Char (ord)
+import Data.Coerce (coerce)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
+import qualified Data.Text as T
 import Language.Javascript.JSaddle hiding (Success)
 import Reflex.Dom.Core hiding (Value)
 import Tapaw.ServiceWorker.Client.Types
@@ -59,10 +68,9 @@ registerServiceWorker swUrl swOpts = do
   (eReg, onReg) <- newTriggerEvent
   _ <- liftJSM $ do
     serviceWorker <- jsg ("navigator" :: Text) ^. js ("serviceWorker" :: Text)
-    callback <- toJSVal $ fun $ \_ _ [swReg] ->
-      liftIO $ onReg (ServiceWorkerRegistration swReg)
     res <- serviceWorker ^. jsf ("register" :: Text) [toJSON swUrl, toJSON swOpts]
-    res ^. jsf ("then" :: Text) [callback]
+    res ^. jsf ("then" :: Text)
+      [fun $ \_ _ [swReg] -> liftIO $ onReg (ServiceWorkerRegistration swReg)]
   pure eReg
 
 fetchPushSubscription ::
@@ -72,11 +80,10 @@ fetchPushSubscription ::
   -> m ()
 fetchPushSubscription cb reg = liftJSM $ do
   mgr <- unServiceWorkerRegistration reg ^. js ("pushManager" :: Text)
-  callback <- toJSVal $ fun $ \_ _ [sub] -> do
-    sub' <- maybeNullOrUndefined sub
-    liftIO $ cb (PushSubscription <$> sub')
   res <- mgr ^. js0 ("getSubscription" :: Text)
-  _ <- res ^. jsf ("then" :: Text) [callback]
+  _ <- res ^. jsf ("then" :: Text) [fun $ \_ _ [sub] -> do
+    sub' <- maybeNullOrUndefined sub
+    liftIO $ cb (PushSubscription <$> sub')]
   pure ()
 
 fetchPushPermissionState ::
@@ -86,11 +93,10 @@ fetchPushPermissionState ::
   -> m ()
 fetchPushPermissionState cb reg = liftJSM $ do
   mgr <- unServiceWorkerRegistration reg ^. js ("pushManager" :: Text)
-  callback <- toJSVal $ fun $ \_ _ [perm] -> do
+  res <- mgr ^. js1 ("permissionState" :: Text) (PushSubscriptionOptions True Nothing)
+  _ <- res ^. jsf ("then" :: Text) [fun $ \_ _ [perm] -> do
     perm' <- fromJSVal perm
-    liftIO $ cb (maybe PermissionDenied (fromSuccess PermissionDenied . fromJSON) perm')
-  res <- mgr ^. js0 ("permissionState" :: Text)
-  _ <- res ^. jsf ("then" :: Text) [callback]
+    liftIO $ cb (maybe PermissionDenied (fromSuccess PermissionDenied . fromJSON) perm')]
   pure ()
   where
     fromSuccess d = \case
@@ -105,7 +111,33 @@ data ServiceWorkerState t = ServiceWorkerState
 
 newtype ServiceWorkerT t m a = ServiceWorkerT
   { unServiceWorkerT :: ReaderT (ServiceWorkerState t) (EventWriterT t (Maybe PushSubscriptionOptions) m) a
-  } deriving (Functor, Applicative, Monad)
+  } deriving ( Functor
+             , Applicative
+             , Monad
+             , MonadFix
+             , MonadIO
+#ifndef ghcjs_HOST_OS
+             , MonadJSM
+#endif
+             , MonadSample t
+             , MonadHold t
+             , PostBuild t
+             , NotReady t
+             , DomBuilder t
+             )
+
+instance MonadTrans (ServiceWorkerT t) where
+  lift = ServiceWorkerT . lift . lift
+
+instance (MonadHold t m, MonadFix m, Adjustable t m) => Adjustable t (ServiceWorkerT t m) where
+  runWithReplace a b = ServiceWorkerT $ runWithReplace (coerce a) (coerceEvent b)
+  traverseIntMapWithKeyWithAdjust a b c = ServiceWorkerT $ traverseIntMapWithKeyWithAdjust (coerce a) b c
+  traverseDMapWithKeyWithAdjustWithMove a b c = ServiceWorkerT $ traverseDMapWithKeyWithAdjustWithMove (coerce a) b c
+
+instance PerformEvent t m => PerformEvent t (ServiceWorkerT t m) where
+  type Performable (ServiceWorkerT t m) = Performable m
+  performEvent_ = lift . performEvent_
+  performEvent = lift . performEvent
 
 runServiceWorkerT ::
      ( TriggerEvent t m
@@ -141,13 +173,11 @@ runServiceWorkerT swUrl swOpts f = do
         res <- unPushSubscription sub ^. js0 ("unsubscribe" :: Text)
         refreshSubPerm reg onSub onPerm res
       (Just reg, _, Just subOpts) -> liftJSM $ do
-        res <- unServiceWorkerRegistration reg ^. js1 ("subscribe" :: Text) (toJSON subOpts)
+        res <- unServiceWorkerRegistration reg ^. js ("pushManager" :: Text) . js1 ("subscribe" :: Text) subOpts
         refreshSubPerm reg onSub onPerm res
     refreshSubPerm reg onSub onPerm res = do
-      subCb <- toJSVal $ fun $ \_ _ [] -> fetchPushSubscription onSub reg
-      permCb <- toJSVal $ fun $ \_ _ [] -> fetchPushPermissionState onPerm reg
-      _ <- res ^. jsf ("then" :: Text) [subCb]
-      _ <- res ^. jsf ("then" :: Text) [permCb]
+      _ <- res ^. jsf ("then" :: Text) [fun $ \_ _ [_] -> fetchPushSubscription onSub reg]
+      _ <- res ^. jsf ("then" :: Text) [fun $ \_ _ [_] -> fetchPushPermissionState onPerm reg]
       pure ()
 
 class MonadServiceWorker t m where
@@ -168,8 +198,7 @@ instance (Monad m, Reflex t, PerformEvent t m, MonadJSM (Performable m)) =>
   unsubscribe e = ServiceWorkerT $ lift $ tellEvent (Nothing <$ e)
   showNotification eNotif = do
     dReg <- getSWRegistration
-    ServiceWorkerT $
-      performEvent_ $ showNotificationImpl <$> current dReg <@> eNotif
+    ServiceWorkerT $ performEvent_ $ showNotificationImpl <$> current dReg <@> eNotif
 
 showNotificationImpl ::
      MonadJSM m
@@ -177,7 +206,14 @@ showNotificationImpl ::
   -> (Text, Maybe NotificationOptions)
   -> m ()
 showNotificationImpl Nothing _ = pure ()
-showNotificationImpl (Just reg) (title, opts) = liftJSM $ do
-  mgr <- unServiceWorkerRegistration reg ^. js ("pushManager" :: Text)
-  _ <- mgr ^. js2 ("showNotification" :: Text) title (toJSON <$> opts)
-  pure ()
+showNotificationImpl (Just reg) (title, opts) = liftJSM $ catch
+  (void $ unServiceWorkerRegistration reg ^. js2 ("showNotification" :: Text) title (toJSON <$> opts))
+  (\(_ :: JSException) -> pure ())
+
+vapidKeyToArray :: MonadJSM m => Text -> m JSVal
+vapidKeyToArray x = liftJSM $ do
+  let x' = T.replace "-" "+" (T.replace "_" "/" x) <> T.replicate ((4 - T.length x `mod` 4) `mod` 4) "="
+  raw <- valToText =<< jsg ("window" :: Text) ^. js1 ("atob" :: Text) x'
+  out <- new (jsg ("Uint8Array" :: Text)) [T.length raw]
+  itraverse_ (\ix pos -> (out <## ix) pos) (ord <$> T.unpack raw)
+  pure out

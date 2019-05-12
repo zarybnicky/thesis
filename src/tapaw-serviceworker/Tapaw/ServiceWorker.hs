@@ -47,11 +47,11 @@ data ServiceWorker push = ServiceWorker
 
 generateWorker :: ServiceWorker push -> ByteString
 generateWorker ServiceWorker{..} = BC.pack . T.unpack . displayTStrict . renderPretty 1 80 . renderJs $ [jmacro|
-  self.addEventListener('install', \e -> e.waitUntil(function () {
-    return caches.open('precache').then(function (cache) {
-      return cache.addAll(`swPrecache`);
-    });
-  }));
+  self.addEventListener('install', function (e) {
+    e.waitUntil(caches.open('precache').then(function (cache) {
+      return cache.addAll(`(swPrecache)`);
+    }));
+  });
   self.addEventListener('fetch', function (e) {
     var req = e.request;
     var method = req.method;
@@ -147,16 +147,16 @@ data CacheStrategy
 renderCacheStrategy :: JExpr -> JExpr -> CacheStrategy -> JStat
 renderCacheStrategy evt req = \case
   CacheFirst c -> [jmacro|
-    return caches.open(`(c)`).then(function (cache) {
+    return `(evt)`.respondWith(caches.open(`(c)`).then(function (cache) {
       return cache.match(`(req)`).then(function (res) {
         return res || fetch(`(req)`);
       });
-    })
+    }));
   |]
   CacheOnly c -> [jmacro|
-    return caches.open(`(c)`).then(function (cache) {
+    return `(evt)`.respondWith(caches.open(`(c)`).then(function (cache) {
       return cache.match(`(req)`)
-    })
+    }));
   |]
   NetworkFirst c timeout -> [jmacro|
     var network = fetch(`(req)`);
@@ -167,9 +167,9 @@ renderCacheStrategy evt req = \case
         }));
       }, `(timeout)`);
     });
-    return Promise.race([network, cached]).then(function (res) {
+    return `(evt)`.respondWith(Promise.race([network, cached]).then(function (res) {
       return res || network;
-    });
+    }));
   |]
   NetworkOnly -> [jmacro|return fetch(`(req)`)|]
   StaleWhileRevalidate c -> [jmacro|
@@ -179,13 +179,16 @@ renderCacheStrategy evt req = \case
       }).then(function () {
         return res;
       });
+    }, function () {
+      //Ignore errors
+      return undefined;
     });
     `(evt)`.waitUntil(network);
-    return caches.open(`(c)`).then(function (cache) {
+    return `(evt)`.respondWith(caches.open(`(c)`).then(function (cache) {
       return cache.match(`(req)`);
     }).then(function (res) {
       return res || network;
-    });
+    }));
   |]
 
 data PushBehavior a where

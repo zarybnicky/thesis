@@ -37,7 +37,9 @@ library
                    , text
                    , wl-pprint-text
 
-executable sw-test
+executable sw-gen
+  hs-source-dirs:    src-bin
+  main-is:           SWGen.hs
   default-language:  Haskell2010
   ghc-options:      -Wall
                     -Wcompat
@@ -47,13 +49,32 @@ executable sw-test
                     -Wmonomorphism-restriction
                     -fwarn-tabs
 
-  hs-source-dirs:    src-bin
-  main-is:           Main.hs
-
-  if impl(ghcjs -any)
-    ghc-options:    -dedupe
-    cpp-options:    -DGHCJS_BROWSER
-
   build-depends:     base
                    , bytestring
                    , tapaw-serviceworker
+
+executable sw-push
+  hs-source-dirs:    src-bin
+  main-is:           SWPush.hs
+  default-language:  Haskell2010
+  ghc-options:      -Wall
+                    -Wcompat
+                    -Wincomplete-uni-patterns
+                    -Wincomplete-record-updates
+                    -Wredundant-constraints
+                    -Wmonomorphism-restriction
+                    -fwarn-tabs
+
+  build-depends:     base
+                   , aeson
+                   , bytestring
+                   , lens
+                   , jsaddle
+                   , jsaddle-warp
+                   , reflex-dom-core
+                   , tapaw-serviceworker
+                   , text
+                   , wai
+                   , wai-app-static
+                   , warp
+                   , websockets

@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Tapaw.ServiceWorker.Client.Types
   ( ServiceWorkerRegistration(..)
@@ -12,20 +13,12 @@ module Tapaw.ServiceWorker.Client.Types
   ) where
 
 import Data.Aeson
-  ( FromJSON(..)
-  , Options(..)
-  , ToJSON(..)
-  , Value
-  , defaultOptions
-  , genericParseJSON
-  , genericToJSON
-  )
 import Data.Char (toLower)
 import Data.List (stripPrefix)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import GHC.Generics (Generic)
-import Language.Javascript.JSaddle (JSVal)
+import Language.Javascript.JSaddle
 
 
 newtype ServiceWorkerRegistration = ServiceWorkerRegistration
@@ -40,7 +33,7 @@ data PermissionState
   = PermissionGranted
   | PermissionDenied
   | PermissionPrompt
-  deriving (Generic)
+  deriving (Show, Generic)
 
 instance FromJSON PermissionState where
   parseJSON =
@@ -57,14 +50,17 @@ instance ToJSON PermissionState where
 
 data PushSubscriptionOptions = PushSubscriptionOptions
   { userVisibleOnly :: Bool
-  , applicationServerKey :: Text
+  , applicationServerKey :: Maybe JSVal
   } deriving (Generic)
 
-instance FromJSON PushSubscriptionOptions where
-  parseJSON = genericParseJSON defaultOptions
-
-instance ToJSON PushSubscriptionOptions where
-  toJSON = genericToJSON defaultOptions
+instance ToJSVal PushSubscriptionOptions where
+  toJSVal v = do
+    o <- create
+    setProp "userVisibleOnly" (toJSBool $ userVisibleOnly v) o
+    case applicationServerKey v of
+      Nothing -> pure ()
+      Just x -> setProp "applicationServerKey" x o
+    toJSVal o
 
 instance Semigroup PushSubscriptionOptions where
   a <> _ = a
@@ -85,7 +81,7 @@ data NotificationOptions = NotificationOptions
   , notificationTag :: Maybe Text
   , notificationTimestamp :: Maybe Int
   , notificationVibrate :: Maybe [Int]
-  } deriving (Generic)
+  } deriving (Show, Generic)
 
 instance FromJSON NotificationOptions where
   parseJSON =
@@ -104,7 +100,7 @@ data NotificationAction = NotificationAction
   { notificationActionAction :: Maybe Text
   , notificationActionTitle :: Maybe Text
   , notificationActionIcon :: Maybe Text
-  } deriving (Generic)
+  } deriving (Show, Generic)
 
 instance FromJSON NotificationAction where
   parseJSON =
@@ -123,7 +119,7 @@ data TextDirection
   = TextDirectionAuto
   | TextDirectionLtr
   | TextDirectionRtl
-  deriving (Generic)
+  deriving (Show, Generic)
 
 instance FromJSON TextDirection where
   parseJSON =
@@ -140,7 +136,7 @@ instance ToJSON TextDirection where
 
 newtype ServiceWorkerOptions = ServiceWorkerOptions
   { serviceWorkerScope :: Maybe Text
-  } deriving (Generic)
+  } deriving (Show, Generic)
 
 instance FromJSON ServiceWorkerOptions where
   parseJSON =
