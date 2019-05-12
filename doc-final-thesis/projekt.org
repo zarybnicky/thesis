@@ -1451,11 +1451,11 @@ access a database when rendering a Reflex application on the server.
 #+CAPTION: Storage API label:storage-api
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
-  class MonadKVStore t e m where
-    get :: Dynamic t (Key e) -> m (Dynamic t (Maybe e))
-    getAll :: m (Dynamic t (Map (Key e) e))
-    put :: Event t (Key e, Maybe e) -> m ()
-    putAll :: Event t (Map (Key e) e) -> m ()
+  class MonadKVStore e t m | m -> t where
+    get :: Dynamic t (StoreKey e) -> m (Dynamic t (Maybe e))
+    getAll :: m (Dynamic t (Map (StoreKey e) e))
+    put :: Event t (StoreKey e, Maybe e) -> m ()
+    putAll :: Event t (Map (StoreKey e) e) -> m ()
 #+END_SRC
 
 Implementing an instance for such a type is not complicated. To

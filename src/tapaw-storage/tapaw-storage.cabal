@@ -20,6 +20,8 @@ library
   exposed-modules:   Tapaw.Storage
 
   build-depends:     base
+                   , aeson
+                   , bytestring
                    , containers
                    , data-default
                    , dependent-sum

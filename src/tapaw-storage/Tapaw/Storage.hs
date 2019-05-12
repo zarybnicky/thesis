@@ -1,16 +1,13 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -19,94 +16,124 @@ module Tapaw.Storage
   ) where
 
 import Control.Monad.Fix (MonadFix)
-import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
+import Control.Monad.Reader (MonadIO, MonadTrans(lift), ReaderT, ask, runReaderT)
+import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey, decode, encode)
+import qualified Data.ByteString.Lazy.Char8 as BC
 import Data.Coerce (coerce)
-import Data.Default (Default(def))
-import Data.Dependent.Sum (DSum((:=>)))
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe (fromMaybe)
+import Data.Text (Text)
+import qualified Data.Text as T
+import GHCJS.DOM.Storage (Storage, getItem, setItem)
+import Language.Javascript.JSaddle (MonadJSM, liftJSM, fromJSVal, maybeNullOrUndefined)
 import Language.Javascript.JSaddle.Warp (run)
-import Reflex.Dom.Core
+import Reflex.Dom.Core hiding (Error, Value)
 
 main :: IO ()
-main = run 3000 $ mainWidget $ do
-  _ <- runUserT $ do
-    pb <- getPostBuild
-    display =<< holdDyn Nothing . fmap Just =<< insert (User <$ pb)
-    el "hr" blank
-    display =<< fetchAll
-  pure ()
+main = run 3000 $ mainWidget $ runKVStoreTPure (UserId 6 =: User) $ do
+  pb <- getPostBuild
+  putKV ((UserId 5, Just User) <$ pb)
+  el "hr" blank
+  display =<< getKVAll @User
 
 data User = User
   deriving Show
 
 newtype UserId = UserId
   { unUserId :: Int
-  } deriving (Eq, Ord, Show, Default)
+  } deriving (Eq, Ord, Show)
 
-type family StoreKey k = r | r -> k
 type instance StoreKey User = UserId
 
-class MonadStorage k t m | m -> t where
-  fetchAll :: m (Dynamic t (Map (StoreKey k) k))
-  fetchOne :: Dynamic t (StoreKey k) -> m (Dynamic t (Maybe k))
-  insert :: Event t k -> m (Event t (StoreKey k))
-  update :: Event t ((StoreKey k), k) -> m ()
-  delete :: Event t (StoreKey k) -> m ()
 
-data StorageRequest k a where
-  StoreReq :: (Maybe (StoreKey k), Maybe k) -> StorageRequest k k
-data StorageResponse k a where
-  StoreRes :: (StoreKey k, Maybe k) -> StorageResponse k k
+type family StoreKey k = r | r -> k
 
-instance
-  ( Ord (StoreKey k)
-  , MonadReader (Dynamic t (Map (StoreKey k) k)) m
-  , Requester t m
-  , Request m ~ StorageRequest k
-  , Response m ~ StorageResponse k
-  ) => MonadStorage k t m where
-  fetchAll = ask
-  fetchOne dId = ffor ask (\dMap -> ffor2 dId dMap M.lookup)
-  insert eUser = do
-    dMap <- ask
-    eRes <- requesting ((\u -> StoreReq (Nothing, Just u)) <$> eUser)
-    pure $ ffor eRes (\(StoreRes (x, _)) -> x)
-  update eBoth = requesting_ $ ffor eBoth (\(i, u) -> StoreReq (Just i, Just u))
-  delete eId = requesting_ . ffor eId $ \i -> StoreReq (Just i, Nothing)
+class MonadKVStore e t m | m -> t where
+  getKV :: Dynamic t (StoreKey e) -> m (Dynamic t (Maybe e))
+  getKVAll :: m (Dynamic t (Map (StoreKey e) e))
+  putKV :: Event t (StoreKey e, Maybe e) -> m ()
+  putKVAll :: Event t (Map (StoreKey e) e) -> m ()
 
-newtype StorageT k t m a = UserT
-  { unUserT :: ReaderT (Dynamic t (Map (StoreKey k) k)) (RequesterT t (StorageRequest k) (StorageResponse k) m) a
+
+newtype KVStoreT t k m a = KVStoreT
+  { unKVStoreT :: ReaderT (Dynamic t (Map (StoreKey k) k)) (EventWriterT t [KVStoreRequest k] m) a
   } deriving ( Functor
              , Applicative
              , Monad
+             , MonadFix
+             , MonadIO
+#ifndef ghcjs_HOST_OS
+             , MonadJSM
+#endif
+             , MonadSample t
+             , MonadHold t
              , PostBuild t
              , NotReady t
              , DomBuilder t
-             , MonadSample t
-             , MonadHold t
              )
-deriving instance (Monad m, key ~ StoreKey k) => MonadReader (Dynamic t (Map key k)) (StorageT k t m)
+
+instance MonadTrans (KVStoreT t k) where
+  lift = KVStoreT . lift . lift
+
+instance (MonadHold t m, MonadFix m, Adjustable t m) => Adjustable t (KVStoreT t k m) where
+  runWithReplace a b = KVStoreT $ runWithReplace (coerce a) (coerceEvent b)
+  traverseIntMapWithKeyWithAdjust a b c = KVStoreT $ traverseIntMapWithKeyWithAdjust (coerce a) b c
+  traverseDMapWithKeyWithAdjustWithMove a b c = KVStoreT $ traverseDMapWithKeyWithAdjustWithMove (coerce a) b c
+
+instance PerformEvent t m => PerformEvent t (KVStoreT t k m) where
+  type Performable (KVStoreT t k m) = Performable m
+  performEvent_ = lift . performEvent_
+  performEvent = lift . performEvent
+
+instance (Ord (StoreKey k), Monad m, Reflex t) => MonadKVStore k t (KVStoreT t k m) where
+  getKVAll = KVStoreT ask
+  getKV dId = KVStoreT $ ffor ask (\dMap -> ffor2 dId dMap M.lookup)
+  putKV = KVStoreT . tellEvent . fmap ((:[]) . KVUpdateOne)
+  putKVAll = KVStoreT . tellEvent . fmap ((:[]) . KVUpdateAll)
+
+data KVStoreRequest e
+  = KVUpdateOne (StoreKey e, Maybe e)
+  | KVUpdateAll (Map (StoreKey e) e)
+
+runKVStoreReqests :: Ord (StoreKey k) => [KVStoreRequest k] -> Map (StoreKey k) k -> Map (StoreKey k) k
+runKVStoreReqests = foldr ((.) . runReq) id
+  where
+    runReq (KVUpdateOne (k, mv)) = M.alter (const mv) k
+    runReq (KVUpdateAll m) = const m
 
 
-instance (MonadHold t m, MonadFix m, Adjustable t m) => Adjustable t (StorageT k t m) where
-  runWithReplace a b = UserT $ runWithReplace (coerce a) (coerceEvent b)
-  traverseIntMapWithKeyWithAdjust a b c = UserT $ traverseIntMapWithKeyWithAdjust (coerce a) b c
-  traverseDMapWithKeyWithAdjustWithMove a b c = UserT $ traverseDMapWithKeyWithAdjustWithMove (coerce a) b c
+runKVStoreTPure ::
+     (PerformEvent t m, MonadHold t m, MonadFix m, Ord (StoreKey k))
+  => Map (StoreKey k) k
+  -> KVStoreT t k m a
+  -> m a
+runKVStoreTPure ini f = do
+  rec
+    dMap <- foldDyn runKVStoreReqests ini eReq
+    (a, eReq) <- runEventWriterT (runReaderT (unKVStoreT f) dMap)
+  pure a
 
-instance (Monad m, Reflex t) => Requester t (StorageT k t m) where
-  type Request (StorageT k t m) = StorageRequest k
-  type Response (StorageT k t m) = StorageResponse k
-  requesting = UserT . requesting
-  requesting_ = UserT . requesting_
-
-runUserT :: (PerformEvent t m, MonadHold t m, MonadFix m, Ord (StoreKey k)) => StorageT k t m a -> m a
-runUserT f = mdo
-  dMap <- foldDyn ($) M.empty eUpdate
-  (a, eReq) <- flip runRequesterT eRes . flip runReaderT dMap $ unUserT f
-  let eUpdate = ffor eReq $
-        foldr (.) id .
-        fmap (\(_ :=> StoreReq (i, u)) -> M.alter (const u) i) .
-        requesterDataToList
-  eRes <- performEvent $ ffor eReq $ traverseRequesterData pure
+runKVStoreTStorage ::
+     ( PerformEvent t m
+     , MonadHold t m
+     , MonadFix m
+     , Ord (StoreKey k)
+     , FromJSONKey (StoreKey k)
+     , FromJSON k
+     , ToJSONKey (StoreKey k)
+     , ToJSON k
+     , MonadJSM m
+     , MonadJSM (Performable m)
+     )
+  => Storage
+  -> Text
+  -> KVStoreT t k m a
+  -> m a
+runKVStoreTStorage store key f = do
+  ini <- liftJSM $ (decode . BC.pack . T.unpack =<<) <$> getItem store key
+  rec
+    dMap <- foldDyn runKVStoreReqests (fromMaybe M.empty ini) eReq
+    (a, eReq) <- runEventWriterT (runReaderT (unKVStoreT f) dMap)
+  performEvent_ $ setItem store key . T.pack . BC.unpack . encode <$> updated dMap
   pure a
