@@ -26,7 +26,7 @@ main = debugWrapper $ \refreshMiddleware registerContext -> do
   runSettings (setPort 3000 . setTimeout 3600 $ defaultSettings) app
 
 frontend :: JSM ()
-frontend = mainWidgetWithHead (pure ()) $ runServiceWorkerT "sw.js" (ServiceWorkerOptions $ Just ".") $ do
+frontend = mainWidgetWithHead (pure ()) $ runServiceWorkerT "sw.js" (ServiceWorkerOptions $ Just ".") (Just ())$ do
   eReg <- fmap (fmap unServiceWorkerRegistration) . updated <$> getSWRegistration
   _ <- performEvent $ ffor eReg $ \reg -> liftJSM $ jsg ("console" :: Text) ^. js1 ("log" :: Text) reg
   dSub <- getPushSubscription

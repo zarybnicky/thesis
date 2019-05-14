@@ -4,6 +4,7 @@
 #+LATEX_CLASS: fitthesis
 #+LATEX_CLASS_OPTIONS: [english,odsaz]
 #+BIND: org-latex-title-command ""
+#+BIND: org-latex-default-figure-position "tb"
 # zadani = includes zadani.pdf
 # print = B&W links and logo
 # cprint = B&W links, color logo
@@ -57,8 +58,6 @@ components (Chapter 6), and conclude with four separate case studies (Chapter
 
 * What is a PWA?
 ** Web development trends
-TODO: Maybe too short paragraphs, connect them?
-
 Today, web pages are more than just static HTML markup. We have moved from the
 Web without JavaScript where any interactions needed to be processed by the
 server, through using JavaScript just for animations and small ease-of-use
@@ -185,7 +184,11 @@ underlying device capabilities, sharing via other applications and the device
 credential storage.
 
 * Web frameworks of today
-TODO: Chapter intro
+As frontend applications grow more complex, so do the frameworks in which they
+are build. Today's frontend framework is no less complex than a desktop or a
+server framework, with a large number of capabilities. In this section, we will
+look into what is expected of a frontend framework, which features they usually
+support and what we will need to look for in Haskell libraries.
 
 ** Features of Web frameworks
 The basis of a web framework is the /UI toolkit/, which defines the structure,
@@ -280,8 +283,7 @@ application URLs is rendered all at once and saved so that the server does not
 need to render the HTML for every request. These techniques are usually part of
 a framework's /supporting tools/, about which we will talk next.
 
-TODO: A separate sub-section "Supporting tools"?
-
+*** Supporting tools
 Developers from different ecosystems have wildly varying expectations on their
 tools. A\nbsp{}Python developer might expect just a text editor and an
 interpreter, whereas a JVM or .NET developer might not be satisfied with
@@ -374,11 +376,9 @@ several projects that attempt to alleviate this problem by combining a set of
 libraries into a more cohesive framework closer in scope to Angular.
 
 * Haskell and the Web
-TODO: Chapter intro
-
 ** Haskell
 #+CAPTION: An example of a web server in Haskell label:ex-haskell
-#+ATTR_LATEX: :options frame=single
+#+ATTR_LATEX: :placement [!bp] :options frame=single
 #+BEGIN_SRC haskell :exports code
   type HackageAPI =
     "users" :> Get '[JSON] [User] :<|>
@@ -473,7 +473,7 @@ combinator library on top of them. There is an example of Reflex code in Listing
 ref:ex-reflex, where =eClick= is an event of unit values and =dCount= is a value
 containing a dynamically changing integer.
 
-#+CAPTION: An example of Reflex code (a counter) label:ex-reflex
+#+CAPTION: An example of a counter in Reflex label:ex-reflex
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   main :: IO ()
@@ -496,8 +496,8 @@ which all local variables from the =where= clause are bound in the expression =A
 {..}=. In particular, you can see the =Action=, the =model= (a simple integer), the
 =update= function, and the =view=, which together form the basis of the application.
 
-#+CAPTION: An example of Miso code (a counter) label:ex-miso
-#+ATTR_LATEX: :options frame=single
+#+CAPTION: An example of a counter in Miso label:ex-miso
+#+ATTR_LATEX: :placement [!bp] :options frame=single
 #+BEGIN_SRC haskell
   data Action = AddOne
     deriving Eq
@@ -529,7 +529,7 @@ competitors. An example is included in Listing ref:ex-concur, where you can see 
 operator =<|>= used for combining widgets inside =main= and =>>= for sequencing in
 =increment1=.
 
-#+CAPTION: An example of Concur code (a counter) label:ex-concur
+#+CAPTION: An example of a counter in Concur label:ex-concur
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   main :: IO ()
@@ -582,6 +582,7 @@ size has been improved to the level of a common JavaScript application, however,
 so that is not a critical concern. /Prerendering/ is also supported by Miso and
 Reflex, which helps to speed up load times as well.
 
+*** Supporting tools
 Moving on to the topic of /build tools/: there are three main options in Haskell:
 Cabal v2 cite:cabal, Stack cite:stack, and Nix. Cabal is the original build tool
 for Haskell, which gained a bad reputation for some of its design decisions (the
@@ -736,8 +737,8 @@ application start-up, changing it according to user navigation actions, storing
 the navigation state for the rest of the application. In types, this might be
 expressed as shown in Listing ref:router-api.
 
-#+CAPTION: Router API label:router-api
-#+ATTR_LATEX: :options frame=single
+#+CAPTION: Router: desired API label:router-api
+#+ATTR_LATEX: :placement [!bp] :options frame=single
 #+BEGIN_SRC haskell
 parseRoute :: URL -> Route app
 dispatchRoute :: Route app -> m ()
@@ -791,7 +792,7 @@ web routing. An API defined using Servant is merely a type, a tree of type-level
 terms composed using type operators. This API type is then interpreted using
 type-level functions into value-level functions, e.g.\nbsp{}routers.
 
-#+CAPTION: Servant API definition label:servant-api
+#+CAPTION: An example of a Servant API label:servant-api
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   data (:>) (a :: Type) (b :: k)
@@ -825,8 +826,8 @@ for individual endpoints are composed together using the value-level operator
 =server=. A client for the API is not created by composition but by decomposition
 of the =:<|>= constructor as shown in the last part of the listing.
 
-#+CAPTION: Servant Generic API definition label:servant-generic-api
-#+ATTR_LATEX: :options frame=single
+#+CAPTION: An example of a Servant Generic API label:servant-generic-api
+#+ATTR_LATEX: :placement [!bp] :options frame=single
 #+BEGIN_SRC haskell
   data UserAPI = UserAPI
     { _getUsers :: "users" :> QueryParam "sort" SortBy :> Get '[JSON] [User]
@@ -934,7 +935,7 @@ something like Listing ref:mtl-api, where first two constraints of =userView=
 would be executed using the function =runApp=, with the remaining =MonadWidget=
 being executed by the top-level rendering function.
 
-#+CAPTION: MTL-based API label:mtl-api
+#+CAPTION: Router: types of application code using MonadRouter label:mtl-api
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   userView ::
@@ -963,6 +964,37 @@ repository.
 We will start with the client-side router, defining the routes type and the
 handlers. This is where we will see how to create a new interpretation of a
 Servant API type.
+
+#+CAPTION: Router: transformation of a Servant API into a client router label:router-hasapp
+#+ATTR_LATEX: :placement [!b] :options frame=single
+#+BEGIN_SRC haskell
+  data App :: Type
+
+  class HasApp api where
+    type MkApp api (m :: Type -> Type) :: Type
+    route :: Proxy api -> MkApp api m -> Loc -> Either Err (m ())
+
+  instance (HasApp a, HasApp b) => HasApp (a :<|> b) where
+    type MkApp (a :<|> b) m = MkApp a m :<|> MkApp b m
+    route _ (a :<|> b) = route (Proxy @a) a <> route (Proxy @b) b
+
+  instance (FromHttpApiData a, HasApp s) => HasApp (Capture sy a :> s) where
+    type MkApp (Capture s a :> sub) m = a -> MkApp s m
+    route _ f loc = case locPath loc of
+      [] -> Left Err404
+      x:xs -> case parseUrlPiece x of
+        Right p -> route (Proxy @sub) (f p) (loc { locPath = xs })
+        Left _ ->
+          let s = T.pack $ symbolVal (Proxy @sy)
+          in Left Err400
+
+  instance HasApp App where
+    type MkApp App m = m ()
+    route _ f loc = case locPath loc of
+      [] -> Right f
+      [""] -> Right f
+      _ -> Left Err404
+#+END_SRC
 
 A regular Servant type has endpoints that end with the terminator =Verb=, which
 represents a HTTP verb like GET or POST and the return type of the
@@ -995,37 +1027,6 @@ The =App= instance is the end of the recursion chain, where neither =MkApp= nor
 action, and the =route= function only checks that we have parsed the entire URL,
 and returning the final handler.
 
-#+CAPTION: Router: API types label:router-hasapp
-#+ATTR_LATEX: :options frame=single
-#+BEGIN_SRC haskell
-  data App :: Type
-
-  class HasApp api where
-    type MkApp api (m :: Type -> Type) :: Type
-    route :: Proxy api -> MkApp api m -> Loc -> Either Err (m ())
-
-  instance (HasApp a, HasApp b) => HasApp (a :<|> b) where
-    type MkApp (a :<|> b) m = MkApp a m :<|> MkApp b m
-    route _ (a :<|> b) = route (Proxy @a) a <> route (Proxy @b) b
-
-  instance (FromHttpApiData a, HasApp s) => HasApp (Capture sy a :> s) where
-    type MkApp (Capture s a :> sub) m = a -> MkApp s m
-    route _ f loc = case locPath loc of
-      [] -> Left Err404
-      x:xs -> case parseUrlPiece x of
-        Right p -> route (Proxy @sub) (f p) (loc { locPath = xs })
-        Left _ ->
-          let s = T.pack $ symbolVal (Proxy @sy)
-          in Left Err400
-
-  instance HasApp App where
-    type MkApp App m = m ()
-    route _ f loc = case locPath loc of
-      [] -> Right f
-      [""] -> Right f
-      _ -> Left Err404
-#+END_SRC
-
 This, in summary, is what it looks like to interpret a Servant type. As for the
 server part of a router, I will not include the relevant code here, however, as
 the Servant server uses special machinery to run a series of optimizations that
@@ -1041,23 +1042,7 @@ additional type parameter, a context using which it is possible to pass values
 to API combinators. The =App= instance reads a rendering function from the
 context, runs the route handler using it, and returns the result.
 
-Back to the client-side router: while we have a =route= function that will return
-either an error or a widget, we need to connect it to the browser in some way.
-To do that, we need a component for manipulating the URL, either using the
-Location API or hash fragment changes, and when we have it, we can write the
-router itself.
-
-In Listing ref:router-url, we have a simplified version of the library
-router. In there, we have a function that takes a tree of handlers, a URL
-manipulation component, and an action to show possible routing errors, and
-produces a piece of dynamically changing content. The function uses /recursive do/
-to make it possible to refer to variable before they are defined (the =rec=
-keyword). Reading from the top, we obtain a dynamic containing the current
-location, use it to run our =route= function defined above, rendering any errors,
-and finally run this dynamically changing piece of content to get the event that
-changes the current URL.
-
-#+CAPTION: Router: URL binding label:router-url
+#+CAPTION: Router: top-level route dispatcher label:router-url
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   runRouter ::
@@ -1078,6 +1063,22 @@ changes the current URL.
 
 #+END_SRC
 
+Back to the client-side router: while we have a =route= function that will return
+either an error or a widget, we need to connect it to the browser in some way.
+To do that, we need a component for manipulating the URL, either using the
+Location API or hash fragment changes, and when we have it, we can write the
+router itself.
+
+In Listing ref:router-url, we have a simplified version of the library
+router. In there, we have a function that takes a tree of handlers, a URL
+manipulation component, and an action to show possible routing errors, and
+produces a piece of dynamically changing content. The function uses /recursive do/
+to make it possible to refer to variable before they are defined (the =rec=
+keyword). Reading from the top, we obtain a dynamic containing the current
+location, use it to run our =route= function defined above, rendering any errors,
+and finally run this dynamically changing piece of content to get the event that
+changes the current URL.
+
 The second part of the router are links from one part of the application to
 another. To do that, we need another interpretation of the API type, as we need
 to process a dynamically changing input into a link, and not produce an action
@@ -1093,7 +1094,7 @@ use it. The =toAppLink= function is again recursive, and it builds up a URL from
 the endpoint type and from the provided arguments, starting from an empty URL.
 
 #+CAPTION: Router: in-application links label:router-link
-#+ATTR_LATEX: :options frame=single
+#+ATTR_LATEX: :placement [!b] :options frame=single
 #+BEGIN_SRC haskell
   viewUserItemsLink :: Event t (UserId, ItemType) -> m ()
   viewUserItemsLink = appLink viewUserItemsRoute
@@ -1188,7 +1189,7 @@ HTTP, in the client for any interactions with the worker (e.g.\nbsp{}to subscrib
 push notifications), and on the server for sending the notifications, as
 illustrated by Listing ref:service-worker-api.
 
-#+CAPTION: Service Worker API label:service-worker-api
+#+CAPTION: Service Worker: desired API label:service-worker-api
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   generateWorker :: ServiceWorker push -> ByteString
@@ -1198,10 +1199,10 @@ illustrated by Listing ref:service-worker-api.
 #+END_SRC
 
 While I had originally intended to write the service worker directly in Haskell
-and compile it using the GHCJS, there is an obstacle that prevents that: service
+and compile it using GHCJS, there is an obstacle that prevents that: service
 workers do not run in the same way that a regular browser application does. A
 browser can terminate a service worker at any time to save computing resources,
-and restarts it when it is needed to process application events, as a service
+and restarts it when it is needed to process incoming events, as a service
 worker is expected to contain mostly just event handlers.
 
 This is, however, at odds with the GHCJS execution model which relies on
@@ -1225,7 +1226,7 @@ forms of JavaScript code, expressions and statements. It also supports injection
 of Haskell variables using anti-quotation. An example of JMacro code can be seen
 in Listing ref:jmacro.
 
-#+CAPTION: An example of JMacro label:jmacro
+#+CAPTION: An example of JMacro code label:jmacro
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   handleFetch :: JExpr -> JStat
@@ -1242,79 +1243,156 @@ in Listing ref:jmacro.
 #+END_SRC
 
 *** Implementation
-Of the three features of service workers that we want to support (prefetch,
-fetch control, push notifications), prefetch is the simplest. It only requires
-adding a bit of code to the =install= event listener in which we add the required
-files into cache, as can be seen in Listing ref:prefetch.
-
-#+CAPTION: Service Worker: prefetch label:prefetch
-#+ATTR_LATEX: :options frame=single
+#+CAPTION: Service Worker: generating prefetch JavaScript label:prefetch
+#+ATTR_LATEX: :placement [b] :options frame=single
 #+BEGIN_SRC haskell
-  generatePrefetch :: Text -> [Text] -> JStat
-  generatePrefetch cacheName urls = [jmacro|
-    return caches.open(`(cacheName)`).then(function (cache) {
+  generatePrefetch :: Text -> [Text] -> JExpr
+  generatePrefetch cacheName urls = [jmacroE|
+    caches.open(`(cacheName)`).then(function (cache) {
       return cache.addAll(`(urls)`);
     });
   |]
 #+END_SRC
 
-Fetch is a bit more involved. In the onFetch handler, we need to find out if the
-outgoing request matches any of the configured filters, so we go through the
-filters in order and if a request matches, the selected cache strategy is
-executed.
+Of the three features of service workers that we want to support (prefetch,
+fetch control, push notifications), prefetch is the simplest. It only requires
+adding a bit of code to the =install= event listener in which we add the required
+files into cache, as can be seen in Listing ref:prefetch.
 
-There are many possible behaviors with regards to caching and network access. We
-cannot cover all possible cases, but we can cover the most common ones. These
-are encoded as a plain sum type in Listing ref:cache-strategy. Most strategy
-names are self-explanatory, I will mention only =StaleWhileRevalidate=, which
-serves the currently cached version of a resource and simultaneously attempts to
-fetch a newer one, which will then be stored into cache for later requests.
+Supporting fetch control is a bit more involved. In the =onFetch= event handler,
+we need to find out if the outgoing request matches any of the configured
+filters, so we go through the filters in order and execute the selected cache
+strategy it if matches. There are, however, many possible behaviors with regards
+to caching and network access. We cannot cover all possible cases, but we can
+cover the most common ones, namely the ones available in Workbox cite:workbox, a
+suite of utilities for service workers from Google.
 
-#+CAPTION: Cache strategies label:cache-strategy
-#+ATTR_LATEX: :options frame=single
+#+CAPTION: Service Worker: cache strategies type and generation label:cache-strategy
+#+ATTR_LATEX: :placement [p] :options frame=single
 #+BEGIN_SRC haskell
   data CacheStrategy
-    = CacheFirst Text
-    | CacheOnly Text
-    | NetworkFirst Text
+    = CacheOnly Text
     | NetworkOnly
+    | CacheFirst Text
+    | NetworkFirst Text
     | StaleWhileRevalidate Text
     deriving (Eq, Ord, Show)
+
+  renderCacheStrategy :: JExpr -> JExpr -> CacheStrategy -> JStat
+  renderCacheStrategy evt req (CacheFirst cacheName) = [jmacro|
+    return `evt`.respondWith(
+      caches.open(`cacheName`).then(function (cache) {
+        return cache.match(`req`).then(function (res) {
+          return res || fetch(`req`);
+        });
+      })
+    );
+  |]
 #+END_SRC
 
-The encoding for request matchers that I chose is not a complex one: a request
-is matched on its method, path, and query string. The method matcher accepts
-three values, any method, a specific method or a list of possible ones. There
-are two types of path matchers: a regular expression matcher and a path
-component-based one, in which e.g.\nbsp{}the path =/article/5= is matched using the
-matcher =matchPath "article" ./ matchInteger=. The query string matcher is a list
-of key-value matchers. While this is not the most expressive or fluent encoding
-of a request matcher, it suffices for common use-cases of fetch control, as with
-the limited palette of cache strategies.
+#+CAPTION: Service Worker: request matching types label:request-types
+#+ATTR_LATEX: :placement [p] :options frame=single
+#+BEGIN_SRC haskell
+  data RequestMatcher = RequestMatcher
+    { rmMethod :: MethodMatcher
+    , rmQuery :: QueryMatcher
+    , rmPath :: PathMatcher
+    }
 
-Handling push notifications is not trivial either. While using them in the most
-basic way is as simple as calling =showNotification= on the body of the incoming
-message, it is possible to do more, like passing the notification to the
-application using =postMessage=. Like with cache strategies, it is not possible to
-cover all possible use-cases with predefined options so again, we add the common
-ones. This time, they need to be encoded as a /GADT/ (Generic Algebraic Data Type),
-an extension of Haskell data types that allows us to specialize the type of a data
-constructor, which we can use to specialize the types of sending and receiving
-functions in client and server code.
+  data MethodMatcher
+    = MethodAny
+    | MethodList [Method]
 
-The options I have selected for the library are included in Listing
-ref:push-behaviors. =Ignore= has the type =Void= as its parameter, which is an empty
-type that can have no valid values (excluding =undefined=), which means that it is
-impossible to call a sending function in server code. =Ignore= has no handler code
-generated in the service worker. =ViewOnly= displays a notification without any
-further handling. =ViewAndOpen= and =ViewAndProcess= both add another event handler
-that listens for the user clicking on the notification, which will open the
-application if closed, and switch to the application window if open but not
-focused. =ViewAndProcess= and =ProcessOnly= will also pass the message to the
-application for further processing via =postMessage=.
+  newtype QueryMatcher
+    = QueryMatcher [(Text, ValueMatcher)]
 
-#+CAPTION: Push behaviors label:push-behaviors
+  data PathMatcher
+    = PathComponentMatcher PathComponentMatcher
+    | PathRegexMatcher Text
+
+  data PathComponentMatcher
+    = PathMatchAny
+    | PathMatchEnd
+    | PathComponent ValueMatcher PathComponentMatcher
+#+END_SRC
+
+These cache strategies are encoded as a plain sum type in Listing
+ref:cache-strategy. Of these, =CacheOnly= and =NetworkOnly= fetch a resource only
+from a cache or the network respectively, whereas in =CacheFirst= and
+=NetworkFirst=, a cache or the network is only the first location attempted, with
+the other location being the fallback. =StaleWhileRevalidate= serves the currently
+cached version of a resource and simultaneously attempts to fetch a newer one,
+which will then be stored into cache for later requests.
+
+As for generating the JavaScript code from these strategies, the code for one of
+these five strategies is included in the second part of the listing. We need to
+=respondWith= a response to the fetch event, first looking it up in the specified
+cache and calling =fetch= to get it from the network if it is not there.
+
+The other part of supporting fetch control is matching incoming fetch requests
+to the strategies. I chose a straightforward encoding of a matcher that can
+match on the request method, path, and query string. The relevant types can be
+seen in Listing ref:request-types. The method matcher accepts either any method
+or one of a list of accepted ones. There are two types of path matchers: one for
+matching the entire path against a regular expression and one for matching
+individual path segments. The query string matcher is a list of key-value
+matchers. While this is not the most expressive or fluent encoding of a request
+matcher, it suffices for common use-cases of fetch control, similar to the
+limited palette of cache strategies.
+
+#+CAPTION: Service Worker: request matching code generation label:request-gen
 #+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell
+  renderFetchMatchers
+    :: JExpr -> JExpr -> [(RequestMatcher, CacheStrategy)] -> JStat
+  renderFetchMatchers evt req = (mconcat .) . fmap $
+    \(matcher, strategy) -> [jmacro|
+      if (`(renderMethodMatcher req (rmMethod matcher))` &&
+          `(renderQueryMatcher req (rmQuery matcher))` &&
+          `(renderPathMatcher req (rmPath matcher))`) {
+        `(renderCacheStrategy evt req strategy)`
+      }
+    |]
+
+  renderMethodMatcher :: JExpr -> MethodMatcher -> JExpr
+  renderMethodMatcher req = \case
+    MethodAny -> jsv "true"
+    MethodList ms -> [jmacroE|`req`.method.some(function (y) {
+      return y == `method`;
+    })|]
+#+END_SRC
+
+Generating the JavaScript code corresponding to such a structure is then only a
+matter of following the types, deconstructing large types into smaller ones and
+piecing together the overall functionality. A part of this code is included
+in ref:request-gen, where in =renderFetchMatchers= we can see the topmost function
+generating a single branch of a request handler.
+
+Moving on to push notifications, an =onPush= event handler in the service worker
+is called with an incoming notification object, and there are several things
+that can be done with it. Again, we only encode the most common use-cases in
+types, as can be seen in Listing ref:push-behaviors. This time, we need to use a
+/GADT/ (Generic Algebraic Data Type), an extension of Haskell data types that
+allows us to specialize the type of a data constructor, which is here used to
+encode the type of the push notification payload. This type parameter is used in
+client and server code, in the functions that send and receive notifications.
+
+=PushIgnore= has the type =Void= as its parameter, which means that it is impossible
+to send a notification with such a type, as =Void= is an empty type that can have
+no valid values (excluding =undefined=), and so =PushIgnore= does not generate any
+handler code in the service worker. =PushViewOnly= displays a notification without
+any further handling. =PushViewAndOpen= displays a notification as well, and it
+also adds another event handler that listens for the user clicking on the
+notification and opens the application if closed or switches to the application
+window if it is open. =PushViewAndProcess= and =PushProcessOnly= will send the
+payload of the message to the application  for further processing via
+=postMessage=.
+
+A part of the JavaScript generation code is also included in ref:push-behaviors,
+demonstrating the simplest =PushViewOnly= variant.
+
+#+CAPTION: Service Worker: implemented push behaviors label:push-behaviors
+#+ATTR_LATEX: :placement [!b] :options frame=single
 #+BEGIN_SRC haskell
   data PushBehavior a where
     PushIgnore :: PushConfig Void
@@ -1322,71 +1400,76 @@ application for further processing via =postMessage=.
     PushViewAndOpen :: PushConfig ()
     PushViewAndProcess :: FromJSON a => PushConfig a
     PushProcessOnly :: FromJSON a => PushConfig a
-#+END_SRC
 
-The rest of the service worker generation code consists of mostly boilerplate so
-I will skip it. The interested reader can find it on the attached data storage.
-
-The server part of this component is made up of two parts: generating and
-serving the service worker code, and sending push notifications.
-
-Serving the service worker is done by extending the Servant code for rendering
-values into transport formats where we create a new content type =JS= and specify
-how to render a service worker into =JS=. The code is quite simple and is included in
-Listing ref:sw-server.
-
-#+CAPTION: Service Worker: serving the JavaScript label:sw-server
-#+ATTR_LATEX: :options frame=single
-#+BEGIN_SRC haskell
-  data JS
-  instance Accept JS where
-    contentType _  = "application" // "javascript"
-
-  instance MimeRender JS (ServiceWorker p) where
-    mimeRender _ v = generateServiceWorker v
-#+END_SRC
-
-Adding the ability to send push notifications is slightly more complex. The
-capability of sending a notification is specified by a type-class =PushNotify=
-with a single method, =sendPushNotification=. This type-class is then implemented
-by a =ReaderT= monad transformer that contains required configuration information
-like signing keys and push server URLs.
-
-The code that demonstrates this is included in Listing ref:sw-server-push. The
-=PushNotification= type is slightly simplified, there are more elements in the
-real type. The type class =HasPushConfig= contains one value, a lens, which can be
-described as a combined getter and a setter. It is used here because an
-application usually has only a single =ReaderT= with the entire application
-runtime context, so a lens is used as a getter to fetch the =PushConfig= from the
-context.
-
-#+CAPTION: Service Worker: push notifications on the server label:sw-server-push
-#+ATTR_LATEX: :options frame=single
-#+BEGIN_SRC haskell
   data PushNotification a = PushNotification
-    { pnTitle :: Text
-    , pnDescription :: Maybe Text
-    , pnData :: a
+    { title :: Text
+    , body :: Maybe Text
+    , payload :: a
     }
 
-  class PushNotify a m | m -> a where
-    sendPushNotification :: PushProvider -> PushNotification a -> m ()
-
-  class HasPushConfig a where
-    pushConfig :: Lens a PushConfig
-
-  instance (MonadReader cfg m, HasPushConfig cfg) => PushNotify a m where
-    sendPushNotification p x = do
-      pushConfig <- views pushConfig
-      sendPushNotificationImpl pushConfig p x
+  renderPushBehavior :: PushBehavior a -> JStat
+  renderPushBehavior PushViewOnly = [jmacro|
+    self.addEventListener('push', function (evt) {
+      var x = evt.data.json();
+      evt.waitUntil(self.registration.showNotification(x.title, x));
+    });
+  |]
 #+END_SRC
 
-The browser part that receives push notifications from the service worker
-is very simple: we listen to the =postMessage= event and if the incoming message
-has the right type, we attempt to deserialize the JSON value into its Haskell
-equivalent, and then trigger a Reflex event.
+#+CAPTION: Service Worker: client monad transformer label:sw-client-mtl
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell
+  newtype ServiceWorkerT t n m a = ServiceWorkerT
+    { unServiceWorkerT :: ReaderT (ServiceWorkerState t)
+         (EventWriterT t (Maybe PushSubscriptionOptions) m) a
+    }
 
-TODO: include browser implementation listing
+  class MonadServiceWorker t a m | m -> a t where
+    getSWRegistration :: m (Dynamic t (Maybe ServiceWorkerRegistration))
+    getPushSubscription :: m (Dynamic t (Maybe PushSubscription))
+    getPushPermissionState :: m (Dynamic t PermissionState)
+    pushSubscribe :: Event t PushSubscriptionOptions -> m ()
+    pushUunsubscribe :: Event t () -> m ()
+    showNotification :: Event t (Text, Maybe NotificationOptions) -> m ()
+    onPushNotification :: m (Event t a)
+#+END_SRC
+
+The browser part of a service worker library does not need much. The application
+needs to only register a service worker, pointing the browser at the URL of the
+worker source file, and only needs to do more if it wants to use push
+notifications. In that case, it is necessary to ask the user for permission and
+send the notification subscription details to the server. To achieve this, we
+can combine an =EventWriter= and a =MonadReader= into a separate monad transformer
+=ServiceWorkerClientT=, as in Listing ref:sw-client-mtl. There are several pieces
+of state that we need to keep track of, the service worker registration object,
+the push notification subscription, and the notification permission state, which
+we combine into =ServiceWorkerState=. There are only two functions that can change
+this state though, =subscribe= and =unsubscribe=, which is where the =EventWriter=
+comes into play. The class =MonadServiceWorker= contains several methods that
+expose these values and capabilities, which we can then interpret in terms of our
+monad transformer, as can be seen in the second part of the listing.
+
+To use these capabilities and subscribe to push notifications, we need to call
+the interpreter of =ServiceWorkerT=, =runServiceWorkerT=, which calls the
+corresponding browser methods and manages its internal state, and then call
+=subscribe= somewhere in the application code. We then need to send the details of
+the subscription to the server so that it can generate push notifications, which
+we can do by listening to updates to the notification subscription, as can be
+seen in ref:sw-client-demo.
+
+#+CAPTION: Service Worker: application code demonstration label:sw-client-demo
+#+ATTR_LATEX: :placement [b] :options frame=single
+#+BEGIN_SRC haskell
+  app :: MonadWidget t m => m ()
+  app = runServiceWorkerT "/sw.js" serviceWorkerOptions $ do
+    eSubscribe <- button "Subscribe"
+    pushSubscribe eSubscribe
+
+    eNotify <- onPushNotification
+    dAllNotifications <- foldDyn (:) [] eNotify
+    el "ul" $ simpleList dAllNotifications $ \notification ->
+      el "li" (display notification)
+#+END_SRC
 
 *** Possible extensions
 The obvious follow-up work is supporting more features of service workers:
@@ -1416,8 +1499,8 @@ demonstrates more complex usage of fetch control, dispatching requests based on
 their destination (the originator of a request, e.g.\nbsp{}\ ="style"= corresponds
 to a =<style>= tag or a CSS include).
 
-#+CAPTION: Service worker using a JavaScript DSL label:jshark
-#+ATTR_LATEX: :options frame=single
+#+CAPTION: Service Worker: alternative style using a JavaScript DSL label:jshark
+#+ATTR_LATEX: :placement [t] :options frame=single
 #+BEGIN_SRC haskell
   sw :: WorkerM ()
   sw = self `on` fetch $ \event -> do
@@ -1437,7 +1520,18 @@ browser, to produce an API that exactly corresponds to the underlying JavaScript
 one, only with strong types. Generating an API from WebIDL has a precedent in
 the library =ghcjs-dom=, a library that provides a strongly-typed interface to
 most browser APIs, which generates most of its code in this way.
+
 ** Storage
+#+CAPTION: Storage: implemented API label:storage-api
+#+ATTR_LATEX: :placement [!b] :options frame=single
+#+BEGIN_SRC haskell
+  class MonadKVStore e t m | m -> t where
+    get :: Dynamic t (StoreKey e) -> m (Dynamic t (Maybe e))
+    getAll :: m (Dynamic t (Map (StoreKey e) e))
+    put :: Event t (StoreKey e, Maybe e) -> m ()
+    putAll :: Event t (Map (StoreKey e) e) -> m ()
+#+END_SRC
+
 A storage library can be implemented in many ways, from the simplest variations
 that store single values or key-value maps, all the way to a full-fledged
 database and query engine.
@@ -1451,16 +1545,6 @@ bindings to a database.
 The API of this storage is simple, as shown by Listing ref:storage-api, but it
 can serve several purposes: as a cache, as an offline storage, or as a way to
 directly access a database when rendering a Reflex application on the server.
-
-#+CAPTION: Storage API label:storage-api
-#+ATTR_LATEX: :options frame=single
-#+BEGIN_SRC haskell
-  class MonadKVStore e t m | m -> t where
-    get :: Dynamic t (StoreKey e) -> m (Dynamic t (Maybe e))
-    getAll :: m (Dynamic t (Map (StoreKey e) e))
-    put :: Event t (StoreKey e, Maybe e) -> m ()
-    putAll :: Event t (Map (StoreKey e) e) -> m ()
-#+END_SRC
 
 Implementing an instance for such a type is not complicated. To
 bind to a database backend on the server, we can run arbitrary code in the
@@ -1492,9 +1576,46 @@ Another option would be to expand the API to support more complicated SQL-like
 queries, so that it can better serve as a client-side database.
 
 ** Web App Manifest
-This component does not require much description. It only contains several data
-types, transcribed almost line for line from the official manifest specification
-cite:webapp-manifest, and the functions to serialize it to and from JSON.
+A Web App Manifest is a special file containing JSON data linked from the HTML
+of an application. Its structure is defined in the official manifest
+specification cite:webapp-manifest. There is not much code to write in this
+component, it suffices to transcribe the data types from the specification and
+write the functions to serialize the data types to and from JSON, together with
+a few helper functions to simplify the manifest definition. The main type
+=WebManifest= is included in Listing ref:manifest-type.
+
+#+CAPTION: Web App Manifest: main type label:manifest-type
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell
+  data WebManifest = WebManifest
+    { dir :: Maybe TextDirectionType
+    , lang :: Maybe Text
+    , name :: Maybe Text
+    , short_name :: Maybe Text
+    , description :: Maybe Text
+    , icons :: [ImageResource]
+    , screenshots :: [ImageResource]
+    , categories :: [Text]
+    , oarc_rating_id :: Maybe Text
+    , start_url :: Maybe AppURI
+    , display :: Maybe DisplayModeType
+    , orientation :: Maybe OrientationLockType
+    , theme_color :: Maybe AppURI
+    , background_color :: Maybe Text
+    , scope :: Maybe AppURI
+    , serviceworker :: Maybe ServiceWorkerRegistrationObject
+    , related_applications :: [ExternalApplicationResource]
+    , prefer_related_applications :: Maybe Bool
+    } deriving (Generic, FromJSON, ToJSON)
+#+END_SRC
+
+As with the "Possible extensions" section in the chapter on service workers,
+however, it is possible to mostly obsolete this component by generating all its
+data types from WebIDL, the Web interface definition language, which should
+remove the need to write any code manually while guaranteeing correctness.
+However, I have only discovered the possibility of this approach only in the
+final stages of writing this thesis, which means that it is left as a potential
+follow-up project.
 
 * Application development
 In this chapter we will go through some principles and techniques that I used
@@ -1640,45 +1761,12 @@ for any errors or warnings, which are then reported on the relevant lines.
 Other editors like Visual Studio Code or Atom are also supported using the
 Language Server Protocol and its Haskell server Haskell IDE Engine.
 
-The interested reader can try editing Haskell in a preconfigured Emacs or Visual
-Studio Code using the Nix expressions in the directories
-=src-snippets/editor-emacs/= or =src-snippets/editor-vscode/= in the included files.
-
-TODO: Niceties: hlint for code style and avoiding dumb errors, it is possible to
-extend using project-specific rules/suggestions; hoogle for easy access
-to the correct versions of API doc.
-
-** Workflow
-TODO: When starting a project, create a project skeleton - *.cabal file,
-default.nix and possibly a submodule of reflex-platform, .envrc for direnv
-support, and source code stubs (src/Main.hs).
-
-TODO: include a listing of src/default.nix for a multi-package
-TODO: include a =$ tree= of a project directory of full-stack app (src-bin/main x
-src/Project.hs (main)
-
-TODO: ghcid + cabal new-repl for testing localhost server, included as the
-script ghcid-here in =src-snippets/ghcid-here/=.
-
-TODO: If external services are necessary, use the orchestration service needed -
-NixOS containers, NixOps machines, Docker containers - according to the
-deployment strategy. It is also possible to run a database without a container,
-SQLite or gargoyle for postgres.
-
-TODO: Regarding code structure:
-- splitting frontend, common, backend packages
-- common = entities and logic, inner layer of 3layer + API definition, routes, ...
-- src-bin/main.hs only a redirect to src/Project.hs (main)
-- project-specific Prelude
-
-TODO: Components:
-- sketch HTML, then animate/bind events
-- prefer top-down data flow, do not often use top-level storage/... constraints
-  => more reusable components
-- Dynamic inputs, Event outputs
-- think hard about whether a piece of state should be local or global, it makes
-  reuse harder
-- limit recursive-do blocks, they lead to hard-to-debug errors ("causality loop")
+The interested reader can try editing Haskell in a preconfigured instance of the
+Emacs editor using the Nix expressions in the directory
+=src-snippets/editor-emacs/= on the attached data storage. Also included is a
+skeleton for a fresh project in =src-snippets/skeleton/=, which contains all
+necessary files for a browser application. The instructions for using the editor
+and running the skeleton are also included in those directories.
 
 ** Deployment
 The options for deploying a Haskell program are generally the same as deploying
@@ -1707,12 +1795,7 @@ ref:nixops-deploy.
 #+CAPTION: NixOps deployment label:nixops-deploy
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC nix
-  {
-    network.description = "Web server";
-
-    webserver = { config, pkgs, ... }: let
-      appPkgs = (import ./release.nix { inherit pkgs; });
-    in {
+  { webserver = { config, pkgs, ... }: {
       networking.firewall.allowedTCPPorts = [ 80 ];
       services.nginx.enable = true;
       services.nginx.virtualHosts.default.locations."/" = {
@@ -1720,9 +1803,9 @@ ref:nixops-deploy.
       };
       systemd.services.app-server = {
         wantedBy = [ "multi-user.target" ];
-        serviceConfig.ExecStart = "${appPkgs.server}/bin/server";
+        serviceConfig.ExecStart =
+          "${(import ./release.nix { inherit pkgs; }).server}/bin/server";
       };
-
       deployment.targetEnv = "virtualbox";
     };
   }
@@ -1737,11 +1820,11 @@ but we can also bundle them into the same package using an additional Nix build
 recipe.
 
 For a GHCJS application, such a post-processing step is nearly mandatory, as the
-JavaScript files produced by the compiler are rather large (over 5.9\nbsp{}MB for a
-simple Reflex application), but processing them with a minification tool like
-=closure-compiler= and further shrinking them with a GZIP compressor reduces the
-size to a reasonable size (1.9\nbsp{}MB minified and 350\nbsp{}kB compressed for the same
-application).
+JavaScript files produced by the compiler are rather large (over 5.9\nbsp{}MB
+for a simple Reflex application), but processing them with a minification tool
+like =closure-compiler= and further shrinking them with a GZIP compressor reduces
+the size to a reasonable size (1.9\nbsp{}MB minified and 350\nbsp{}kB compressed
+for the same application).
 
 * Case studies
 In this chapter we will go through three Reflex application in the order of
@@ -1787,7 +1870,7 @@ about when and who created or modified it, but considering this is a client-only
 application that does not need this kind of complexity, we can use the simplest
 possible solution.
 
-#+CAPTION: TodoMVC entities label:todomvc-entities
+#+CAPTION: TodoMVC: application entities label:todomvc-entities
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   data Task = Task
@@ -1841,7 +1924,7 @@ The code of this and the remaining components is not too interesting, so we can
 skip directly on the next step, the structure of the application's monad
 transformer stack.
 
-#+CAPTION: TodoMVC: New task box label:new-task-box
+#+CAPTION: TodoMVC: component for creating a new task label:new-task-box
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   newTaskBox :: MonadWidget t m => m (Event t Text)
@@ -1868,7 +1951,7 @@ which means we can nest them in an arbitrary order. The newtype of the resulting
 monad can be seen in Listing ref:todomvc-mtl, as is the type synonym that
 contains most constraints needed in application code.
 
-#+CAPTION: TodoMVC: Base monad transformer label:todomvc-mtl
+#+CAPTION: TodoMVC: base monad transformer label:todomvc-mtl
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   newtype AppT t m a = AppT
