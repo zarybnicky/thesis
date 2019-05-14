@@ -55,28 +55,15 @@ area (Chapter 5), have a look at how to create an application using these
 components (Chapter 6), and conclude with four separate case studies (Chapter
 7).
 
-** Related work
-TODO: Move to chapter 3?
-
-The volume of work in the area of frontend Haskell is not large, as the
-Haskell-to-JavaScript compiler GHCJS is only available since 2013, and also due
-to the fact that Haskell in general is only recently becoming a mainstream
-language and used in commercial projects. Academic work in this area is sparse,
-but there are several mature projects under active development, usually
-commercially sponsored. Reflex and Obelisk are two projects from Obsidian
-Systems cite:obsidian, a UI framework and a deployment tool respectively. Tweag
-cite:tweag is working on a Haskell-to-WebAssembly compiler, Asterius, and QFPL
-cite:qfpl has created many learning materials for frontend Haskell.
-
 * What is a PWA?
 ** Web development trends
 TODO: Maybe too short paragraphs, connect them?
 
-Today, web pages are more than just static HTML markup. We have moved from
-the Web without JavaScript where any interactions needed to be processed by the
-server, to using JavaScript for animations and small ease-of-use features, to
-building entire applications in JavaScript that only talk to servers in the
-background.
+Today, web pages are more than just static HTML markup. We have moved from the
+Web without JavaScript where any interactions needed to be processed by the
+server, through using JavaScript just for animations and small ease-of-use
+features, to building entire applications in JavaScript that only talk to
+servers in the background.
 
 When JavaScript received the ability to execute HTTP requests and get or save
 data in the background, a technology then called AJAX, it was only used for
@@ -198,8 +185,6 @@ underlying device capabilities, sharing via other applications and the device
 credential storage.
 
 * Web frameworks of today
-TODO: Rename chapter, "Existing Web Frameworks"?
-
 TODO: Chapter intro
 
 ** Features of Web frameworks
@@ -219,9 +204,7 @@ includes some "view logic" and variable interpolation. In some frameworks the
 whole program is a template (purely functional React), some have templates in
 separate files and pre-compile them during the build process or even in the
 browser (Angular). Templates may also contain CSS as well as in the recent
-CSS-in-JS trend.
-
-TODO: Cite CSS-in-JS
+CSS-in-JS trend cite:cssInJs.
 
 The second defining feature of frameworks is /state management/. This rather vague
 concept may include receiving input from the user, displaying the state back to
@@ -311,19 +294,16 @@ tool that takes care of building, testing, and perhaps even deploying the
 application, to the way of the IDE, where any build variant is just a few clicks
 away.
 
-TODO: generic language-specific
-TODO: time-traveling debugger
-
 /Debugging tools/ are the next area. After building an application, trying it out,
 and discovering faulty behavior, these tools help to pinpoint and fix the
-underlying error. There are generic language-specific tools, a stepping debugger
-is a typical example, and there are also framework-specific tools, like an
-explorer of the component hierarchy (React) or a time-traveling debugger
-(Redux). In the web world, all modern browsers provide basic debugging tools
-inside the "DevTools": a stepping debugger and a profiler. Some frameworks build
-on that and provide an extension to DevTools that interacts with the application
-in the current window, some provide debugging tools integrated into the
-application itself.
+underlying error. There are generic tools, a stepping debugger is a typical
+example, and there are also framework-specific tools, like an explorer of the
+component hierarchy (React) or a time-traveling debugger that can navigate
+through application state backward or forward (Redux). In the web world, all
+modern browsers provide basic debugging tools inside the "DevTools": a stepping
+debugger and a profiler. Some frameworks build on that and provide an extension
+to DevTools that interacts with the application in the current window, some
+provide debugging tools integrated into the application itself.
 
 When building or maintaining a large application with several developers, it is
 necessary to ensure good practices in all steps of the development
@@ -394,7 +374,7 @@ several projects that attempt to alleviate this problem by combining a set of
 libraries into a more cohesive framework closer in scope to Angular.
 
 * Haskell and the Web
-TODO: intro
+TODO: Chapter intro
 
 ** Haskell
 #+CAPTION: An example of a web server in Haskell label:ex-haskell
@@ -460,6 +440,16 @@ Asterius cite:asterius.
 ** Haskell ecosystem for the Web
 We will now go through Haskell libraries for Web development, using the same
 structure as we did in the chapter describing general Web framework features.
+
+The volume of work in the area of frontend Haskell is not large, as the
+Haskell-to-JavaScript compiler GHCJS is only available since 2013, and also due
+to the fact that Haskell in general is only recently becoming a mainstream
+language and used in commercial projects. Academic work in this area is sparse,
+but there are several mature projects under active development, usually
+commercially sponsored. Reflex and Obelisk are two projects from Obsidian
+Systems cite:obsidian, a UI framework and a deployment tool respectively. Tweag
+cite:tweag is working on a Haskell-to-WebAssembly compiler, Asterius, and QFPL
+cite:qfpl has created many learning materials for frontend Haskell.
 
 There is a significant focus on the semantics of libraries in the Haskell
 community, e.g.\nbsp{}writing down mathematical laws for the foundational types of a
@@ -697,19 +687,18 @@ Basic PWA reiterated:
 We will go through them one by one to see which components already exist and
 which are left to be implemented.
 
-TODO: How CSS provides responsiveness?
-
-Responsiveness is accomplished via CSS and is therefore out of scope, we are
-focusing on the JavaScript part only. The next two requirements (offline,
-cache-first networking) need to be implemented in a service worker, which is not
-covered by any existing library. Non-blocking page transitions and the use of
-History API are similar requirements that can today be implemented manually, but
-a routing component is desirable to remove the large amounts of boilerplate code
-necessary and to fulfill the next requirement of each page having a URL. The
-metadata for "Add to Home screen" need to be specified in the Web App Manifest,
-which is currently not supported by any existing library, but can be created
-manually as well. Indication of online/offline status is supported by the basic
-DOM interaction library. Push notifications require three components: in the
+Responsiveness, the ability of an application to fit any screen size, is usually
+accomplished only via CSS and is therefore out of scope, we are focusing on the
+JavaScript part only. The next two requirements (offline, cache-first
+networking) need to be implemented in a service worker, which is not covered by
+any existing library. Non-blocking page transitions and the use of History API
+are similar requirements that can today be implemented manually, but a routing
+component is desirable to remove the large amounts of boilerplate code necessary
+and to fulfill the next requirement of each page having a URL. The metadata for
+"Add to Home screen" need to be specified in the Web App Manifest, which is
+currently not supported by any existing library, but can be created manually as
+well. Indication of online/offline status is supported by the basic DOM
+interaction library. Push notifications require three components: in the
 browser, in the service worker, and on the server. Only the server-side
 component is currently available in Haskell.
 
@@ -1276,14 +1265,10 @@ executed.
 
 There are many possible behaviors with regards to caching and network access. We
 cannot cover all possible cases, but we can cover the most common ones. These
-are encoded as a plain sum type in Listing ref:cache-strategy. Most strategy names are
-self-explanatory, I will mention only =StaleWhileRevalidate= and its =Notify=
-variation: these serve the currently cached version of a resource, and attempt
-to fetch a newer one, which will then be stored into cache for later
-requests. This strategy is often used for main application files, which is the
-reason for the =Notify= variation, which will also notify the application itself
-if there is a newer version available so that the application can then notify
-the user.
+are encoded as a plain sum type in Listing ref:cache-strategy. Most strategy
+names are self-explanatory, I will mention only =StaleWhileRevalidate=, which
+serves the currently cached version of a resource and simultaneously attempts to
+fetch a newer one, which will then be stored into cache for later requests.
 
 #+CAPTION: Cache strategies label:cache-strategy
 #+ATTR_LATEX: :options frame=single
@@ -1294,7 +1279,6 @@ the user.
     | NetworkFirst Text
     | NetworkOnly
     | StaleWhileRevalidate Text
-    | StaleWhileRevalidateNotify Text
     deriving (Eq, Ord, Show)
 #+END_SRC
 
@@ -1916,7 +1900,7 @@ in e.g.\nbsp{}\ =http://localhost/#!/active=). The storage needs to be persisted
 from and to LocalStorage, so we do not use the simple in-memory interpreter, but
 =runLocalStorageT= instead.
 
-TODO: screenshot
+TODO: TodoMVC screenshot
 
 This concludes the TodoMVC application, implemented according to its
 specification. If compiled using GHCJS, we get a bundle of JavaScript files and
@@ -1972,7 +1956,7 @@ it is very similar to the structure in TodoMVC, there are again larger
 components that work with the top-level application state and small components
 with dynamics as their inputs and events as outputs.
 
-TODO: screenshot
+TODO: HNPWA screenshot
 
 The resulting application is a valid PWA that works offline, showing cached
 data. Its only major deficiency is that it uses the official hierarchical API
@@ -2022,8 +2006,8 @@ application, using only the service worker cache is an easier approach.
 The routing and service worker components are the same as in the HNPWA
 application, routing using Location API and caching requests to the API.
 
-TODO: interesting components?
-TODO: screenshot
+TODO: interesting components in RealWorld
+TODO: RealWorld screenshot
 
 The created application fulfills all requirements of the specification and of
 the PWA checklist. As with HNPWA, it would be possible to improve the
@@ -2121,5 +2105,5 @@ remaining deficiencies compared to the features available in JavaScript.
 #+END_EXPORT
 
 * Contents of the attached data storage
-TODO: fill in
+TODO: Fill in "Contents of the attached data storage"
 
