@@ -7,7 +7,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Tapaw.WebManifest
-  (
+  ( WebManifest(..)
+  , AppURI(..)
+  , TextDirection(..)
+  , ImageResource(..)
+  , DisplayMode(..)
+  , OrientationLock(..)
+  , ServiceWorkerRegistrationObject(..)
+  , WorkerType(..)
+  , ServiceWorkerUpdateViaCache(..)
+  , ExternalApplicationResource(..)
+  , Fingerprint(..)
   ) where
 
 import Data.Aeson as A
@@ -19,12 +29,8 @@ import qualified  Data.Text as T
 import GHC.Generics (Generic)
 import Network.URI (URI, parseRelativeReference)
 
-mimeType, link :: Text
-mimeType = "application/manifest+json"
-link = "<link rel=\"manifest\" href=\"manifest.webmanifest\">"
-
 data WebManifest = WebManifest
-  { dir :: Maybe TextDirectionType
+  { dir :: Maybe TextDirection
   , lang :: Maybe Text
   , name :: Maybe Text
   , short_name :: Maybe Text
@@ -34,8 +40,8 @@ data WebManifest = WebManifest
   , categories :: [Text]
   , oarc_rating_id :: Maybe Text
   , start_url :: Maybe AppURI
-  , display :: Maybe DisplayModeType
-  , orientation :: Maybe OrientationLockType
+  , display :: Maybe DisplayMode
+  , orientation :: Maybe OrientationLock
   , theme_color :: Maybe AppURI
   , background_color :: Maybe Text
   , scope :: Maybe AppURI
@@ -57,16 +63,16 @@ instance ToJSON AppURI where
   toJSON = String . T.pack . show . unAppURL
 
 
-data TextDirectionType
+data TextDirection
   = Ltr
   | Rtl
   | Auto
   deriving (Generic)
 
-instance FromJSON TextDirectionType where
+instance FromJSON TextDirection where
   parseJSON = genericParseJSON defaultOptions {constructorTagModifier = map toLower}
 
-instance ToJSON TextDirectionType where
+instance ToJSON TextDirection where
   toJSON = genericToJSON defaultOptions {constructorTagModifier = map toLower}
 
 
@@ -91,21 +97,21 @@ instance ToJSON ImageResource where
         {fieldLabelModifier = \x -> map toLower $ fromMaybe x $ stripPrefix "imageResource" x}
 
 
-data DisplayModeType
+data DisplayMode
   = Fullscreen
   | Standalone
   | MinimalUi
   | Browser
   deriving Generic
 
-instance FromJSON DisplayModeType where
+instance FromJSON DisplayMode where
   parseJSON = genericParseJSON defaultOptions {constructorTagModifier = camelTo2 '_'}
 
-instance ToJSON DisplayModeType where
+instance ToJSON DisplayMode where
   toJSON = genericToJSON defaultOptions {constructorTagModifier = camelTo2 '_'}
 
 
-data OrientationLockType
+data OrientationLock
   = Any
   | Natural
   | Landscape
@@ -116,10 +122,10 @@ data OrientationLockType
   | LandscapeSecondary
   deriving Generic
 
-instance FromJSON OrientationLockType where
+instance FromJSON OrientationLock where
   parseJSON = genericParseJSON defaultOptions {constructorTagModifier = camelTo2 '-'}
 
-instance ToJSON OrientationLockType where
+instance ToJSON OrientationLock where
   toJSON = genericToJSON defaultOptions {constructorTagModifier = camelTo2 '-'}
 
 

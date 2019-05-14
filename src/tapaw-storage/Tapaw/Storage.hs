@@ -12,9 +12,10 @@
 module Tapaw.Storage
   ( MonadKVStore(..)
   , StoreKey
+
   , KVStoreT(..)
   , KVStoreRequest(..)
-  , runKVStoreReqests
+  , runKVStoreRequests
   , runKVStoreTPure
   , runKVStoreTStorage
   ) where
@@ -75,15 +76,15 @@ instance PerformEvent t m => PerformEvent t (KVStoreT t k m) where
 instance (Ord (StoreKey k), Monad m, Reflex t) => MonadKVStore k t (KVStoreT t k m) where
   getKVAll = KVStoreT ask
   getKV dId = KVStoreT $ ffor ask (\dMap -> ffor2 dId dMap M.lookup)
-  putKV = KVStoreT . tellEvent . fmap ((:[]) . KVUpdateOne)
-  putKVAll = KVStoreT . tellEvent . fmap ((:[]) . KVUpdateAll)
+  putKV req = KVStoreT $ tellEvent ((\x -> [KVUpdateOne x]) <$> req)
+  putKVAll req = KVStoreT $ tellEvent ((\x -> [KVUpdateAll x]) <$> req)
 
 data KVStoreRequest e
   = KVUpdateOne (StoreKey e, Maybe e)
   | KVUpdateAll (Map (StoreKey e) e)
 
-runKVStoreReqests :: Ord (StoreKey k) => [KVStoreRequest k] -> Map (StoreKey k) k -> Map (StoreKey k) k
-runKVStoreReqests = foldr ((.) . runReq) id
+runKVStoreRequests :: Ord (StoreKey k) => [KVStoreRequest k] -> Map (StoreKey k) k -> Map (StoreKey k) k
+runKVStoreRequests = foldr ((.) . runReq) id
   where
     runReq (KVUpdateOne (k, mv)) = M.alter (const mv) k
     runReq (KVUpdateAll m) = const m
@@ -94,10 +95,9 @@ runKVStoreTPure ::
   => Map (StoreKey k) k
   -> KVStoreT t k m a
   -> m a
-runKVStoreTPure ini f = do
-  rec
-    dMap <- foldDyn runKVStoreReqests ini eReq
-    (a, eReq) <- runEventWriterT (runReaderT (unKVStoreT f) dMap)
+runKVStoreTPure i f = mdo
+  dMap <- foldDyn runKVStoreRequests i eReq
+  (a, eReq) <- runEventWriterT (runReaderT (unKVStoreT f) dMap)
   pure a
 
 runKVStoreTStorage ::
@@ -118,9 +118,9 @@ runKVStoreTStorage ::
   -> KVStoreT t k m a
   -> m a
 runKVStoreTStorage store key f = do
-  ini <- liftJSM $ (decode . BC.pack . T.unpack =<<) <$> getItem store key
+  i <- liftJSM $ (decode . BC.pack . T.unpack =<<) <$> getItem store key
   rec
-    dMap <- foldDyn runKVStoreReqests (fromMaybe M.empty ini) eReq
+    dMap <- foldDyn runKVStoreRequests (fromMaybe M.empty i) eReq
     (a, eReq) <- runEventWriterT (runReaderT (unKVStoreT f) dMap)
   performEvent_ $ setItem store key . T.pack . BC.unpack . encode <$> updated dMap
   pure a

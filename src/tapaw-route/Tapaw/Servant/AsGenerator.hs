@@ -39,17 +39,6 @@ import System.Directory (createDirectoryIfMissing)
 
 import Unsafe.Coerce (unsafeCoerce)
 
-
--- type family Flatten (api :: k) :: k where
---   Flatten ((a :: k) :> (b :<|> c)) = (a :> Flatten b) :<|> (a :> Flatten c)
---   Flatten ((a :: k) :> b)          = Redex b (Flatten b) a
---   Flatten (a :<|> b)               = Flatten a :<|> Flatten b
---   Flatten (a :: k)                 = a
-
--- type family Redex a b (c :: k) :: * where
---   Redex a a first = Flatten first :> a
---   Redex a b first = Flatten (first :> b)
-
 runGen ::
      Monad m
   => Text

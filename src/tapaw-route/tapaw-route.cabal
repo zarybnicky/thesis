@@ -41,6 +41,7 @@ library
                    , uri-bytestring
 
 executable route-test
+  hs-source-dirs:    src-bin
   main-is:           Main.hs
   default-language:  Haskell2010
   ghc-options:      -Wall

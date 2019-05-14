@@ -84,8 +84,3 @@ instance HasApp App where
     [] -> Right f
     [""] -> Right f
     _ -> Left Err404
-
--- data Authorized
--- instance (HasContextElement AuthCheck ctx, HasApp sub ctx) => HasApp (AuthProtect Authorized :> sub) ctx where
---   type MkApp (AuthProtect Authorized :> sub) t m = MkApp sub t m
---   route _ ctx f = route (Proxy @sub) ctx f

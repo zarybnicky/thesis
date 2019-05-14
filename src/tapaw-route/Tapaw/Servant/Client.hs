@@ -30,7 +30,7 @@ import URI.ByteString
   (Query(..), URI, URIRef(..), laxURIParserOptions, parseURI, serializeURIRef')
 
 -- error page :: (api -> MkApp) -> Err -> m ()
--- Think about /error?redirect=/admin/x
+-- /error?redirect=/admin/x
 
 serve ::
      forall t m api.
