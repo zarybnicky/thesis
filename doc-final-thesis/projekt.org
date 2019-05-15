@@ -2,7 +2,7 @@
 #+LANGUAGE: en
 #+OPTIONS: texht:nil toc:nil author:nil ':t
 #+LATEX_CLASS: fitthesis
-#+LATEX_CLASS_OPTIONS: [english,odsaz]
+#+LATEX_CLASS_OPTIONS: [english,zadani,odsaz]
 #+BIND: org-latex-title-command ""
 #+BIND: org-latex-default-figure-position "tb"
 # zadani = includes zadani.pdf
@@ -55,6 +55,10 @@ missing, we will walk through the implementation of several libraries in the
 area (Chapter 5), have a look at how to create an application using these
 components (Chapter 6), and conclude with four separate case studies (Chapter
 7).
+
+The source code for this work is available online
+https://github.com/zarybnicky/thesis, and also at https://tapaw.dev, where the
+live versions of the applications created here are also available.
 
 * What is a PWA?
 ** Web development trends
@@ -737,7 +741,7 @@ application start-up, changing it according to user navigation actions, storing
 the navigation state for the rest of the application. In types, this might be
 expressed as shown in Listing ref:router-api.
 
-#+CAPTION: Router: desired API label:router-api
+#+CAPTION: Router: the intended API label:router-api
 #+ATTR_LATEX: :placement [!bp] :options frame=single
 #+BEGIN_SRC haskell
 parseRoute :: URL -> Route app
@@ -948,13 +952,9 @@ being executed by the top-level rendering function.
 
 *** Implementation
 I have decided to use Servant's approach in my work, as it seems to be the most
-flexible and extendable one.
-
-My contributions in this area are:
-- a client-side router using Reflex's FRP types composed of a dispatch component
-  and in-application links and
-- an extension to the server-side Servant router that supports rendering Reflex
-  applications.
+flexible and extendable one. My contributions in this area is a client-side
+router using Reflex's FRP types composed of a dispatch component and
+in-application links.
 
 I have also created a proof-of-concept of a static site generator using these
 components, as well as a combinator that allows easier manipulation with
@@ -1025,24 +1025,10 @@ this explicitly: the handler for a =Capture= needs to accept a value of type =a=
 The =App= instance is the end of the recursion chain, where neither =MkApp= nor
 =route= recurse anymore. The =MkApp= type declares the handler of an =App= to be an
 action, and the =route= function only checks that we have parsed the entire URL,
-and returning the final handler.
+and returning the final handler. This, in summary, is what it looks like to
+interpret a Servant type.
 
-This, in summary, is what it looks like to interpret a Servant type. As for the
-server part of a router, I will not include the relevant code here, however, as
-the Servant server uses special machinery to run a series of optimizations that
-preprocess a tree of handlers. The resulting code is not too readable, so I do
-not think it is worth including it here. I will sketch what the code does, at least:
-
-For the server part, we only need to implement a single instance, the instance
-of =HasServer= for our =App= type. It will be different from the client instances,
-not only for the above-mentioned reasons, but also due to the fact that while we
-have a handler action, we cannot run it directly, but we need to render it into
-a HTML string before sending it to the client. The Servant server uses an
-additional type parameter, a context using which it is possible to pass values
-to API combinators. The =App= instance reads a rendering function from the
-context, runs the route handler using it, and returns the result.
-
-#+CAPTION: Router: top-level route dispatcher label:router-url
+#+CAPTION: Router: the top-level route dispatcher label:router-url
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   runRouter ::
@@ -1052,28 +1038,26 @@ context, runs the route handler using it, and returns the result.
     -> (Event t Loc -> m (Dynamic t Loc))
     -> (Err -> EventWriterT t Loc m ())
     -> m ()
-  runRouter api handlers url showError = do
-    rec
-      dUrl <- url eUrl
-      let widget = case route api handlers <$> dUrl of
-            Left err -> showError err
-            Right f -> f
-      ((), eUrl) <- runEventWriterT (dyn widget)
+  runRouter api handlers url showError = mdo
+    dUrl <- url eUrl
+    let widget = case route api handlers <$> dUrl of
+          Left err -> showError err
+          Right f -> f
+    ((), eUrl) <- runEventWriterT (dyn widget)
     pure ()
 
 #+END_SRC
 
-Back to the client-side router: while we have a =route= function that will return
-either an error or a widget, we need to connect it to the browser in some way.
-To do that, we need a component for manipulating the URL, either using the
-Location API or hash fragment changes, and when we have it, we can write the
-router itself.
+While we have a =route= function that will return either an error or a widget, we
+need to connect it to the browser in some way. To do that, we need a component
+for manipulating the URL, either using the Location API or hash fragment
+changes, and when we have it, we can write the router itself.
 
 In Listing ref:router-url, we have a simplified version of the library
 router. In there, we have a function that takes a tree of handlers, a URL
 manipulation component, and an action to show possible routing errors, and
 produces a piece of dynamically changing content. The function uses /recursive do/
-to make it possible to refer to variable before they are defined (the =rec=
+to make it possible to refer to variable before they are defined (the =mdo=
 keyword). Reading from the top, we obtain a dynamic containing the current
 location, use it to run our =route= function defined above, rendering any errors,
 and finally run this dynamically changing piece of content to get the event that
@@ -1123,7 +1107,9 @@ the endpoint type and from the provided arguments, starting from an empty URL.
     toAppLink _ l _ = l
 #+END_SRC
 
-TODO: A complete example of a router: type, handlers, links
+The other part of this work, the static site generator and the Servant record
+combinator, are included only in the attached source files, as they are only
+trivial extensions of the ideas presented above.
 
 *** Possible extensions
 There are several possible directions in which to expand this router. One idea
@@ -1189,7 +1175,7 @@ HTTP, in the client for any interactions with the worker (e.g.\nbsp{}to subscrib
 push notifications), and on the server for sending the notifications, as
 illustrated by Listing ref:service-worker-api.
 
-#+CAPTION: Service Worker: desired API label:service-worker-api
+#+CAPTION: Service Worker: the intended API label:service-worker-api
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   generateWorker :: ServiceWorker push -> ByteString
@@ -1522,7 +1508,7 @@ the library =ghcjs-dom=, a library that provides a strongly-typed interface to
 most browser APIs, which generates most of its code in this way.
 
 ** Storage
-#+CAPTION: Storage: implemented API label:storage-api
+#+CAPTION: Storage: the implemented API label:storage-api
 #+ATTR_LATEX: :placement [!b] :options frame=single
 #+BEGIN_SRC haskell
   class MonadKVStore e t m | m -> t where
@@ -1546,27 +1532,53 @@ The API of this storage is simple, as shown by Listing ref:storage-api, but it
 can serve several purposes: as a cache, as an offline storage, or as a way to
 directly access a database when rendering a Reflex application on the server.
 
-Implementing an instance for such a type is not complicated. To
-bind to a database backend on the server, we can run arbitrary code in the
-underlying monad, so if we have a function to execute database
-queries available e.g.\nbsp{}using a =ReaderT= monad, we can sequentially construct the
-query, run it and wait for the result, and then return a =Dynamic= with the
-query's result.
+Implementing an instance for such a type is not complicated. To bind to a
+database backend on the server, we can run arbitrary code in the underlying
+monad, so if we have a function to execute database queries available
+e.g.\nbsp{}using a =ReaderT= monad, we can sequentially construct the query, run
+it and wait for the result, and then return a =Dynamic= with the query's result.
 
-On the frontend, we can use a combination of a =ReaderT=, to
-make the underlying map available for reading from anywhere, and an
-=EventWriterT=, to collect all =put= events.
+On the frontend, we can use a combination of a =ReaderT=, to make the underlying
+map available for reading anywhere, and an =EventWriterT=, to collect the =put=
+events. The implementation is short enough to include here in its entirety: in
+the Listing ref:storage-impl, we can see both the definition of the monad
+transformer =KVStoreT= and its instance of =MonadKVStore,= and also how it can be
+interpreted using an in-memory map and how it can be used in application code.
 
-The code is very similar to the code we saw in the implementation of the router,
-so I will not include it here. There are three implemented variants on the
-attached data storage: client-side bindings using an in-memory map or persisted
-using LocalStorage, and a single serve-side binding to the Persistent database library.
+#+CAPTION: Storage: monad transformer definition and usage label:storage-impl
+#+ATTR_LATEX: :options frame=single
+#+BEGIN_SRC haskell
+  newtype KVStoreT t k m a = KVStoreT
+    { unKVStoreT :: ReaderT (Dynamic t (Map (StoreKey k) k))
+       (EventWriterT t [KVStoreRequest k] m) a
+    } deriving (...)
 
-TODO: include listing demonstrating basic usage
+  data KVStoreRequest e
+    = KVUpdateOne (StoreKey e, Maybe e)
+    | KVUpdateAll (Map (StoreKey e) e)
 
+  runKVStoreTPure :: _ => Map (StoreKey k) k -> KVStoreT t k m a -> m a
+  runKVStoreTPure i f = mdo
+    dMap <- foldDyn (foldr ((.) . runReq) id) i eReq
+    (a, eReq) <- runEventWriterT (runReaderT (unKVStoreT f) dMap)
+    pure a
+    where
+      runReq (KVUpdateOne (k, mv)) = Map.alter (const mv) k
+      runReq (KVUpdateAll m) = const m
+
+  app :: MonadWidget t m => m ()
+  app = runKVStoreTPure Map.empty $ do
+    eIns <- button "Insert"
+    eDel <- button "Delete"
+    putKV ((UserId 5, Just User) <$ eIns)
+    putKV ((UserId 5, Nothing) <$ eDel)
+    display =<< getKVAll @User
+#+END_SRC
+
+*** Possible extensions
 There are several ways to extend this storage library. The first one is simply
-adding more backends, e.g.\nbsp{}to support IndexedDB in the browser or other database
-engines on the backend.
+adding more backends, e.g.\nbsp{}to support IndexedDB in the browser or other
+database engines on the backend.
 
 The storage can also be specialized to work as a cache, which would mean
 extending the API e.g.\nbsp{}with expiration, automatic or manual, so that it can
@@ -1584,7 +1596,7 @@ write the functions to serialize the data types to and from JSON, together with
 a few helper functions to simplify the manifest definition. The main type
 =WebManifest= is included in Listing ref:manifest-type.
 
-#+CAPTION: Web App Manifest: main type label:manifest-type
+#+CAPTION: Web App Manifest: main data type label:manifest-type
 #+ATTR_LATEX: :options frame=single
 #+BEGIN_SRC haskell
   data WebManifest = WebManifest
@@ -1899,10 +1911,31 @@ contains three natural sections: an input for creating new tasks at the top, a
 task list for editing or deleting existing tasks, and a navigation bar at the
 bottom.
 
+#+CAPTION: TodoMVC: component for creating a new task label:new-task-box
+#+ATTR_LATEX: :placement [b] :options frame=single
+#+BEGIN_SRC haskell
+  newTaskBox :: MonadWidget t m => m (Event t Text)
+  newTaskBox = elClass "header" "header" $ do
+    el "h1" (text "todos")
+    rec
+      textbox <- inputElement $ def
+        & elementConfig . initialAttributes .~
+          ("class" =: "new-todo" <> "autofocus" =: "autofocus" <>
+           "placeholder" =: "What needs to be done?")
+        & setValue .~ ("" <$ keypress Enter textbox)
+    return . ffilter T.null $
+      T.strip <$> current (value textbox) <@ keypress Enter textbox
+#+END_SRC
+
 As this the first application we are going through, we can look at a single
 component in more detail: the component =newTaskBox= is included in Listing
 ref:new-task-box, where we can see what a simple GUI component in Reflex might
-look like. The functions =el= and =elClass= generate static HTML elements, the
+look like. This component contains a header and a simple text input box that
+emits an event when we press Enter in it, so it is not a complex component,
+although the abundance of custom operators (=&=, =$=, =<$=, =<$>=, =<@=, ==:=, =.~=, =<>=) may
+make reading the code a bit difficult.
+
+The functions =el= and =elClass= generate static HTML elements, the
 =inputElement= function generates an =<input>=, and the last line prepares the
 return value of the function, an event containing the current value of the text
 box whenever the Enter key is pressed in it. The =rec= mark the beginning of a
@@ -1912,50 +1945,23 @@ which is translated into a fixpoint computation by the compiler (in the form of
 emptied when we press Enter in it, as can be seen on the last but one line of
 the listing.
 
-The next component, =taskListItem=, is slightly more complicated. According to the
-specification, double-clicking on a list item switches it to /edit mode/, which is,
-however, not captured anywhere in the global application state. When in edit
-mode, the component may revert to previous state when the Escape key is pressed,
-or update the task with new contents of the text box when Enter is pressed
-instead. This is achieved by adding a small piece of state in the component, a
-boolean value saying whether this task is currently being edited.
-
-The code of this and the remaining components is not too interesting, so we can
-skip directly on the next step, the structure of the application's monad
-transformer stack.
-
-#+CAPTION: TodoMVC: component for creating a new task label:new-task-box
-#+ATTR_LATEX: :options frame=single
-#+BEGIN_SRC haskell
-  newTaskBox :: MonadWidget t m => m (Event t Text)
-  newTaskBox =
-    elClass "header" "header" $ do
-      el "h1" (text "todos")
-      rec
-        textbox <- inputElement $ def
-          & elementConfig . initialAttributes .~
-            ("class" =: "new-todo" <> "autofocus" =: "autofocus" <>
-             "placeholder" =: "What needs to be done?")
-          & inputElementConfig_setValue .~ ("" <$ keypress Enter textbox)
-      return . ffilter T.null $
-        T.strip <$> current (value textbox) <@ keypress Enter textbox
-#+END_SRC
-
-The application uses two global pieces of state, the task list, persisted to
-LocalStorage on each change, and the router. While the order of the monad
-transformers may matter in some special cases like =ExceptT= or =ContT=, the
-exception and continuation transformers, neither of the transformers we want to
-use, =StorageT= and =RoutedT=, affect program flow, they simply add new capabilities
-to the base monad. Also, neither transformer uses the capabilities of the other,
-which means we can nest them in an arbitrary order. The newtype of the resulting
-monad can be seen in Listing ref:todomvc-mtl, as is the type synonym that
-contains most constraints needed in application code.
+Moving on to the large-scale structure of the application: it uses two global
+pieces of state, the task list, persisted to LocalStorage on each change, and
+the router. Both can be represented using a monad transformer each, in our case
+the =KVStoreT= and =RoutedT= created in the previous sections. While the order of
+the monad transformers may matter in some special cases like =ExceptT= or =ContT=,
+the exception and continuation transformers, neither of the transformers we want
+to use affect program flow, they simply add new capabilities to the base
+monad. Also, neither transformer uses the capabilities of the other, which means
+we can nest them in an arbitrary order. The newtype of the resulting monad can
+be seen in Listing ref:todomvc-mtl, as is the type synonym that contains most
+constraints needed in application code.
 
 #+CAPTION: TodoMVC: base monad transformer label:todomvc-mtl
-#+ATTR_LATEX: :options frame=single
+#+ATTR_LATEX: :placement [!b] :options frame=single
 #+BEGIN_SRC haskell
   newtype AppT t m a = AppT
-    { unAppT :: RoutedT t AppRoute (StorageT t Task m) a
+    { unAppT :: RoutedT t AppRoute (KVStoreT t Task m) a
     } deriving ( Functor
                , Applicative
                , Monad
@@ -1965,13 +1971,13 @@ contains most constraints needed in application code.
 
   type AppM t m =
      ( MonadRouted t AppRoute
-     , MonadStorage t Task
+     , MonadKVStore t Task
      , DomBuilder t m
      , PostBuild t m
      )
 
   runAppT :: _ => AppT t m a -> m a
-  runAppT = runLocalStorageT . runHashRoutedT . unAppT
+  runAppT = runKVStoreTStorage . runRoutedTHash . unAppT
 #+END_SRC
 
 The top-level interpreter of the monad is also included. As we can see, we
@@ -1979,19 +1985,22 @@ unwrap the =AppT= from the outside, starting from the newtype wrapper, running t
 router, and running the storage last. The router is not interpreted with the
 default interpreter that uses the Location API as, according to the
 specification, we need to route using the hash fragment only (the part after =#=
-in e.g.\nbsp{}\ =http://localhost/#!/active=). The storage needs to be persisted
+in e.g. the =!/active= in =http://localhost/#!/active=). The storage needs to be persisted
 from and to LocalStorage, so we do not use the simple in-memory interpreter, but
 =runLocalStorageT= instead.
 
-TODO: TodoMVC screenshot
+#+CAPTION: The TodoMVC application label:todomvc-app
+#+ATTR_LaTeX: :height 7cm :placement [!t]
+[[file:obrazky-figures/screenshot-todomvc.png]]
 
-This concludes the TodoMVC application, implemented according to its
-specification. If compiled using GHCJS, we get a bundle of JavaScript files and
-an =index.html= which is the entry point. As described in Chapter [[Deployment]], we
-can add a post-compile step that compresses these files and adds any necessary
-assets like CSS or icons. It is possible to go a step further and include a
-service worker using the service worker component implemented in this work, but
-that is what we do in the next application.
+This concludes the TodoMVC application, which can be seen in Figure
+ref:todomvc-app, implemented according to its specification. If compiled using
+GHCJS, we get a bundle of JavaScript files and an =index.html= which is the entry
+point. As described in Chapter [[Deployment]], we can add a post-compile step that
+compresses these files and adds any necessary assets like CSS or icons. It is
+possible to go a step further and include a service worker using the service
+worker component implemented in this work, but that is what we do in the next
+application.
 
 ** HNPWA
 HNPWA cite:hnpwa is a client for Hacker News, a technological news site. Unlike
@@ -2039,12 +2048,15 @@ it is very similar to the structure in TodoMVC, there are again larger
 components that work with the top-level application state and small components
 with dynamics as their inputs and events as outputs.
 
-TODO: HNPWA screenshot
+#+CAPTION: The HNPWA application label:hnpwa-app
+#+ATTR_LaTeX: :height 7.1cm :placement [!b]
+[[file:obrazky-figures/screenshot-hnpwa.png]]
 
 The resulting application is a valid PWA that works offline, showing cached
-data. Its only major deficiency is that it uses the official hierarchical API
-and therefore it loads content gradually and not as fast as it could if it had a
-dedicated server that preprocessed the data into a more suitable format.
+data. What it looks like can be seen in Figure ref:hnpwa-app. Its only major
+deficiency is that it uses the official hierarchical API and therefore it loads
+content gradually and not as fast as it could if it had a dedicated server that
+preprocessed the data into a more suitable format.
 
 If we had a server, we could also implement another feature, prerendering. By
 using the server instance of the storage component, we would be able to generate
@@ -2089,27 +2101,35 @@ application, using only the service worker cache is an easier approach.
 The routing and service worker components are the same as in the HNPWA
 application, routing using Location API and caching requests to the API.
 
-TODO: interesting components in RealWorld
-TODO: RealWorld screenshot
+#+CAPTION: The RealWorld application label:realworld-app
+#+ATTR_LaTeX: :height 7.1cm :placement [!b]
+[[file:obrazky-figures/screenshot-realworld.png]]
 
-The created application fulfills all requirements of the specification and of
-the PWA checklist. As with HNPWA, it would be possible to improve the
-application by using a custom server for prerendering and for unifying the
-Servant types of the API and the application into a single large type.
+The created application, illustrated in ref:realworld-app, fulfills all
+requirements of the specification and of the PWA checklist. As with HNPWA, it
+would be possible to improve the application by using a custom server for
+prerendering and for unifying the Servant types of the API and the application
+into a single large type.
 
 * Conclusion
 In this work, I have led the reader from a general introduction to modern Web
 technologies, through an overview of the capabilities of contemporary Web
 frameworks, to an analysis of the capabilities of Haskell on the frontend and
-specifically the state of available features in its library ecosystem.
+specifically the state of available features in its library ecosystem. In the
+second half of this work, I have designed and implemented three components, a
+router, a service worker generator with supporting libraries, and a key-value
+browser storage library.
 
-In the second half of this work, I have designed and implemented three
-components, a router, a service worker generator with supporting libraries, and
-a key-value browser storage library, that together make a significant
-contribution to the ecosystem of Haskell on the frontend. These components do not
-comprise a framework equivalent to most popular JavaScript frameworks, but they
-enable creating Progressive Web Applications in Haskell, which was the set goal
-of this work.
+** Evaluation
+While these components do not comprise a framework equivalent to the most
+popular JavaScript frameworks, they together give developers a set of
+functionality that is mostly equivalent to minimalist frameworks in JavaScript,
+and they make a significant contribution to the ecosystem of Haskell on the
+frontend. They enable creating Progressive Web Applications in Haskell, which
+was the set goal of this work, and they also set the groundwork for further work
+in this area. I also believe that the analysis done in the first part of this
+work is a significant contribution itself, identifying the deficiencies in the
+Haskell ecosystem, possibly guiding future projects.
 
 ** Future work
 The work that needs to immediately follow the submission of this thesis is
@@ -2163,6 +2183,10 @@ frontend, expanded the library ecosystem with three new additions, implemented a
 number of example applications, and suggested follow-up projects to remedy the
 remaining deficiencies compared to the features available in JavaScript.
 
+The source code for this work is available online
+https://github.com/zarybnicky/thesis, and also at https://tapaw.dev, where the
+live versions of the applications created here are also available.
+
 * (bibliography, start of appendix)                           :ignoreheading:
 #+BEGIN_EXPORT latex
 \makeatletter
@@ -2188,5 +2212,27 @@ remaining deficiencies compared to the features available in JavaScript.
 #+END_EXPORT
 
 * Contents of the attached data storage
-TODO: Fill in "Contents of the attached data storage"
 
+- =doc-final-thesis/=, the source files for this thesis and its rendered PDF
+  version,
+- =doc-midterm-report/=, the source files and rendered PDF version of the midterm
+  report of this work,
+- =doc-midterm-presentation/=, the source files and rendered PDF version of the midterm
+  presentation of this work,
+- =README.md=, the usage instructions for the following source files,
+- =src/tapaw-route/=, the routing library created in this work,
+- =src/tapaw-serviceworker/=, the service worker library created in this work,
+- =src/tapaw-storage/=, the storage library created in this work,
+- =src/tapaw-webmanifest/=, the Web App Manifest library created in this work,
+- =src-demo/tapaw-7guis/=, a simple set of GUI components originally intended as
+  another demonstration application,
+- =src-demo/tapaw-todomvc/=, the TodoMVC demonstration application,
+- =src-demo/tapaw-hnpwa/=, the HNPWA demonstration application,
+- =src-demo/tapaw-realworld/=, the RealWorld demonstration application,
+- =src-snippets/=, a set of code snippets written during the process of writing
+  this thesis, especially:
+  - =deployment-nixops/=, an example of application deployment using NixOps,
+  - =skeleton/=, a minimal project skeleton for a browser application,
+  - =storage-tagged/=, an alternate version of the storage library, and
+  - =editor-emacs/=, a pre-configured instance of the Emacs editor usable for
+    exploring the packages in this work

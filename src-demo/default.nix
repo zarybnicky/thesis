@@ -3,7 +3,6 @@
     tapaw-7guis = ./tapaw-7guis;
     tapaw-todomvc = ./tapaw-todomvc;
     tapaw-hnpwa = ./tapaw-hnpwa;
-    tapaw-prerender = ./tapaw-prerender;
     tapaw-realworld-client = ./tapaw-realworld-client;
   };
 

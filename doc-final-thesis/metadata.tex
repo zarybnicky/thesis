@@ -19,15 +19,88 @@
   supervisor.title.a={Ph.D.},
   keywords.cs={Haskell, GHCJS, Web Platform, Progressive Web Application, open source, návrh knihoven},
   keywords.en={Haskell, GHCJS, Web Platform, Progressive Web Application, open source, library design},
-  abstract.cs={Do tohoto odstavce bude zapsán výtah (abstrakt) práce v českém (slovenském) jazyce.},
-  abstract.en={Do tohoto odstavce bude zapsán výtah (abstrakt) práce v anglickém jazyce.},
-  declaration={Hereby I declare that this bachelor's thesis was prepared as an
+  abstract.cs={
+
+    Tato práce se snaží usnadnit vývoj webových aplikací psaných v programovacím
+    jazyce Haskell vytvořením sady komponent, které zatím chybí v jeho
+    ekosystému knihoven, se zaměřením na komponenty nutné pro tvorbu Progressive
+    Web Applications, t.j.~aplikace, které používají nové technologie jako
+    např.~Service Workers.
+
+    Tato práce porovnává, které komponenty se očekávají od webových platforem a
+    které jsou dostupné pro Haskell; popisuje implementaci tří komponent
+    (knihovny pro routování, úložiště a Service Workery); a implementuje tři
+    aplikace, které demonstrují použití těchto komponent.
+
+  },
+  abstract.en={
+
+    This work attempts to ease developing browser applications in the Haskell
+    programming language by creating a set of components that its library
+    ecosystem so far lacks, especially focusing on the components required for
+    development of Progressive Web Applications, i.e.~applications that use new
+    technologies like Service Workers.
+
+    The thesis compares which components are commonly expected from a web
+    framework and which are available in Haskell; describes the implementation
+    of three such components (router, storage, and Service Worker libraries);
+    and implements three applications that demonstrate use of these components.
+
+  },
+  declaration={
+
+    Hereby I declare that this bachelor's thesis was prepared as an
     original author’s work under the supervision of Ing.~Ondřej Lengál,~Ph.D.
     All the relevant information sources used during preparation of this
-    thesis are properly cited and included in the list of references.},
-  %acknowledgment={Here it is possible to express thanks to the supervisor and
-  %  to the people which provided professional help (external submitter, consultant, etc.).},
-  extendedabstract={Do tohoto odstavce bude zapsán rozšířený abstrakt práce v
-    českém jazyce, bude mít rozsah 2 až 6 normostran a bude obsahovat úvod,
-    popis vlastního řešení a shrnutí a zhodnocení dosažených výsledků.},
+    thesis are properly cited and included in the list of references.
+
+  },
+  extendedabstract={
+
+    Webové aplikace se už dnes svou velikostí a komplexitou blíží nativním a je
+    možné je psát v mnoha jazycích. V této práci se zaměřuji na tvorbu aplikací
+    pro prohlížeče v jazyce Haskell, který ale disponuje omezenou nabídkou
+    dostupných knihoven v této oblasti. Zaměřuji se obzvlášť na tzv.~Progressive
+    Web Applications, což jsou aplikace, které používají sadu relativně nových
+    technologií jako např.~Service Workers, aby poskytly funkce, které byly
+    dříve dostupné jen v nativních aplikacích. Takové aplikace jsou schopné
+    např.~pracovat offline, nebo používat tzv.~push notifikace, upozornění
+    generovaná serverem.
+
+    V této práci nejdříve porovnávám funkce dostupné v nejrozšířenějších
+    webových platformách, tj.~funkce, které očekávají i vývojáři, kteří Haskell
+    používají nebo chtějí používat, s funkcemi aktuálně dostupnými v jazyce
+    Haskell. Na základě této analýzy pak implementuji tři komponenty, které jsou
+    podle mého uvážení nejvíce potřeba pro vývoj Progressive Web Applications a
+    které se navzájem doplňují: knihovny pro routování, úložiště a Service
+    Workers (jejich generování a interakci s nimi).
+
+    Knihovna pro routování umožňuje definici mapování URL na GUI komponenty a
+    přechody mezi URL a stránkami převážně pomocí programování na úrovni typů
+    (\emph{type-level programming}). Knihovna také obsahuje prototyp komponenty
+    pro statické generování stránek (\emph{static site generation}). Knihovna
+    pro úložiště obsahuje jednoduché úložiště typu klíč-hodnota (\emph{key-value
+    storage}), s podporou offline úložiště a možností rozšíření pro přímý
+    přístup k databázi při statickém generování stránek. Komponenta pro podporu
+    Service Workers má dvě části, generování Service Worker jako kód psaný
+    jazykem JavaScript a klientská knihovna pro interakci s ním. Komponenta
+    podporuje použití Service Workers jako programovatelné HTTP proxy
+    (\emph{fetch control}) a pro podporu upozornění generovaných serverem
+    (\emph{push notifications}).
+
+    Použití těchto knihoven pak demonstruji na třech aplikacích: TodoMVC, HNPWA,
+    RealWorld, které jsou vytvořené podle specifikací běžně používaných pro
+    porovnání webových platforem. TodoMVC je aplikace pro správu seznamu úkolů,
+    HNPWA je klient zpravodajské služby Hacker News a RealWorld je
+    víceuživatelská platforma pro čtení a psaní článků.
+
+    Práce přidává do open-source ekosystému Haskellu tři nové komponenty, které
+    v něm doposud chyběly. Tyto komponenty vyplňují základní nedostatky v
+    ekosystému a dohromady funkčností odpovídají minimalistickým frameworkům v
+    jazyce JavaScript, ale pořád v Haskellu zůstává mnoho nedostatků v porovnání
+    s ekosystémem JavaScriptu. Tyto komponenty jsou již použitelné pro tvorbu
+    Progressive Web Applications, zároveň ale slouží jako výchozí bod pro další
+    práci, jejich další vývoj a tvorbu příbuzných komponent.
+
+  },
 }
