@@ -3,7 +3,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
@@ -30,7 +29,6 @@ import GHCJS.DOM.EventM (on)
 import qualified GHCJS.DOM.IDBDatabase as IDB
 import qualified GHCJS.DOM.IDBFactory as IDB
 import qualified GHCJS.DOM.IDBRequest as IDB
-import qualified GHCJS.DOM.IDBObjectStore as IDB
 import GHCJS.DOM.Types (IDBObjectStoreParameters(..), IDBRequestResult(..))
 import GHCJS.DOM.Window (getLocalStorage, getIndexedDB)
 import Language.Javascript.JSaddle
