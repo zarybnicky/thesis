@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
@@ -17,6 +18,7 @@ module Tapaw.Servant.Routed
   , RoutedT(..)
   , SomeRoute(..)
   , someRouteToLoc
+  , runRouter
   ) where
 
 import Control.Monad.Fix (MonadFix)
@@ -34,8 +36,12 @@ import Servant.API.Generic (AsApi, GenericServant, ToServantApi, genericApi)
 
 class MonadRouted (r :: * -> *) t m | m -> r t where
   setRoute :: Event t (SomeRoute r) -> m ()
+  default setRoute :: (m ~ f m', Monad m', MonadTrans f, MonadRouted r t m') => Event t (SomeRoute r) -> m ()
+  setRoute = lift . setRoute
+
   getRoute :: m (Dynamic t (Either Err Loc))
-  runRouter :: MkApp (ToServantApi r) m -> (Err -> m ()) -> m ()
+  default getRoute :: (m ~ f m', Monad m', MonadTrans f, MonadRouted r t m') => m (Dynamic t (Either Err Loc))
+  getRoute = lift getRoute
 
 newtype RoutedT t (r :: * -> *) m a = RoutedT
   { unRoutedT :: ReaderT (Dynamic t (Either Err Loc)) (EventWriterT t Loc m) a
@@ -67,24 +73,27 @@ instance PerformEvent t m => PerformEvent t (RoutedT t k m) where
   performEvent_ = lift . performEvent_
   performEvent = lift . performEvent
 
-instance ( HasApp (ToServantApi r)
-         , GenericServant r AsApi
+instance ( GenericServant r AsApi
          , Monad m
          , DomBuilder t m
          , MonadHold t m
-         , MonadFix m
          , PostBuild t m
          , Reflex t
          ) =>
          MonadRouted r t (RoutedT t r m) where
   setRoute e = RoutedT $ tellEvent (someRouteToLoc <$> e)
   getRoute = RoutedT ask
-  runRouter ws onError = do
-    dUrl <- getRoute
-    _ <-
-      dyn $
-      either onError id . (route (Proxy @(ToServantApi r)) ws =<<) <$> dUrl
-    pure ()
+
+runRouter ::
+     forall r t m.
+     (DomBuilder t m, PostBuild t m, HasApp (ToServantApi r), MonadRouted r t m)
+  => MkApp (ToServantApi r) m
+  -> (Err -> m ())
+  -> m ()
+runRouter ws onError = do
+  dUrl <- getRoute
+  _ <- dyn $ either onError id . (route (Proxy @(ToServantApi r)) ws =<<) <$> dUrl
+  pure ()
 
 data SomeRoute api where
   SomeRoute
