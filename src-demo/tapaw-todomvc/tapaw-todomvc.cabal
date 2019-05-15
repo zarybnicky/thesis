@@ -21,7 +21,10 @@ executable tapaw-todomvc
   if impl(ghcjs -any)
     ghc-options:      -dedupe
 
+  other-modules:       Types
+
   build-depends:       base
+                     , aeson
                      , bytestring
                      , containers
                      , file-embed
@@ -29,6 +32,10 @@ executable tapaw-todomvc
                      , lens
                      , jsaddle
                      , jsaddle-warp
+                     , mtl
                      , reflex-dom-core
+                     , servant
+                     , tapaw-route
+                     , tapaw-storage
                      , text
                      , time

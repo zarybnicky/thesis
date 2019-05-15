@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
@@ -38,9 +39,20 @@ type family StoreKey k = r | r -> k
 
 class MonadKVStore e t m | m -> t where
   getKV :: Dynamic t (StoreKey e) -> m (Dynamic t (Maybe e))
+  default getKV :: (m ~ f m', Monad m', MonadTrans f, MonadKVStore e t m') => Dynamic t (StoreKey e) -> m (Dynamic t (Maybe e))
+  getKV = lift . getKV
+
   getKVAll :: m (Dynamic t (Map (StoreKey e) e))
+  default getKVAll :: (m ~ f m', Monad m', MonadTrans f, MonadKVStore e t m') => m (Dynamic t (Map (StoreKey e) e))
+  getKVAll = lift getKVAll
+
   putKV :: Event t (StoreKey e, Maybe e) -> m ()
+  default putKV :: (m ~ f m', Monad m', MonadTrans f, MonadKVStore e t m') => Event t (StoreKey e, Maybe e) -> m ()
+  putKV = lift . putKV
+
   putKVAll :: Event t (Map (StoreKey e) e) -> m ()
+  default putKVAll :: (m ~ f m', Monad m', MonadTrans f, MonadKVStore e t m') => Event t (Map (StoreKey e) e) -> m ()
+  putKVAll = lift . putKVAll
 
 
 newtype KVStoreT t k m a = KVStoreT
@@ -58,6 +70,7 @@ newtype KVStoreT t k m a = KVStoreT
              , PostBuild t
              , NotReady t
              , DomBuilder t
+             , TriggerEvent t
              )
 
 instance MonadTrans (KVStoreT t k) where

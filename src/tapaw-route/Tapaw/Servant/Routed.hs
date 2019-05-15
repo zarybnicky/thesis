@@ -58,6 +58,7 @@ newtype RoutedT t (r :: * -> *) m a = RoutedT
              , PostBuild t
              , NotReady t
              , DomBuilder t
+             , TriggerEvent t
              )
 
 instance MonadTrans (RoutedT t k) where

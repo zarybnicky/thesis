@@ -23,6 +23,11 @@
     extra = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) super.extra;
     http-date = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) super.http-date;
     jsaddle-warp = if self.ghc.isGhcjs or false then self.callHackage "jsaddle-warp" "0.9.6.0" {} else super.jsaddle-warp;
+    parseargs = dontCheck super.parseargs;
+    tapaw-route = super.callCabal2nix "tapaw-route" ../src/tapaw-route {};
+    tapaw-serviceworker = super.callCabal2nix "tapaw-serviceworker" ../src/tapaw-serviceworker {};
+    tapaw-storage = super.callCabal2nix "tapaw-storage" ../src/tapaw-storage {};
+    tapaw-webmanifest = super.callCabal2nix "tapaw-webmanifest" ../src/tapaw-webmanifest {};
 
     servant-reflex = doJailbreak super.servant-reflex;
     polysemy = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) (super.callCabal2nix "polysemy" (pkgs.fetchFromGitHub {
