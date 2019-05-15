@@ -27,12 +27,12 @@ import Data.Coerce (coerce)
 import Data.Proxy (Proxy(..))
 import Language.Javascript.JSaddle (MonadJSM)
 import Reflex.Dom.Core
-import Tapaw.Servant.AsApp (HasApp, MkApp, route)
+import Tapaw.Servant.AsApp (AsApp, HasApp, MkApp, route)
 import Tapaw.Servant.AsAppLink (GatherLinkArgs, HasAppLink, safeAppLink)
 import Tapaw.Servant.TupleProduct (TupleProductOf)
 import Tapaw.Servant.Types (Err, Loc(..))
 import Servant.API (IsElem)
-import Servant.API.Generic (AsApi, GenericServant, ToServantApi, genericApi)
+import Servant.API.Generic (AsApi, GenericServant, ToServant, ToServantApi, genericApi, toServant)
 
 class MonadRouted (r :: * -> *) t m | m -> r t where
   setRoute :: Event t (SomeRoute r) -> m ()
@@ -86,20 +86,26 @@ instance ( GenericServant r AsApi
 
 runRouter ::
      forall r t m a.
-     (DomBuilder t m, PostBuild t m, HasApp (ToServantApi r), MonadRouted r t m)
-  => MkApp (ToServantApi r) (m a)
+     ( DomBuilder t m
+     , PostBuild t m
+     , GenericServant r (AsApp (m a))
+     , ToServant r (AsApp (m a)) ~ MkApp (ToServantApi r) (m a)
+     , HasApp (ToServantApi r)
+     , MonadRouted r t m
+     )
+  => r (AsApp (m a))
   -> (Err -> m a)
   -> m (Event t a)
 runRouter ws onError = do
   dUrl <- getRoute
-  dyn $ either onError id . (route (Proxy @(ToServantApi r)) ws =<<) <$> dUrl
+  dyn $ either onError id . (route (Proxy @(ToServantApi r)) (toServant ws) =<<) <$> dUrl
 
 data SomeRoute api where
   SomeRoute
     :: forall e api. (HasAppLink e, IsElem e (ToServantApi api))
-    => (api AsApi -> e, TupleProductOf (GatherLinkArgs e))
+    => (api AsApi -> e) -> TupleProductOf (GatherLinkArgs e)
     -> SomeRoute api
 
 someRouteToLoc :: GenericServant r AsApi => SomeRoute r -> Loc
-someRouteToLoc (SomeRoute (_ :: r AsApi -> e, args)) =
+someRouteToLoc (SomeRoute (_ :: r AsApi -> e) args) =
   safeAppLink (genericApi (Proxy @r)) (Proxy @e) (Loc [] []) args

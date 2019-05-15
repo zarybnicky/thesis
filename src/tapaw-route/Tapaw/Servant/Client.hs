@@ -8,9 +8,11 @@
 module Tapaw.Servant.Client
   ( getInitialRouteHistory
   , getInitialRouteHash
+  , runRoutedTFrozen
   , runRoutedTHistory
   , runRoutedTHash
   , appLink
+  , appLink'
   , appLinkDyn
   , serve
   , url
@@ -23,6 +25,7 @@ import Data.Bifunctor (bimap, first)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BC
 import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Proxy (Proxy(..))
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -34,9 +37,12 @@ import GHCJS.DOM.Types (MonadJSM)
 import GHCJS.DOM.Window (getHistory, getLocation)
 import GHCJS.DOM.WindowEventHandlers (popState, hashChange)
 import Reflex.Dom.Core
-import Servant.API.Generic (AsApi, GenericServant)
+import Servant.API (IsElem)
+import Servant.API.Generic (AsApi, GenericServant, ToServantApi)
 import Tapaw.Servant.AsApp (HasApp(..))
+import Tapaw.Servant.AsAppLink (GatherLinkArgs, HasAppLink)
 import Tapaw.Servant.Routed (MonadRouted(..), RoutedT(..), SomeRoute(..), someRouteToLoc)
+import Tapaw.Servant.TupleProduct (TupleProductOf)
 import Tapaw.Servant.Types (Err(..), Loc(..))
 import URI.ByteString
   (Query(..), URI, URIRef(..), laxURIParserOptions, parseURI, parseRelativeRef, serializeURIRef')
@@ -44,19 +50,39 @@ import URI.ByteString
 -- error page :: (api -> MkApp) -> Err -> m ()
 -- /error?redirect=/admin/x
 
-
 appLink ::
-     (GenericServant r AsApi, MonadRouted r t m, Reflex t, PostBuild t m, DomBuilder t m)
-  => SomeRoute r
+     ( GenericServant r AsApi
+     , IsElem e (ToServantApi r)
+     , HasAppLink e
+     , MonadRouted r t m
+     , PostBuild t m
+     , DomBuilder t m
+     )
+  => (r AsApi -> e)
+  -> TupleProductOf (GatherLinkArgs e)
+  -> m ()
+  -> m ()
+appLink r a = appLinkDyn (pure (SomeRoute r a)) (pure M.empty) (pure True)
+
+appLink' ::
+     ( GenericServant r AsApi
+     , IsElem e (ToServantApi r)
+     , HasAppLink e
+     , MonadRouted r t m
+     , PostBuild t m
+     , DomBuilder t m
+     )
+  => (r AsApi -> e)
+  -> TupleProductOf (GatherLinkArgs e)
   -> Dynamic t (Map Text Text)
   -> Dynamic t Bool
   -> m ()
   -> m ()
-appLink = appLinkDyn . pure
+appLink' r a = appLinkDyn (constDyn (SomeRoute r a))
 
 appLinkDyn ::
      forall t r m.
-     (GenericServant r AsApi, MonadRouted r t m, Reflex t, PostBuild t m, DomBuilder t m)
+     (GenericServant r AsApi, MonadRouted r t m, PostBuild t m, DomBuilder t m)
   => Dynamic t (SomeRoute r)
   -> Dynamic t (Map Text Text)
   -> Dynamic t Bool
@@ -73,6 +99,11 @@ appLinkDyn dR dAttrs dDisabled inner = do
         Click
         (const preventDefault)) inner
   setRoute $ current dR <@ gate (current dDisabled) (domEvent Click e)
+
+runRoutedTFrozen :: PerformEvent t m => Loc -> RoutedT t r m a -> m a
+runRoutedTFrozen loc f = do
+  (a, _) <- runEventWriterT $ runReaderT (unRoutedT f) (pure $ Right loc)
+  pure a
 
 runRoutedTHistory ::
      ( MonadJSM m

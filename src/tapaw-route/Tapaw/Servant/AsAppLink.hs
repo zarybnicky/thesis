@@ -14,7 +14,6 @@
 module Tapaw.Servant.AsAppLink
   ( HasAppLink(..)
   , GetSkipped
-  , appLink
   , safeAppLink
   , (.>)
   , (.>!)
@@ -24,7 +23,6 @@ import Data.Proxy (Proxy(..))
 import qualified Data.Text as T
 import GHC.Generics (Generic, Rep)
 import GHC.TypeLits (KnownSymbol, symbolVal)
-import Reflex.Dom.Core (Event, EventWriter, Reflex, tellEvent)
 import Tapaw.Servant.TupleProduct (TupleProduct(..), unconsT)
 import Tapaw.Servant.Types (App, Loc(..))
 import Servant.API ((:>), Capture, IsElem, QueryParam, QueryParams, ToHttpApiData(..))
@@ -32,28 +30,11 @@ import Servant.API.Generic
   ( AsApi
   , GServantProduct
   , GenericMode
-  , GenericServant
   , ToServant
   , ToServantApi
-  , genericApi
   , fromServant
   )
 import Servant.API.TypeLevel (IsSubAPI)
-
-appLink ::
-     forall t e rs m.
-     ( EventWriter t Loc m
-     , Reflex t
-     , IsElem e (ToServantApi rs)
-     , GenericServant rs AsApi
-     , HasAppLink e
-     )
-  => (rs AsApi -> e)
-  -> Event t (TupleProductOf (GatherLinkArgs e))
-  -> m ()
-appLink _ args =
-  tellEvent $
-  safeAppLink (genericApi (Proxy :: Proxy rs)) (Proxy @e) (Loc [] []) <$> args
 
 safeAppLink ::
      (IsElem e api, HasAppLink e)

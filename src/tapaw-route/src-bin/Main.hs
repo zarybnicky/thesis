@@ -7,25 +7,23 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Main where
 
-import Control.Monad.IO.Class (liftIO)
-import Data.Proxy (Proxy(..))
+import Data.Either (fromRight)
 import Data.Text (Text)
 import qualified Data.Text as T
-import Language.Javascript.JSaddle.Warp as JS (run)
 import GHC.Generics (Generic)
 import Reflex.Dom.Core hiding (Link, Widget)
 import Servant.API
 import Servant.API.Generic
 import Tapaw.Servant
+import Tapaw.Servant.AsGenerator
 
 main :: IO ()
-main = runGen "out" runEventWriterT appHead widgets $ do
+main = runGen "out" (runRoutedTFrozen $ Loc [] []) appHead widgets $ do
   gen showUserRoute 2
   gen homeRoute
   gen (adminRoute .> editUserRoute) "text"
@@ -34,32 +32,34 @@ appHead :: DomBuilder t m => m ()
 appHead = el "title" $ text "Static app"
 
 app :: MonadWidget t m => m ()
-app = serve (genericApi $ Proxy @Routes) (toServant widgets) errorPage
+app = do
+  i <- fromRight undefined <$> getInitialRouteHistory
+  runRoutedTHistory i $ do
+    _ <- runRouter widgets errorPage
+    pure ()
 
 errorPage :: DomBuilder t m => Err -> m ()
 errorPage = text . T.pack . show
 
-widgets :: (EventWriter t Loc m, DomBuilder t m) => Routes (AsApp m)
+widgets :: (DomBuilder t m, PostBuild t m, MonadRouted Routes t m) => Routes (AsApp (m ()))
 widgets = Routes
   { showUserRoute = \i ->
       text (T.pack $ show i)
   , homeRoute = do
-      e' <- button "Go to user"
-      appLink showUserRoute (5 <$ e')
-      e <- ("..." <$) <$> button "Go to admin"
-      appLink (adminRoute .> editUserRoute) e
+      appLink showUserRoute 5 (text "Go to user")
+      appLink (adminRoute .> editUserRoute) "..." (text "Go to admin")
       pure ()
   , adminRoute = toServant adminWidgets
   }
 
-adminWidgets :: (EventWriter t Loc m, DomBuilder t m) => AdminRoutes (AsApp m)
+adminWidgets :: (DomBuilder t m, PostBuild t m, MonadRouted Routes t m) => AdminRoutes (AsApp (m ()))
 adminWidgets = AdminRoutes
   { listUsersRoute = do
       text "users"
-      appLink homeRoute =<< button "Home"
+      appLink homeRoute () (text "Home")
   , editUserRoute = \slug -> do
       text slug
-      appLink homeRoute =<< button "Home"
+      appLink homeRoute () (text "Home")
   }
 
 data Routes route = Routes

@@ -22,6 +22,7 @@ library
                      Tapaw.Servant.AsAppLink
                      Tapaw.Servant.AsGenerator
                      Tapaw.Servant.Client
+                     Tapaw.Servant.Routed
                      Tapaw.Servant.TupleProduct
                      Tapaw.Servant.Types
 
@@ -61,3 +62,5 @@ executable route-test
                    , jsaddle
                    , jsaddle-warp
                    , reflex-dom-core
+                   , text
+                   , servant
