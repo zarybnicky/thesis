@@ -10,12 +10,3 @@
 [submodule "src-demo/tapaw-realworld-client/test/integration/haskell-yesod-realworld-example-app"]
 	path = src-demo/tapaw-realworld-client/test/integration/haskell-yesod-realworld-example-app
 	url = https://github.com/tzemanovic/haskell-yesod-realworld-example-app/
-[submodule "src-snippets/service-worker/domconv-webkit"]
-	path = src-snippets/service-worker/domconv-webkit
-	url = git@github.com:zarybnicky/domconv-webkit
-[submodule "src-snippets/service-worker/webbits"]
-	path = src-snippets/service-worker/webbits
-	url = https://github.com/brownplt/webbits
-[submodule "src-snippets/service-worker/jmacro"]
-	path = src-snippets/service-worker/jmacro
-	url = git@github.com:zarybnicky/jmacro.git
