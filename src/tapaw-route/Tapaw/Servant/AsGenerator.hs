@@ -104,7 +104,7 @@ htmlify = \case
   x:xs -> cons x (htmlify xs)
 
 
-newtype GenM app m a = GenM
+newtype GenM app (m :: * -> *) a = GenM
   { unGenM :: WriterT [RenderAction m] (Reader app) a
   } deriving ( Functor
              , Applicative
@@ -123,9 +123,9 @@ gen ::
      , Monad m
      )
   => (top AsApi -> e)
-  -> MkRender e m (GenM (top (AsApp m)) m)
+  -> MkRender e (m ()) (GenM (top (AsApp (m ()))) m ())
 gen f = genR (Proxy @m) (Proxy @e) id
-  (asks (unsafeCoerce f) :: GenM (top (AsApp m)) m (MkApp e m))
+  (asks (unsafeCoerce f) :: GenM (top (AsApp (m ()))) m (MkApp e (m ())))
 
 
 data RenderAction m = RenderAction
@@ -134,14 +134,14 @@ data RenderAction m = RenderAction
   }
 
 class HasGen api where
-  type MkRender api (m :: * -> *) (m0 :: * -> *) :: *
+  type MkRender api m m0 :: *
   genR ::
        MonadWriter [RenderAction m] m0
     => Proxy m
     -> Proxy api
     -> (Loc -> Loc)
-    -> m0 (MkApp api m)
-    -> MkRender api m m0
+    -> m0 (MkApp api (m ()))
+    -> MkRender api (m ()) (m0 ())
 
 instance (HasGen a, HasGen b) => HasGen (a :<|> b) where
   type MkRender (a :<|> b) m m0 = MkRender a m m0 :<|> MkRender b m m0
@@ -176,7 +176,7 @@ instance (ToHttpApiData a, KnownSymbol sym, HasGen sub) => HasGen (QueryParams s
       sym = T.pack . symbolVal $ Proxy @sym
 
 instance HasGen App where
-  type MkRender App m m0 = m0 ()
+  type MkRender App m m0 = m0
   genR _ _ l f = do
     app <- f
     tell [RenderAction (l $ Loc [] []) app]

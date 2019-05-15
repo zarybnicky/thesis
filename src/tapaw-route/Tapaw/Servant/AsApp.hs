@@ -22,14 +22,14 @@ import Servant.API ((:<|>)(..), (:>), Capture, FromHttpApiData(..), QueryParam, 
 import Servant.API.Generic (GenericMode(..))
 
 
-data AsApp (m :: * -> *)
+data AsApp m
 
 instance GenericMode (AsApp m) where
   type AsApp m :- api = MkApp api m
 
 class HasApp api where
-  type MkApp api (m :: * -> *) :: *
-  route :: Proxy api -> MkApp api m -> Loc -> Either Err (m ())
+  type MkApp api m :: *
+  route :: Proxy api -> MkApp api m -> Loc -> Either Err m
 
 instance (HasApp a, HasApp b) => HasApp (a :<|> b) where
   type MkApp (a :<|> b) m = MkApp a m :<|> MkApp b m
@@ -79,7 +79,7 @@ instance (FromHttpApiData a, KnownSymbol sym, HasApp sub) => HasApp (QueryParams
       s = T.pack $ symbolVal (Proxy @sym)
 
 instance HasApp App where
-  type MkApp App m = m ()
+  type MkApp App m = m
   route _ f loc = case locPath loc of
     [] -> Right f
     [""] -> Right f

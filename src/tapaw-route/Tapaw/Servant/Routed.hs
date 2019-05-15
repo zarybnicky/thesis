@@ -85,15 +85,14 @@ instance ( GenericServant r AsApi
   getRoute = RoutedT ask
 
 runRouter ::
-     forall r t m.
+     forall r t m a.
      (DomBuilder t m, PostBuild t m, HasApp (ToServantApi r), MonadRouted r t m)
-  => MkApp (ToServantApi r) m
-  -> (Err -> m ())
-  -> m ()
+  => MkApp (ToServantApi r) (m a)
+  -> (Err -> m a)
+  -> m (Event t a)
 runRouter ws onError = do
   dUrl <- getRoute
-  _ <- dyn $ either onError id . (route (Proxy @(ToServantApi r)) ws =<<) <$> dUrl
-  pure ()
+  dyn $ either onError id . (route (Proxy @(ToServantApi r)) ws =<<) <$> dUrl
 
 data SomeRoute api where
   SomeRoute

@@ -184,7 +184,7 @@ serve ::
      , MonadJSM m
      )
   => Proxy api
-  -> MkApp api (EventWriterT t Loc m)
+  -> MkApp api (EventWriterT t Loc m ())
   -> (Err -> EventWriterT t Loc m ())
   -> m ()
 serve api ws showError = mdo
