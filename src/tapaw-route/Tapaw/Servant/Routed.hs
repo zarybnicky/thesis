@@ -1,0 +1,93 @@
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
+
+module Tapaw.Servant.Routed
+  ( MonadRouted(..)
+  , RoutedT(..)
+  ) where
+
+import Control.Monad.Fix (MonadFix)
+import Control.Monad.Reader (MonadIO, MonadTrans(lift), ReaderT, ask)
+import Data.Coerce (coerce)
+import Data.Proxy (Proxy(..))
+import Language.Javascript.JSaddle (MonadJSM)
+import Reflex.Dom.Core
+import Tapaw.Servant.AsApp (HasApp, MkApp, route)
+import Tapaw.Servant.AsAppLink (GatherLinkArgs, HasAppLink, safeAppLink)
+import Tapaw.Servant.TupleProduct (TupleProductOf)
+import Tapaw.Servant.Types (Err, Loc(..))
+import Servant.API (IsElem)
+import Servant.API.Generic (AsApi, GenericServant, ToServantApi, genericApi)
+
+class MonadRouted (r :: * -> *) t m | m -> r t where
+  setRoute ::
+       (HasAppLink e, IsElem e (ToServantApi r))
+    => (r AsApi -> e)
+    -> Event t (TupleProductOf (GatherLinkArgs e))
+    -> m ()
+  getRoute :: m (Dynamic t (Either Err Loc))
+  runRouter :: MkApp (ToServantApi r) m -> (Err -> m ()) -> m ()
+
+newtype RoutedT t (r :: * -> *) m a = RoutedT
+  { unRoutedT :: ReaderT (Dynamic t (Either Err Loc)) (EventWriterT t Loc m) a
+  } deriving ( Functor
+             , Applicative
+             , Monad
+             , MonadFix
+             , MonadIO
+#ifndef ghcjs_HOST_OS
+             , MonadJSM
+#endif
+             , MonadSample t
+             , MonadHold t
+             , PostBuild t
+             , NotReady t
+             , DomBuilder t
+             )
+
+instance MonadTrans (RoutedT t k) where
+  lift = RoutedT . lift . lift
+
+instance (MonadHold t m, MonadFix m, Adjustable t m) => Adjustable t (RoutedT t k m) where
+  runWithReplace a b = RoutedT $ runWithReplace (coerce a) (coerceEvent b)
+  traverseIntMapWithKeyWithAdjust a b c = RoutedT $ traverseIntMapWithKeyWithAdjust (coerce a) b c
+  traverseDMapWithKeyWithAdjustWithMove a b c = RoutedT $ traverseDMapWithKeyWithAdjustWithMove (coerce a) b c
+
+instance PerformEvent t m => PerformEvent t (RoutedT t k m) where
+  type Performable (RoutedT t k m) = Performable m
+  performEvent_ = lift . performEvent_
+  performEvent = lift . performEvent
+
+instance ( HasApp (ToServantApi r)
+         , GenericServant r AsApi
+         , Monad m
+         , DomBuilder t m
+         , MonadHold t m
+         , MonadFix m
+         , PostBuild t m
+         , Reflex t
+         ) =>
+         MonadRouted r t (RoutedT t r m) where
+  setRoute ::
+       forall e. (HasAppLink e, IsElem e (ToServantApi r))
+    => (r AsApi -> e)
+    -> Event t (TupleProductOf (GatherLinkArgs e))
+    -> RoutedT t r m ()
+  setRoute _ args =
+    RoutedT . tellEvent $
+    safeAppLink (genericApi (Proxy @r)) (Proxy @e) (Loc [] []) <$> args
+  getRoute = RoutedT ask
+  runRouter ws onError = do
+    dUrl <- getRoute
+    _ <- dyn $ either onError id . (route (Proxy @(ToServantApi r)) ws =<<) <$> dUrl
+    pure ()
