@@ -1,6 +1,6 @@
-% Created 2019-05-13 Mon 20:05
+% Created 2019-05-15 Wed 11:21
 % Intended LaTeX compiler: pdflatex
-\documentclass[english,odsaz]{fitthesis}
+\documentclass[english,zadani,odsaz]{fitthesis}
 \renewcommand\title[1]{}
 \input{metadata}
 \usepackage{minted}
@@ -27,7 +27,7 @@
 \setlength{\parskip}{0.5\bigskipamount}
 
 \chapter{Introduction}
-\label{sec:org7fc7348}
+\label{sec:org2128abd}
 Imagine you are building an application for an event your company is
 organizing. There will not be reliable internet connection in the area of the
 event, so it needs to work offline. You are on a tight budget, so implementing
@@ -60,31 +60,19 @@ area (Chapter 5), have a look at how to create an application using these
 components (Chapter 6), and conclude with four separate case studies (Chapter
 7).
 
-\section{Related work}
-\label{sec:org3749493}
-TODO: Move to chapter 3?
-
-The volume of work in the area of frontend Haskell is not large, as the
-Haskell-to-JavaScript compiler GHCJS is only available since 2013, and also due
-to the fact that Haskell in general is only recently becoming a mainstream
-language and used in commercial projects. Academic work in this area is sparse,
-but there are several mature projects under active development, usually
-commercially sponsored. Reflex and Obelisk are two projects from Obsidian
-Systems \cite{obsidian}, a UI framework and a deployment tool respectively. Tweag
-\cite{tweag} is working on a Haskell-to-WebAssembly compiler, Asterius, and QFPL
-\cite{qfpl} has created many learning materials for frontend Haskell.
+The source code for this work is available online
+\url{https://github.com/zarybnicky/thesis}, and also at \url{https://tapaw.dev}, where the
+live versions of the applications created here are also available.
 
 \chapter{What is a PWA?}
-\label{sec:orgaf7b54d}
-\section{Web Development Trends}
-\label{sec:orgb8d99f6}
-TODO: Maybe too short paragraphs, connect them?
-
-Today, web pages are more than just static HTML markup. We have moved from
-the Web without JavaScript where any interactions needed to be processed by the
-server, to using JavaScript for animations and small ease-of-use features, to
-building entire applications in JavaScript that only talk to servers in the
-background.
+\label{sec:orgc9d286d}
+\section{Web development trends}
+\label{sec:orgcb43bb9}
+Today, web pages are more than just static HTML markup. We have moved from the
+Web without JavaScript where any interactions needed to be processed by the
+server, through using JavaScript just for animations and small ease-of-use
+features, to building entire applications in JavaScript that only talk to
+servers in the background.
 
 When JavaScript received the ability to execute HTTP requests and get or save
 data in the background, a technology then called AJAX, it was only used for
@@ -119,7 +107,7 @@ the capabilities of web and mobile applications is still ongoing, and a large
 step towards this goal is the concept of a Progressive Web Application.
 
 \section{Progressive Web Applications}
-\label{sec:org7af6f1b}
+\label{sec:org9cbfaa7}
 The term Progressive Web Application (PWA) is an umbrella term for several
 relatively new, closely related technologies. While many of them are useful on
 all devices, the main target audience are mobile Web browsers.
@@ -210,14 +198,16 @@ requirements are the Web Share API and Credentials API that expose more of the
 underlying device capabilities, sharing via other applications and the device
 credential storage.
 
-\chapter{Web frameworks of today}
-\label{sec:orga8a4a27}
-TODO: Rename chapter, ``Existing Web Frameworks''?
+\chapter{Web frameworks today}
+\label{sec:org557e11b}
+As frontend applications grow more complex, so do the frameworks in which they
+are build. Today's frontend framework is no less complex than a desktop or a
+server framework, with a large number of capabilities. In this section, we will
+look into what is expected of a frontend framework, which features they usually
+support and what we will need to look for in Haskell libraries.
 
-TODO: Chapter intro
-
-\section{Features of Web Frameworks}
-\label{sec:orge92de03}
+\section{Features of Web frameworks}
+\label{sec:org957fed4}
 The basis of a web framework is the \emph{UI toolkit}, which defines the structure,
 architecture, and paradigm of the rest of the application. I am intentionally
 using the now-uncommon term toolkit, as the UI frameworks we will see vary in
@@ -234,7 +224,7 @@ includes some ``view logic'' and variable interpolation. In some frameworks the
 whole program is a template (purely functional React), some have templates in
 separate files and pre-compile them during the build process or even in the
 browser (Angular). Templates may also contain CSS as well as in the recent
-CSS-in-JS trend.
+CSS-in-JS trend \cite{cssInJs}.
 
 The second defining feature of frameworks is \emph{state management}. This rather vague
 concept may include receiving input from the user, displaying the state back to
@@ -261,7 +251,7 @@ accepting data from the user and validating it, and sometimes even submitting it
 to an API.
 
 There are other features that a framework can provide, like authentication or
-standardized UI components, but frameworks usually leave these to third party
+standardized UI components, but frameworks usually leave these to third-party
 libraries. There is one more topic I would like to mention that is usually too
 broad to cover in the core of a framework, but important to consider when
 developing an application. \emph{Accessibility} is an area concerned with removing
@@ -284,8 +274,8 @@ process.
 \emph{Internationalization} is somewhat easier to support in a framework, as it
 includes so many cross-cutting concerns. At the most basic level, it means
 simple string translations, perhaps with pluralization and word order. Going
-further, it may also mean supporting RTL scripts, different date/time formats,
-currency, or time zones.
+further, it may also mean supporting right-to-left scripts, different date/time
+formats, currency, or time zones.
 
 As for \emph{load times}, there are many techniques frameworks use to speed up the
 initial load of an application. We can talk about the first load, which can be
@@ -308,10 +298,10 @@ stack'' pattern (``JavaScript, APIs, Markup'' \cite{jamstack}), where after
 application state changes, the HTML of the entire application, of all
 application URLs is rendered all at once and saved so that the server does not
 need to render the HTML for every request. These techniques are usually part of
-a framework's \emph{supporting tools}, about which we will talk now.
+a framework's \emph{supporting tools}, about which we will talk next.
 
-TODO: A separate sub-section ``Supporting tools''?
-
+\subsection{Supporting tools}
+\label{sec:org4ef450c}
 Developers from different ecosystems have wildly varying expectations on their
 tools. A~Python developer might expect just a text editor and an
 interpreter, whereas a JVM or .NET developer might not be satisfied with
@@ -326,14 +316,14 @@ away.
 
 \emph{Debugging tools} are the next area. After building an application, trying it out,
 and discovering faulty behavior, these tools help to pinpoint and fix the
-underlying error. There are generic language-specific tools, a stepping debugger
-is a typical example, and there are also framework-specific tools, like an
-explorer of the component hierarchy (React) or a time-traveling debugger
-(Redux). In the web world, all modern browsers provide basic debugging tools
-inside the ``DevTools'': a stepping debugger and a profiler. Some frameworks build
-on that and provide an extension to DevTools that interacts with the application
-in the current window, some provide debugging tools integrated into the
-application itself.
+underlying error. There are generic tools, a stepping debugger is a typical
+example, and there are also framework-specific tools, like an explorer of the
+component hierarchy (React) or a time-traveling debugger that can navigate
+through application state backward or forward (Redux). In the web world, all
+modern browsers provide basic debugging tools inside the ``DevTools'': a stepping
+debugger and a profiler. Some frameworks build on that and provide an extension
+to DevTools that interacts with the application in the current window, some
+provide debugging tools integrated into the application itself.
 
 When building or maintaining a large application with several developers, it is
 necessary to ensure good practices in all steps of the development
@@ -360,26 +350,26 @@ or integrating framework-specific debugging tools.
 
 While we were talking about Web frameworks so far, some of them support not only
 running inside the browser but also being packaged as a \emph{mobile app} for Android
-or iOS, or as a \emph{native desktop application} for the many desktop operating
-systems. For mobile support, frameworks often provide wrappers around Apache
-Cordova, which is a thin wrapper around a regular website exposing some extra
-capabilities of the device. Some, however, go even further and support fully
-native mobile interfaces controlled by JavaScript, like React Native. The
-situation is similar for desktop support, just with Electron used as the base
-instead of Cordova. The main benefits of packaging a Web application instead of
-just running it inside a browser are performance (they are usually faster to
-load and to use), access to device-specific capabilities (direct access to the
-file system), or branding.
+or iOS, or as a /native desktop application. For mobile support, frameworks
+often provide wrappers around Apache Cordova, which is a thin wrapper around a
+regular website exposing some extra capabilities of the device. Some, however,
+go even further and support fully native mobile interfaces controlled by
+JavaScript, like React Native. The situation is similar for desktop support,
+just with Electron used as the base instead of Cordova. The main benefits of
+packaging a Web application instead of just running it inside a browser are
+performance (they are usually faster to load and to use), access to
+device-specific capabilities (direct access to the file system), or branding.
 
 The last point to mention is \emph{code generation}, of which there are two variants:
 project skeleton generators, which create all files necessary for a project to
 compile and run and which are provided in a large majority of frameworks. Then
 there are component generators, which may include generating a template, a URL
 route and its corresponding controller, or an entire subchapter of a
-website. These are less common but some frameworks also provide them.
+website. While they are less common, they are indispensable especially in
+frameworks that require large amounts of boilerplate code.
 
-\section{Web Frameworks in JavaScript}
-\label{sec:org649d4f6}
+\section{Web frameworks in JavaScript}
+\label{sec:org5cb1037}
 The features we just went through are features that are widely available in
 JavaScript and its frameworks. We will now go through some of them to see how
 they approach the implementation of these features.
@@ -405,12 +395,10 @@ several projects that attempt to alleviate this problem by combining a set of
 libraries into a more cohesive framework closer in scope to Angular.
 
 \chapter{Haskell and the Web}
-\label{sec:org86f916d}
-TODO: intro
-
+\label{sec:org60b4e51}
 \section{Haskell}
-\label{sec:org6455032}
-\begin{listing}[htbp]
+\label{sec:orgd7d41fa}
+\begin{listing}[!bp]
 \begin{minted}[,frame=single]{haskell}
 type HackageAPI =
   "users" :> Get '[JSON] [User] :<|>
@@ -458,25 +446,35 @@ assembly language and a runtime designed specifically for the Web.
 
 Web developers have been using JavaScript compilers for a long time.
 CoffeeScript is rather popular language announced in 2010
-\cite{coffeescript}. Also the new ECMAScript~6 or 7 features have only been usable
-via compilation until browsers implemented them natively. There are other, more
-advanced languages built with compilation to JavaScript in mind,
-e.g.~TypeScript, a superset of ECMAScript~6 \cite{typescript}, or Elm, a framework
-with its own language based on Haskell \cite{czaplicki2012elm}. The need to
-compile your code before running it is now quite accepted in the world of Web
-development.
+\cite{coffeescript}. Also the new ECMAScript~6 or 7 features have only been
+usable via compilation until browsers implemented them natively. There are
+other, more advanced languages built with compilation to JavaScript in mind,
+e.g.~TypeScript, a superset of ECMAScript~6 \cite{typescript}, or Elm,
+a framework with its own language based on Haskell \cite{czaplicki2012elm}. The
+need to compile your code before running it is now quite accepted in the world
+of Web development.
 
 The currently accepted way of running Haskell in the browser is via GHCJS, a
 Haskell-to-JavaScript compiler, although there are two active projects in the
 process of creating a Haskell-to-WebAssembly compiler: WebGHC \cite{webghc} and
 Asterius \cite{asterius}.
 
-\section{Haskell Ecosystem for the Web}
-\label{sec:orgc9cef99}
+\section{Haskell ecosystem for the Web}
+\label{sec:org476ce47}
 We will now go through Haskell libraries for Web development, using the same
 structure as we did in the chapter describing general Web framework features.
 
-There is significant focus on the semantics of libraries in the Haskell
+The volume of work in the area of frontend Haskell is not large, as the
+Haskell-to-JavaScript compiler GHCJS is only available since 2013, and also due
+to the fact that Haskell in general is only recently becoming a mainstream
+language and used in commercial projects. Academic work in this area is sparse,
+but there are several mature projects under active development, usually
+commercially sponsored. Reflex and Obelisk are two projects from Obsidian
+Systems \cite{obsidian}, a UI framework and a deployment tool respectively. Tweag
+\cite{tweag} is working on a Haskell-to-WebAssembly compiler, Asterius, and QFPL
+\cite{qfpl} has created many learning materials for frontend Haskell.
+
+There is a significant focus on the semantics of libraries in the Haskell
 community, e.g.~writing down mathematical laws for the foundational types of a
 library and using them to prove correctness of the code, so UI libraries have
 mostly used Functional Reactive Programming (FRP) or similar approaches like
@@ -498,7 +496,7 @@ combinator library on top of them. There is an example of Reflex code in Listing
 \ref{ex-reflex}, where \texttt{eClick} is an event of unit values and \texttt{dCount} is a value
 containing a dynamically changing integer.
 
-\begin{listing}[htbp]
+\begin{listing}[tb]
 \begin{minted}[,frame=single]{haskell}
 main :: IO ()
 main = mainWidget $ do
@@ -506,22 +504,23 @@ main = mainWidget $ do
   dCount :: Dynamic t Int <- count eClick
   display dCount
 \end{minted}
-\caption{An example of Reflex code (a counter) \label{ex-reflex}}
+\caption{An example of a counter in Reflex \label{ex-reflex}}
 \end{listing}
 
-\emph{Miso} \cite{miso} is a re-implementation of the \emph{Elm architecture} in Haskell, which
-means that it uses a strictly uni-directional data-flow with a central data
-store on the one hand, and the view as a pure function that takes the state and
-creates a view on the other hand, where the view can change the state using
-strictly defined events. The ecosystem of Miso is not as well developed as
-Reflex's, and the overall architecture is quite limiting, which I consider to be
-a large disadvantage. You can see an example of Miso code in Listing
-\ref{ex-miso}, in which all local variables from the \texttt{where} clause are bound in the
-expression \texttt{App \{..\}}. In particular, you can see the \texttt{Action}, the \texttt{model} (a simple
-integer), the \texttt{update} function, and the \texttt{view}, which together form the basis of
-the application.
+\emph{Miso} \cite{miso} is described as a re-implementation of the \emph{Elm architecture} in
+Haskell. That means that it uses a strictly uni-directional data-flow in which
+the entire state of the application is stored as a single value, the model,
+which is passed to a view function that renders the application and produces a
+stream of action values, which are in turn interpreted by a reducer function to
+update the application state, where each action causes re-rendering of the
+entire application. The ecosystem of Miso is not as well developed as Reflex's,
+and the overall architecture is quite limiting, which I consider to be a large
+disadvantage. You can see an example of Miso code in Listing \ref{ex-miso}, in
+which all local variables from the \texttt{where} clause are bound in the expression \texttt{App
+\{..\}}. In particular, you can see the \texttt{Action}, the \texttt{model} (a simple integer), the
+\texttt{update} function, and the \texttt{view}, which together form the basis of the application.
 
-\begin{listing}[htbp]
+\begin{listing}[!bp]
 \begin{minted}[,frame=single]{haskell}
 data Action = AddOne
   deriving Eq
@@ -542,7 +541,7 @@ main = JSaddle.run 8080 $ startApp App {..}
       , button_ [ onClick AddOne ] [ text "Click Me" ]
       ]
 \end{minted}
-\caption{An example of Miso code (a counter) \label{ex-miso}}
+\caption{An example of a counter in Miso \label{ex-miso}}
 \end{listing}
 
 \emph{Concur} \cite{concur} tries to explore a different paradigm by combining the best
@@ -555,7 +554,7 @@ competitors. An example is included in Listing \ref{ex-concur}, where you can se
 operator \texttt{<|>} used for combining widgets inside \texttt{main} and \texttt{>>} for sequencing in
 \texttt{increment1}.
 
-\begin{listing}[htbp]
+\begin{listing}[tb]
 \begin{minted}[,frame=single]{haskell}
 main :: IO ()
 main = do
@@ -568,7 +567,7 @@ main = do
       count <- get
       lift $ el_ E.div [] $ text $ show count ++ " clicks"
 \end{minted}
-\caption{An example of Concur code (a counter) \label{ex-concur}}
+\caption{An example of a counter in Concur \label{ex-concur}}
 \end{listing}
 
 In all of these frameworks, \emph{templating} is a feature that has been side-stepped
@@ -585,67 +584,66 @@ architecture strictly with a central data store that can be only changed by
 messages from the view, whereas Reflex and Concur are more flexible, allowing
 both centralized and component-local state. A common complaint regarding Reflex
 is that there is no recommended application architecture. It errs on the other
-side of the flexibility vs. best practices spectrum.
+side of the flexibility vs.~best practices spectrum.
 
-As for \emph{routing}, Miso has routing built into its base library. There are several
+Regarding \emph{routing}, Miso has routing built into its base library. There are several
 attempts at a routing library in Reflex, though the situation is the same as
 with templating libraries. Concur with its small ecosystem does not have routing
-at all, it would be necessary to implement form scratch for a production-ready
+at all, it would be necessary to implement from scratch for a production-ready
 application.
 
 In \emph{forms} and UI components in general, the selection is not good. There are
-several components collections for Reflex which use popular CSS frameworks
+several component collections for Reflex that use popular CSS frameworks
 (Bootstrap, Semantic UI), though each has many missing pieces and they lack
 components that need to be re-implemented anew in each application, forms in
 particular. Miso and Concur do not have any publicly available UI component
 libraries, or at least none that I was able to find.
 
 \emph{Accessibility} as a whole has not been a focus of Web development in Haskell. It
-is possible to reuse JavaScript accessibility testing tools, however, though I
-have not seen any sort of automated testing done on any of the publicly
-available Haskell applications. The only area with continued developer focus is
-\emph{loading speed}, as the size of build artifacts was a problem for a long
-time. That has been ameliorated to the level of a common JavaScript application,
-however, so that is not a critical concern. \emph{Prerendering} is also supported by
-Miso and Reflex, which helps speed up load times as well.
+is possible to reuse JavaScript accessibility testing tools, though I have not
+seen any sort of automated testing done on any publicly available Haskell
+application. The only area with continued developer focus is \emph{loading speed}, as
+the size of build artifacts was a problem for a long time. The build artifact
+size has been improved to the level of a common JavaScript application, however,
+so that is not a critical concern. \emph{Prerendering} is also supported by Miso and
+Reflex, which helps to speed up load times as well.
 
+\subsection{Supporting tools}
+\label{sec:org14b24de}
 Moving on to the topic of \emph{build tools}: there are three main options in Haskell:
-Cabal v2 \cite{cabal}, Stack \cite{stack}, and Nix. There are also other options.
-Snack \cite{snack}, aiming for the best of these three but not yet ready for
-production use, or Mafia \cite{mafia}, which is not too popular in the community
-at large. Cabal is the original Haskell build tool which gained a bad reputation
-for some of its design decisions (the so-called ``Cabal hell''), though most of
-them were fixed in ``Cabal v2'' which puts it on par with its main competitor,
-Stack. Stack tried to bring Haskell closer to other mainstream programming
-language by introducing several new features like automatic download of the
-selected compiler or a curated subset of the main Haskell package repository,
+Cabal v2 \cite{cabal}, Stack \cite{stack}, and Nix. Cabal is the original build tool
+for Haskell, which gained a bad reputation for some of its design decisions (the
+so-called ``Cabal hell''), although most of them were fixed in ``Cabal v2'' which
+puts it on par with its main competitor, Stack. Stack tried to bring Haskell
+closer to other mainstream programming languages by introducing several new
+features like automatic download of the correct version of the GHC compiler or
+having a curated set of Haskell packages guaranteed to work together, called
 Stackage. It succeeded in that, becoming the tool of choice for a large part of
-the Haskell community in the process. Nix, as mentioned in the previous chapter,
-is a general-purpose build tool and not a Haskell-specific one. It is especially
-capable for cross-compilation, however, which is the reason why it is used for
-frontend Haskell.
+the Haskell community in the process. Nix, in contrast, is a general-purpose
+build tool and not a Haskell-specific one, which is used in Haskell development
+mainly for its cross-compilation capabilities and reproducibility guarantees.
 
 Glasgow Haskell Compiler (GHC) is the main Haskell \emph{compiler} used for the
 creation of native binaries. Compilation to JavaScript, as required for frontend
 development, is supported by a separate compiler, GHCJS, which uses GHC as a
 library. Setting up a GHCJS development environment with Cabal is not a trivial
-process and using Stack limits the developer to old GHC versions, so it is Nix
-that is usually recommended. When set up correctly, Nix offers almost a
-one-click setup, downloading the compiler and all dependencies from a binary
-cache or compiling them if unavailable. Reflex especially, in the
-reflex-platform project~\cite{reflex-platform}, uses the cross-compilation
-capabilities of Nix to allow applications to compile for Android, iOS, desktop,
-or the web simultaneously.
+process and Stack does not support GHCJS at all in recent versions, so the
+commonly recommended build tool for frontend development is Nix. When set up
+correctly, it offers almost a one-click setup, downloading the compiler and all
+dependencies from a binary cache or compiling them if unavailable. Especially
+Reflex, in the reflex-platform project~\cite{reflex-platform}, uses the
+cross-compilation capabilities of Nix to compile applications for Android, iOS,
+desktop, or the web simultaneously.
 
-The main problem of GHCJS has been speed and the size of the produced
+The main problem of GHCJS has been the speed and the size of the produced
 JavaScript. The latter has been gradually improving and is now mostly on par
-with modern JavaScript framework, the former is harder to improve though, and
-GHCJS applications are still within a factor of 3 of native JavaScript ones
-\cite{nanda_bench}. However, this should be improved soon by compiling to
-WebAssembly instead of JavaScript. There are two projects trying to create a
-Haskell-to-WebAssembly compiler in parallel: Asterius \cite{asterius} and WebGHC
-\cite{webghc}. They are so far in alpha, but I expect them to be production-ready
-by the end of 2019.
+with modern JavaScript frameworks, the former is harder to improve though, and
+the speed of GHCJS applications is still within a factor of 3 of native
+JavaScript ones \cite{nanda_bench}. This should, however, be improved soon by
+compiling to WebAssembly instead of JavaScript. There are two projects trying to
+create a Haskell-to-WebAssembly compiler in parallel: Asterius \cite{asterius} and
+WebGHC \cite{webghc}. These are still under active development, but I expect them
+to be production-ready by the end of 2019.
 
 Moving on to the topic of \emph{debugging tools}, this is where Haskell on the frontend
 is lacking the most. While it is possible to use the browser's built-in DevTools
@@ -653,31 +651,31 @@ and their debugger and profiler, the compiled output of GHCJS does not
 correspond to the original Haskell code too much, which makes using the debugger
 quite hard. There are no other debugging tools, though in my experience I did
 not ever feel the need to use anything else than writing debugging output to the
-console.
+browser console.
 
 In contrast, there are many \emph{quality assurance} tools available for Haskell in
 general, of which almost all are available for use in frontend
-development. Starting with static quality assurance, Hlint is the standard
-``linter'' for Haskell, well-supported and mature. There are several code
-formatters, Hindent is the most widely used one, which enforces a single style
-of code as is common in other contemporary languages (e.g.~gofmt for Go). As for
-test frameworks, there are many options. HSpec or HUnit are examples of unit- or
-integration-testing frameworks, property-based testing is also common in
-Haskell, with QuickCheck~\cite{claessen2011quickcheck} being the most well-known
-example. For end-to-end testing in the browser, there are libraries that
-integrate with Selenium.
+development. Starting with static quality assurance, Hlint is the standard code
+quality analyzer for Haskell, well-supported and mature. There are several code
+formatters, Hindent is the most widely used one; it enforces a single style of
+code as is common in other contemporary languages (e.g.~gofmt for Go). As
+for test frameworks, there are many options. HSpec or HUnit are examples of
+unit- or integration-testing frameworks, property-based testing is also common
+in Haskell, with QuickCheck~\cite{claessen2011quickcheck} being the most
+well-known example. For end-to-end testing in the browser, there are libraries
+that integrate with Selenium.
 
 Haskell has a quite bad reputation for the lack of \emph{editor integration}. The
 situation is better with the recent Language Server Protocol project, where
 haskell-ide-engine, Haskell's language server, enables users to write Haskell in
 contemporary editors like Atom easily. The language server supports
-type-checking, linting and formatting, and also common IDE features like
+type-checking, linting, formatting, and also common IDE features like
 ``Go to definition'' or ``Type at point''.
 
 Compiling applications as \emph{mobile or desktop apps} is well-supported in Reflex,
 though not in Miso or Concur. Using the scaffolding of reflex-platform makes
 supporting different platforms almost automatic, as Nix takes care of switching
-between compilers: GHCJS for the Web, regular GHC for the desktop and
+between compilers: GHCJS for the Web, regular GHC for the desktop, and
 cross-compiling GHC for iOS or Android. Bundling the compiled applications for
 distribution for each platform is a bit more involved, though there are efforts
 to automate even that.
@@ -687,9 +685,9 @@ new project initialization, though there are no templates for frontend
 development so far. Cabal comes with a single standard template for a blank
 project but lacks customization options for creating framework-specific
 templates. And Nix does not do code generation at all. The common practice so
-far is to make copy of a repository containing the basics, edit project-specific
-details, and use that as a base for a new project. I have not found any attempts
-at component generation in Haskell.
+far is to use a copy of a repository as the base for a new project, which
+contains all necessary files for a working minimal project. I have not found any
+attempts at component generation in Haskell.
 
 In summary, while there are several UI toolkits available for browser
 applications in Haskell, individual components that are required for easy
@@ -697,9 +695,9 @@ application development are either not available at all or not too well
 developed.
 
 \chapter{Creating the framework}
-\label{sec:orga788627}
+\label{sec:org42cbbc5}
 \section{Implementation plan}
-\label{sec:org82f9b3c}
+\label{sec:orgdcad0af}
 In the previous chapter, I presented my research into Haskell and its library
 ecosystem for browser applications. Now it is time to select which components
 need to be created to fulfill the goal of this thesis, i.e. creating a framework
@@ -721,19 +719,18 @@ Basic PWA reiterated:
 We will go through them one by one to see which components already exist and
 which are left to be implemented.
 
-TODO: How CSS provides responsiveness?
-
-Responsiveness is accomplished via CSS and is therefore out of scope, we are
-focusing on the JavaScript part only. The next two requirements (offline,
-cache-first networking) need to be implemented in a service worker, which is not
-covered by any existing library. Non-blocking page transitions and the use of
-History API are similar requirements that can today be implemented manually, but
-a routing component is desirable to remove the large amounts of boilerplate code
-necessary and to fulfill the next requirement of each page having a URL. The
-metadata for ``Add to Home screen'' need to be specified in the Web App Manifest,
-which is currently not supported by any existing library, but can be created
-manually as well. Indication of online/offline status is supported by the basic
-DOM interaction library. Push notifications require three components: in the
+Responsiveness, the ability of an application to fit any screen size, is usually
+accomplished only via CSS and is therefore out of scope, we are focusing on the
+JavaScript part only. The next two requirements (offline, cache-first
+networking) need to be implemented in a service worker, which is not covered by
+any existing library. Non-blocking page transitions and the use of History API
+are similar requirements that can today be implemented manually, but a routing
+component is desirable to remove the large amounts of boilerplate code necessary
+and to fulfill the next requirement of each page having a URL. The metadata for
+``Add to Home screen'' need to be specified in the Web App Manifest, which is
+currently not supported by any existing library, but can be created manually as
+well. Indication of online/offline status is supported by the basic DOM
+interaction library. Push notifications require three components: in the
 browser, in the service worker, and on the server. Only the server-side
 component is currently available in Haskell.
 
@@ -767,28 +764,28 @@ process and some interesting parts of the implementations, as I believe that
 will make for a more concise and informative presentation.
 
 \section{Routing}
-\label{sec:org8c28894}
+\label{sec:orgf0e42c3}
 A router is one of the basic components of a modern web application. There are
 several features a router is concerned with: parsing the initial URL on
 application start-up, changing it according to user navigation actions, storing
 the navigation state for the rest of the application. In types, this might be
 expressed as shown in Listing \ref{router-api}.
 
-\begin{listing}[htbp]
+\begin{listing}[!bp]
 \begin{minted}[,frame=single]{haskell}
 parseRoute :: URL -> Route app
 dispatchRoute :: Route app -> m ()
 renderRoute :: Route app -> URL
 \end{minted}
-\caption{Router API \label{router-api}}
+\caption{Router: the intended API \label{router-api}}
 \end{listing}
 
 \subsection{Previous work}
-\label{sec:org442d4dc}
+\label{sec:org2dbefc5}
 There are several widely used options for a server-side router, which has the
 same responsibilities as a client-side one, and a very similar interface, for
 the most part. These options differ in several ways, the most fundamental one
-being the representation of the route, which in turn defines the basis of the
+being the representation of a route, which in turn defines the basis of the
 client API.
 
 We will go through the routers of Yesod, Happstack, and Snap, all of them
@@ -826,13 +823,13 @@ compared to the simplicity of the other two approaches which use plain functions
 and simple sum types at their core.
 
 \subsection{Servant}
-\label{sec:org7dd1d22}
+\label{sec:org2402350}
 Servant is a general type-level DSL (Domain-Specific Language) in the domain of
 web routing. An API defined using Servant is merely a type, a tree of type-level
 terms composed using type operators. This API type is then interpreted using
 type-level functions into value-level functions, e.g.~routers.
 
-\begin{listing}[htbp]
+\begin{listing}[tb]
 \begin{minted}[,frame=single]{haskell}
 data (:>) (a :: Type) (b :: k)
 data (:<|>) (a :: Type) (b :: Type)
@@ -851,7 +848,7 @@ getUsers = f
   where
     (f :<|> _) = client (Proxy @UserAPI)
 \end{minted}
-\caption{Servant API definition \label{servant-api}}
+\caption{An example of a Servant API \label{servant-api}}
 \end{listing}
 
 In Listing \ref{servant-api}, we can see that a single Servant endpoint \texttt{GetUsers} is a
@@ -867,7 +864,7 @@ for individual endpoints are composed together using the value-level operator
 \texttt{server}. A client for the API is not created by composition but by decomposition
 of the \texttt{:<|>} constructor as shown in the last part of the listing.
 
-\begin{listing}[htbp]
+\begin{listing}[!bp]
 \begin{minted}[,frame=single]{haskell}
 data UserAPI = UserAPI
   { _getUsers :: "users" :> QueryParam "sort" SortBy :> Get '[JSON] [User]
@@ -885,7 +882,7 @@ getUsers = _getUsers apiClient
   where
     apiClient = genericClient @UserAPI
 \end{minted}
-\caption{Servant Generic API definition \label{servant-generic-api}}
+\caption{An example of a Servant Generic API \label{servant-generic-api}}
 \end{listing}
 
 An alternative approach to defining an API is using records. This approach uses
@@ -912,7 +909,7 @@ and when extending an existing interpretation to support prerendering of
 applications on the server.
 
 \subsection{Reflex}
-\label{sec:org3f57501}
+\label{sec:orgf1b6cb9}
 Before we dive into the implementation of the router, we also need to go through
 the basics of Reflex, as its philosophy and building blocks constrain the
 shape of any function we design.
@@ -980,7 +977,7 @@ something like Listing \ref{mtl-api}, where first two constraints of \texttt{use
 would be executed using the function \texttt{runApp}, with the remaining \texttt{MonadWidget}
 being executed by the top-level rendering function.
 
-\begin{listing}[htbp]
+\begin{listing}[tb]
 \begin{minted}[,frame=single]{haskell}
 userView ::
      (MonadReader AppState m, MonadRouter AppRoute m, MonadWidget t m)
@@ -989,21 +986,15 @@ userView ::
 
 runAppM :: MonadWidget t m => RouterT AppRoute (ReaderT State m) a -> m a
 \end{minted}
-\caption{MTL-based API \label{mtl-api}}
+\caption{Router: types of application code using MonadRouter \label{mtl-api}}
 \end{listing}
 
 \subsection{Implementation}
-\label{sec:org23c98aa}
+\label{sec:org63d6b5d}
 I have decided to use Servant's approach in my work, as it seems to be the most
-flexible and extendable one.
-
-My contributions in this area are:
-\begin{itemize}
-\item a client-side router using Reflex's FRP types composed of a dispatch component
-and in-application links and
-\item an extension to the server-side Servant router that supports rendering Reflex
-applications.
-\end{itemize}
+flexible and extendable one. My contributions in this area is a client-side
+router using Reflex's FRP types composed of a dispatch component and
+in-application links.
 
 I have also created a proof-of-concept of a static site generator using these
 components, as well as a combinator that allows easier manipulation with
@@ -1013,6 +1004,38 @@ repository.
 We will start with the client-side router, defining the routes type and the
 handlers. This is where we will see how to create a new interpretation of a
 Servant API type.
+
+\begin{listing}[!t]
+\begin{minted}[,frame=single]{haskell}
+data App :: Type
+
+class HasApp api where
+  type MkApp api (m :: Type -> Type) :: Type
+  route :: Proxy api -> MkApp api m -> Loc -> Either Err (m ())
+
+instance (HasApp a, HasApp b) => HasApp (a :<|> b) where
+  type MkApp (a :<|> b) m = MkApp a m :<|> MkApp b m
+  route _ (a :<|> b) = route (Proxy @a) a <> route (Proxy @b) b
+
+instance (FromHttpApiData a, HasApp s) => HasApp (Capture sym a :> s) where
+  type MkApp (Capture s a :> sub) m = a -> MkApp s m
+  route _ f loc = case locPath loc of
+    [] -> Left Err404
+    x:xs -> case parseUrlPiece x of
+      Right p -> route (Proxy @sub) (f p) (loc { locPath = xs })
+      Left _ ->
+        let s = T.pack $ symbolVal (Proxy @sym)
+        in Left Err400
+
+instance HasApp App where
+  type MkApp App m = m ()
+  route _ f loc = case locPath loc of
+    [] -> Right f
+    [""] -> Right f
+    _ -> Left Err404
+\end{minted}
+\caption{Router: transformation of a Servant API into a client router \label{router-hasapp}}
+\end{listing}
 
 A regular Servant type has endpoints that end with the terminator \texttt{Verb}, which
 represents a HTTP verb like GET or POST and the return type of the
@@ -1043,72 +1066,10 @@ this explicitly: the handler for a \texttt{Capture} needs to accept a value of t
 The \texttt{App} instance is the end of the recursion chain, where neither \texttt{MkApp} nor
 \texttt{route} recurse anymore. The \texttt{MkApp} type declares the handler of an \texttt{App} to be an
 action, and the \texttt{route} function only checks that we have parsed the entire URL,
-and returning the final handler.
+and returning the final handler. This, in summary, is what it looks like to
+interpret a Servant type.
 
-\begin{listing}[htbp]
-\begin{minted}[,frame=single]{haskell}
-data App :: Type
-
-class HasApp api where
-  type MkApp api (m :: Type -> Type) :: Type
-  route :: Proxy api -> MkApp api m -> Loc -> Either Err (m ())
-
-instance (HasApp a, HasApp b) => HasApp (a :<|> b) where
-  type MkApp (a :<|> b) m = MkApp a m :<|> MkApp b m
-  route _ (a :<|> b) = route (Proxy @a) a <> route (Proxy @b) b
-
-instance (FromHttpApiData a, HasApp s) => HasApp (Capture sy a :> s) where
-  type MkApp (Capture s a :> sub) m = a -> MkApp s m
-  route _ f loc = case locPath loc of
-    [] -> Left Err404
-    x:xs -> case parseUrlPiece x of
-      Right p -> route (Proxy @sub) (f p) (loc { locPath = xs })
-      Left _ ->
-        let s = T.pack $ symbolVal (Proxy @sy)
-        in Left Err400
-
-instance HasApp App where
-  type MkApp App m = m ()
-  route _ f loc = case locPath loc of
-    [] -> Right f
-    [""] -> Right f
-    _ -> Left Err404
-\end{minted}
-\caption{Router: API types \label{router-hasapp}}
-\end{listing}
-
-This, in summary, is what it looks like to interpret a Servant type. As for the
-server part of a router, I will not include the relevant code here, however, as
-the Servant server uses special machinery to run a series of optimizations that
-preprocess a tree of handlers. The resulting code is not too readable, so I do
-not think it is worth including it here. I will sketch what the code does, at least:
-
-For the server part, we only need to implement a single instance, the instance
-of \texttt{HasServer} for our \texttt{App} type. It will be different from the client instances,
-not only for the above-mentioned reasons, but also due to the fact that while we
-have a handler action, we cannot run it directly, but we need to render it into
-a HTML string before sending it to the client. The Servant server uses an
-additional type parameter, a context using which it is possible to pass values
-to API combinators. The \texttt{App} instance reads a rendering function from the
-context, runs the route handler using it, and returns the result.
-
-Back to the client-side router: while we have a \texttt{route} function that will return
-either an error or a widget, we need to connect it to the browser in some way.
-To do that, we need a component for manipulating the URL, either using the
-Location API or hash fragment changes, and when we have it, we can write the
-router itself.
-
-In Listing \ref{router-url}, we have a simplified version of the library
-router. In there, we have a function that takes a tree of handlers, a URL
-manipulation component, and an action to show possible routing errors, and
-produces a piece of dynamically changing content. The function uses \emph{recursive do}
-to make it possible to refer to variable before they are defined (the \texttt{rec}
-keyword). Reading from the top, we obtain a dynamic containing the current
-location, use it to run our \texttt{route} function defined above, rendering any errors,
-and finally run this dynamically changing piece of content to get the event that
-changes the current URL.
-
-\begin{listing}[htbp]
+\begin{listing}[!t]
 \begin{minted}[,frame=single]{haskell}
 runRouter ::
      forall t m api. _
@@ -1117,18 +1078,32 @@ runRouter ::
   -> (Event t Loc -> m (Dynamic t Loc))
   -> (Err -> EventWriterT t Loc m ())
   -> m ()
-runRouter api handlers url showError = do
-  rec
-    dUrl <- url eUrl
-    let widget = case route api handlers <$> dUrl of
-          Left err -> showError err
-          Right f -> f
-    ((), eUrl) <- runEventWriterT (dyn widget)
+runRouter api handlers url showError = mdo
+  dUrl <- url eUrl
+  let widget = case route api handlers <$> dUrl of
+        Left err -> showError err
+        Right f -> f
+  ((), eUrl) <- runEventWriterT (dyn widget)
   pure ()
 
 \end{minted}
-\caption{Router: URL binding \label{router-url}}
+\caption{Router: the top-level route dispatcher \label{router-url}}
 \end{listing}
+
+While we have a \texttt{route} function that will return either an error or a widget, we
+need to connect it to the browser in some way. To do that, we need a component
+for manipulating the URL, either using the Location API or hash fragment
+changes, and when we have it, we can write the router itself.
+
+In Listing \ref{router-url}, we have a simplified version of the library
+router. In there, we have a function that takes a tree of handlers, a URL
+manipulation component, and an action to show possible routing errors, and
+produces a piece of dynamically changing content. The function uses \emph{recursive do}
+to make it possible to refer to variable before they are defined (the \texttt{mdo}
+keyword). Reading from the top, we obtain a dynamic containing the current
+location, use it to run our \texttt{route} function defined above, rendering any errors,
+and finally run this dynamically changing piece of content to get the event that
+changes the current URL.
 
 The second part of the router are links from one part of the application to
 another. To do that, we need another interpretation of the API type, as we need
@@ -1144,7 +1119,7 @@ convert it to a tuple using the \texttt{TupleProduct} type family, and only then
 use it. The \texttt{toAppLink} function is again recursive, and it builds up a URL from
 the endpoint type and from the provided arguments, starting from an empty URL.
 
-\begin{listing}[htbp]
+\begin{listing}[!t]
 \begin{minted}[,frame=single]{haskell}
 viewUserItemsLink :: Event t (UserId, ItemType) -> m ()
 viewUserItemsLink = appLink viewUserItemsRoute
@@ -1175,10 +1150,12 @@ instance HasAppLink App where
 \caption{Router: in-application links \label{router-link}}
 \end{listing}
 
-TODO: A complete example of a router: type, handlers, links
+The other part of this work, the static site generator and the Servant record
+combinator, are included only in the attached source files, as they are only
+trivial extensions of the ideas presented above.
 
 \subsection{Possible extensions}
-\label{sec:org951d223}
+\label{sec:org53cc193}
 There are several possible directions in which to expand this router. One idea
 available in server-side API routes is encoding authentication constraints in
 the endpoint type itself using a combinator like \texttt{AuthProtect User}. I would like
@@ -1199,8 +1176,8 @@ headers. I tried this approach at the start but did not succeed, so I moved on
 to other approaches, but I expect that a more skilled Servant developer would
 find a way.
 
-\section{Service Workers}
-\label{sec:orgb418892}
+\section{Service workers}
+\label{sec:org4af91cb}
 To reiterate the description of a service worker from the introductory chapters:
 it is a JavaScript script that can, among other things, intercept requests
 initiated by the application that installed it and respond to them from cache,
@@ -1211,7 +1188,7 @@ device goes online, regardless of whether the application is running or not
 (Background Sync API).
 
 \subsection{Requirements}
-\label{sec:orgd809ad8}
+\label{sec:orgb6ce156}
 The Service Worker features that we aim to support are: precaching, fetch
 control, and push notifications, keeping Background Sync for a possible
 extension of this library.
@@ -1244,21 +1221,21 @@ HTTP, in the client for any interactions with the worker (e.g.~to subscribe to
 push notifications), and on the server for sending the notifications, as
 illustrated by Listing \ref{service-worker-api}.
 
-\begin{listing}[htbp]
+\begin{listing}[b]
 \begin{minted}[,frame=single]{haskell}
 generateWorker :: ServiceWorker push -> ByteString
 runServiceWorkerClientT ::
   ServiceWorker push -> ServiceWorkerClientT push m a -> m a
 runPushServerT :: ServiceWorker push -> PushT push m a -> m a
 \end{minted}
-\caption{Service Worker API \label{service-worker-api}}
+\caption{Service Worker: the intended API \label{service-worker-api}}
 \end{listing}
 
 While I had originally intended to write the service worker directly in Haskell
-and compile it using the GHCJS, there is an obstacle that prevents that: service
+and compile it using GHCJS, there is an obstacle that prevents that: service
 workers do not run in the same way that a regular browser application does. A
 browser can terminate a service worker at any time to save computing resources,
-and restarts it when it is needed to process application events, as a service
+and restarts it when it is needed to process incoming events, as a service
 worker is expected to contain mostly just event handlers.
 
 This is, however, at odds with the GHCJS execution model which relies on
@@ -1268,7 +1245,7 @@ browser. That means that we cannot use GHCJS to create Service Workers and need
 to generate plain JavaScript code instead.
 
 \subsection{JMacro}
-\label{sec:org2ad5640}
+\label{sec:org74bd2ce}
 Of the options available for generation of JavaScript in Haskell, only the
 library JMacro is suitable for this task, as it is the only library intended for
 this purpose, none of the other libraries are very user-friendly.
@@ -1283,7 +1260,7 @@ forms of JavaScript code, expressions and statements. It also supports injection
 of Haskell variables using anti-quotation. An example of JMacro code can be seen
 in Listing \ref{jmacro}.
 
-\begin{listing}[htbp]
+\begin{listing}[tb]
 \begin{minted}[,frame=single]{haskell}
 handleFetch :: JExpr -> JStat
 handleFetch fn = [jmacro|self.addEventListener('fetch', `(fn)`);|]
@@ -1297,90 +1274,159 @@ function(evt) {
   }));
 }|]
 \end{minted}
-\caption{An example of JMacro \label{jmacro}}
+\caption{An example of JMacro code \label{jmacro}}
 \end{listing}
 
 \subsection{Implementation}
-\label{sec:org01c504c}
+\label{sec:org005f77e}
+\begin{listing}[t]
+\begin{minted}[,frame=single]{haskell}
+generatePrefetch :: Text -> [Text] -> JExpr
+generatePrefetch cacheName urls = [jmacroE|
+  caches.open(`(cacheName)`).then(function (cache) {
+    return cache.addAll(`(urls)`);
+  });
+|]
+\end{minted}
+\caption{Service Worker: generating prefetch JavaScript \label{prefetch}}
+\end{listing}
+
 Of the three features of service workers that we want to support (prefetch,
 fetch control, push notifications), prefetch is the simplest. It only requires
 adding a bit of code to the \texttt{install} event listener in which we add the required
 files into cache, as can be seen in Listing \ref{prefetch}.
 
-\begin{listing}[htbp]
-\begin{minted}[,frame=single]{haskell}
-generatePrefetch :: Text -> [Text] -> JStat
-generatePrefetch cacheName urls = [jmacro|
-  return caches.open(`(cacheName)`).then(function (cache) {
-    return cache.addAll(`(urls)`);
-  });
-|]
-\end{minted}
-\caption{Service Worker: prefetch \label{prefetch}}
-\end{listing}
+Supporting fetch control is a bit more involved. In the \texttt{onFetch} event handler,
+we need to find out if the outgoing request matches any of the configured
+filters, so we go through the filters in order and execute the selected cache
+strategy it if matches. There are, however, many possible behaviors with regards
+to caching and network access. We cannot cover all possible cases, but we can
+cover the most common ones, namely the ones available in Workbox \cite{workbox}, a
+suite of utilities for service workers from Google.
 
-Fetch is a bit more involved. In the onFetch handler, we need to find out if the
-outgoing request matches any of the configured filters, so we go through the
-filters in order and if a request matches, the selected cache strategy is
-executed.
-
-There are many possible behaviors with regards to caching and network access. We
-cannot cover all possible cases, but we can cover the most common ones. These
-are encoded as a plain sum type in Listing \ref{cache-strategy}. Most strategy names are
-self-explanatory, I will mention only \texttt{StaleWhileRevalidate} and its \texttt{Notify}
-variation: these serve the currently cached version of a resource, and attempt
-to fetch a newer one, which will then be stored into cache for later
-requests. This strategy is often used for main application files, which is the
-reason for the \texttt{Notify} variation, which will also notify the application itself
-if there is a newer version available so that the application can then notify
-the user.
-
-\begin{listing}[htbp]
+\begin{listing}[!b]
 \begin{minted}[,frame=single]{haskell}
 data CacheStrategy
-  = CacheFirst Text
-  | CacheOnly Text
-  | NetworkFirst Text
+  = CacheOnly Text
   | NetworkOnly
+  | CacheFirst Text
+  | NetworkFirst Text
   | StaleWhileRevalidate Text
-  | StaleWhileRevalidateNotify Text
-  deriving (Eq, Ord, Show)
+
+renderCacheStrategy :: JExpr -> JExpr -> CacheStrategy -> JStat
+renderCacheStrategy evt req (CacheFirst cacheName) = [jmacro|
+  return `evt`.respondWith(caches.open(`cacheName`).then(function (cache) {
+    return cache.match(`req`).then(function (res) {
+      return res || fetch(`req`);
+    });
+  }));
+|]
 \end{minted}
-\caption{Cache strategies \label{cache-strategy}}
+\caption{Service Worker: cache strategies type and generation \label{cache-strategy}}
 \end{listing}
 
-The encoding for request matchers that I chose is not a complex one: a request
-is matched on its method, path, and query string. The method matcher accepts
-three values, any method, a specific method or a list of possible ones. There
-are two types of path matchers: a regular expression matcher and a path
-component-based one, in which e.g.~the path \texttt{/article/5} is matched using the
-matcher \texttt{matchPath "article" ./ matchInteger}. The query string matcher is a list
-of key-value matchers. While this is not the most expressive or fluent encoding
-of a request matcher, it suffices for common use-cases of fetch control, as with
-the limited palette of cache strategies.
+\begin{listing}[!t]
+\begin{minted}[,frame=single]{haskell}
+data RequestMatcher = RequestMatcher
+  { rmMethod :: MethodMatcher
+  , rmQuery :: QueryMatcher
+  , rmPath :: PathMatcher
+  }
 
-Handling push notifications is not trivial either. While using them in the most
-basic way is as simple as calling \texttt{showNotification} on the body of the incoming
-message, it is possible to do more, like passing the notification to the
-application using \texttt{postMessage}. Like with cache strategies, it is not possible to
-cover all possible use-cases with predefined options so again, we add the common
-ones. This time, they need to be encoded as a \emph{GADT} (Generic Algebraic Data Type),
-an extension of Haskell data types that allows us to specialize the type of a data
-constructor, which we can use to specialize the types of sending and receiving
-functions in client and server code.
+data MethodMatcher
+  = MethodAny
+  | MethodList [Method]
 
-The options I have selected for the library are included in Listing
-\ref{push-behaviors}. \texttt{Ignore} has the type \texttt{Void} as its parameter, which is an empty
-type that can have no valid values (excluding \texttt{undefined}), which means that it is
-impossible to call a sending function in server code. \texttt{Ignore} has no handler code
-generated in the service worker. \texttt{ViewOnly} displays a notification without any
-further handling. \texttt{ViewAndOpen} and \texttt{ViewAndProcess} both add another event handler
-that listens for the user clicking on the notification, which will open the
-application if closed, and switch to the application window if open but not
-focused. \texttt{ViewAndProcess} and \texttt{ProcessOnly} will also pass the message to the
-application for further processing via \texttt{postMessage}.
+newtype QueryMatcher
+  = QueryMatcher [(Text, ValueMatcher)]
 
-\begin{listing}[htbp]
+data PathMatcher
+  = PathComponentMatcher PathComponentMatcher
+  | PathRegexMatcher Text
+
+data PathComponentMatcher
+  = PathMatchAny
+  | PathMatchEnd
+  | PathComponent ValueMatcher PathComponentMatcher
+\end{minted}
+\caption{Service Worker: request matching types \label{request-types}}
+\end{listing}
+
+These cache strategies are encoded as a plain sum type in Listing
+\ref{cache-strategy}. Of these, \texttt{CacheOnly} and \texttt{NetworkOnly} fetch a resource only
+from a cache or the network respectively, whereas in \texttt{CacheFirst} and
+\texttt{NetworkFirst}, a cache or the network is only the first location attempted, with
+the other location being the fallback. \texttt{StaleWhileRevalidate} serves the currently
+cached version of a resource and simultaneously attempts to fetch a newer one,
+which will then be stored into cache for later requests.
+
+As for generating the JavaScript code from these strategies, the code for one of
+these five strategies is included in the second part of the listing. We need to
+\texttt{respondWith} a response to the fetch event, first looking it up in the specified
+cache and calling \texttt{fetch} to get it from the network if it is not there.
+
+The other part of supporting fetch control is matching incoming fetch requests
+to the strategies. I chose a straightforward encoding of a matcher that can
+match on the request method, path, and query string. The relevant types can be
+seen in Listing \ref{request-types}. The method matcher accepts either any method
+or one of a list of accepted ones. There are two types of path matchers: one for
+matching the entire path against a regular expression and one for matching
+individual path segments. The query string matcher is a list of key-value
+matchers. While this is not the most expressive or fluent encoding of a request
+matcher, it suffices for common use-cases of fetch control, similar to the
+limited palette of cache strategies.
+
+\begin{listing}[tb]
+\begin{minted}[,frame=single]{haskell}
+renderFetchMatchers
+  :: JExpr -> JExpr -> [(RequestMatcher, CacheStrategy)] -> JStat
+renderFetchMatchers evt req = (mconcat .) . fmap $
+  \(matcher, strategy) -> [jmacro|
+    if (`(renderMethodMatcher req (rmMethod matcher))` &&
+        `(renderQueryMatcher req (rmQuery matcher))` &&
+        `(renderPathMatcher req (rmPath matcher))`) {
+      `(renderCacheStrategy evt req strategy)`
+    }
+  |]
+
+renderMethodMatcher :: JExpr -> MethodMatcher -> JExpr
+renderMethodMatcher req = \case
+  MethodAny -> jsv "true"
+  MethodList ms -> [jmacroE|`req`.method.some(\y -> y == `method`)|]
+\end{minted}
+\caption{Service Worker: request matching code generation \label{request-gen}}
+\end{listing}
+
+Generating the JavaScript code corresponding to such a structure is then only a
+matter of following the types, deconstructing large types into smaller ones and
+piecing together the overall functionality. A part of this code is included
+in \ref{request-gen}, where in \texttt{renderFetchMatchers} we can see the topmost function
+generating a single branch of a request handler.
+
+Moving on to push notifications, an \texttt{onPush} event handler in the service worker
+is called with an incoming notification object, and there are several things
+that can be done with it. Again, we only encode the most common use-cases in
+types, as can be seen in Listing \ref{push-behaviors}. This time, we need to use a
+\emph{GADT} (Generic Algebraic Data Type), an extension of Haskell data types that
+allows us to specialize the type of a data constructor, which is here used to
+encode the type of the push notification payload. This type parameter is used in
+client and server code, in the functions that send and receive notifications.
+
+\texttt{PushIgnore} has the type \texttt{Void} as its parameter, which means that it is impossible
+to send a notification with such a type, as \texttt{Void} is an empty type that can have
+no valid values (excluding \texttt{undefined}), and so \texttt{PushIgnore} does not generate any
+handler code in the service worker. \texttt{PushViewOnly} displays a notification without
+any further handling. \texttt{PushViewAndOpen} displays a notification as well, and it
+also adds another event handler that listens for the user clicking on the
+notification and opens the application if closed or switches to the application
+window if it is open. \texttt{PushViewAndProcess} and \texttt{PushProcessOnly} will send the
+payload of the message to the application  for further processing via
+\texttt{postMessage}.
+
+A part of the JavaScript generation code is also included in \ref{push-behaviors},
+demonstrating the simplest \texttt{PushViewOnly} variant.
+
+\begin{listing}[p]
 \begin{minted}[,frame=single]{haskell}
 data PushBehavior a where
   PushIgnore :: PushConfig Void
@@ -1388,78 +1434,83 @@ data PushBehavior a where
   PushViewAndOpen :: PushConfig ()
   PushViewAndProcess :: FromJSON a => PushConfig a
   PushProcessOnly :: FromJSON a => PushConfig a
-\end{minted}
-\caption{Push behaviors \label{push-behaviors}}
-\end{listing}
 
-The rest of the service worker generation code consists of mostly boilerplate so
-I will skip it. The interested reader can find it on the attached data storage.
-
-The server part of this component is made up of two parts: generating and
-serving the service worker code, and sending push notifications.
-
-Serving the service worker is done by extending the Servant code for rendering
-values into transport formats where we create a new content type \texttt{JS} and specify
-how to render a service worker into \texttt{JS}. The code is quite simple and is included in
-Listing \ref{sw-server}.
-
-\begin{listing}[htbp]
-\begin{minted}[,frame=single]{haskell}
-data JS
-instance Accept JS where
-  contentType _  = "application" // "javascript"
-
-instance MimeRender JS (ServiceWorker p) where
-  mimeRender _ v = generateServiceWorker v
-\end{minted}
-\caption{Service Worker: serving the JavaScript \label{sw-server}}
-\end{listing}
-
-Adding the ability to send push notifications is slightly more complex. The
-capability of sending a notification is specified by a type-class \texttt{PushNotify}
-with a single method, \texttt{sendPushNotification}. This type-class is then implemented
-by a \texttt{ReaderT} monad transformer that contains required configuration information
-like signing keys and push server URLs.
-
-The code that demonstrates this is included in Listing \ref{sw-server-push}. The
-\texttt{PushNotification} type is slightly simplified, there are more elements in the
-real type. The type class \texttt{HasPushConfig} contains one value, a lens, which can be
-described as a combined getter and a setter. It is used here because an
-application usually has only a single \texttt{ReaderT} with the entire application
-runtime context, so a lens is used as a getter to fetch the \texttt{PushConfig} from the
-context.
-
-\begin{listing}[htbp]
-\begin{minted}[,frame=single]{haskell}
 data PushNotification a = PushNotification
-  { pnTitle :: Text
-  , pnDescription :: Maybe Text
-  , pnData :: a
+  { title :: Text
+  , body :: Maybe Text
+  , payload :: a
   }
 
-class PushNotify a m | m -> a where
-  sendPushNotification :: PushProvider -> PushNotification a -> m ()
-
-class HasPushConfig a where
-  pushConfig :: Lens a PushConfig
-
-instance (MonadReader cfg m, HasPushConfig cfg) => PushNotify a m where
-  sendPushNotification p x = do
-    pushConfig <- views pushConfig
-    sendPushNotificationImpl pushConfig p x
+renderPushBehavior :: PushBehavior a -> JStat
+renderPushBehavior PushViewOnly = [jmacro|
+  self.addEventListener('push', function (evt) {
+    var x = evt.data.json();
+    evt.waitUntil(self.registration.showNotification(x.title, x));
+  });
+|]
 \end{minted}
-\caption{Service Worker: push notifications on the server \label{sw-server-push}}
+\caption{Service Worker: implemented push behaviors \label{push-behaviors}}
 \end{listing}
 
-The browser part that receives push notifications from the service worker
-is very simple: we listen to the \texttt{postMessage} event and if the incoming message
-has the right type, we attempt to deserialize the JSON value into its Haskell
-equivalent, and then trigger a Reflex event.
+\begin{listing}[p]
+\begin{minted}[,frame=single]{haskell}
+newtype ServiceWorkerT t n m a = ServiceWorkerT
+  { unServiceWorkerT :: ReaderT (ServiceWorkerState t)
+       (EventWriterT t (Maybe PushSubscriptionOptions) m) a
+  }
 
-TODO: include browser implementation listing
+class MonadServiceWorker t a m | m -> a t where
+  getSWRegistration :: m (Dynamic t (Maybe ServiceWorkerRegistration))
+  getPushSubscription :: m (Dynamic t (Maybe PushSubscription))
+  getPushPermissionState :: m (Dynamic t PermissionState)
+  pushSubscribe :: Event t PushSubscriptionOptions -> m ()
+  pushUunsubscribe :: Event t () -> m ()
+  showNotification :: Event t (Text, Maybe NotificationOptions) -> m ()
+  onPushNotification :: m (Event t a)
+\end{minted}
+\caption{Service Worker: client monad transformer \label{sw-client-mtl}}
+\end{listing}
+
+The browser part of a service worker library does not need much. The application
+needs to only register a service worker, pointing the browser at the URL of the
+worker source file, and only needs to do more if it wants to use push
+notifications. In that case, it is necessary to ask the user for permission and
+send the notification subscription details to the server. To achieve this, we
+can combine an \texttt{EventWriter} and a \texttt{MonadReader} into a separate monad transformer
+\texttt{ServiceWorkerClientT}, as in Listing \ref{sw-client-mtl}. There are several pieces
+of state that we need to keep track of, the service worker registration object,
+the push notification subscription, and the notification permission state, which
+we combine into \texttt{ServiceWorkerState}. There are only two functions that can change
+this state though, \texttt{subscribe} and \texttt{unsubscribe}, which is where the \texttt{EventWriter}
+comes into play. The class \texttt{MonadServiceWorker} contains several methods that
+expose these values and capabilities, which we can then interpret in terms of our
+monad transformer, as can be seen in the second part of the listing.
+
+To use these capabilities and subscribe to push notifications, we need to call
+the interpreter of \texttt{ServiceWorkerT}, \texttt{runServiceWorkerT}, which calls the
+corresponding browser methods and manages its internal state, and then call
+\texttt{subscribe} somewhere in the application code. We then need to send the details of
+the subscription to the server so that it can generate push notifications, which
+we can do by listening to updates to the notification subscription, as can be
+seen in \ref{sw-client-demo}.
+
+\begin{listing}[t]
+\begin{minted}[,frame=single]{haskell}
+app :: MonadWidget t m => m ()
+app = runServiceWorkerT "/sw.js" serviceWorkerOptions $ do
+  eSubscribe <- button "Subscribe"
+  pushSubscribe eSubscribe
+
+  eNotify <- onPushNotification
+  dAllNotifications <- foldDyn (:) [] eNotify
+  el "ul" $ simpleList dAllNotifications $ \notification ->
+    el "li" (display notification)
+\end{minted}
+\caption{Service Worker: application code demonstration \label{sw-client-demo}}
+\end{listing}
 
 \subsection{Possible extensions}
-\label{sec:orgfe97332}
+\label{sec:org9909b7b}
 The obvious follow-up work is supporting more features of service workers:
 fine-grained cache control with resource expiration based on its age or
 available storage space; or \emph{Background Sync}, an API for retrying requests made
@@ -1482,12 +1533,7 @@ of the underlying logic. However, as of the time of writing, this library is
 still unfinished, so writing a service worker builder using a typed DSL stays a
 project for the future.
 
-A hypothetical example of such approach can be seen in Listing \ref{jshark}, which
-demonstrates more complex usage of fetch control, dispatching requests based on
-their destination (the originator of a request, e.g.~$\backslash$ \texttt{"style"} corresponds
-to a \texttt{<style>} tag or a CSS include).
-
-\begin{listing}[htbp]
+\begin{listing}[!b]
 \begin{minted}[,frame=single]{haskell}
 sw :: WorkerM ()
 sw = self `on` fetch $ \event -> do
@@ -1500,8 +1546,13 @@ sw = self `on` fetch $ \event -> do
     default_ $
       respondWith event networkOnly
 \end{minted}
-\caption{Service worker using a JavaScript DSL \label{jshark}}
+\caption{Service Worker: alternative style using a JavaScript DSL \label{jshark}}
 \end{listing}
+
+A hypothetical example of such approach can be seen in Listing \ref{jshark}, which
+demonstrates more complex usage of fetch control, dispatching requests based on
+their destination (the originator of a request, e.g. \texttt{"style"} corresponds
+to a \texttt{<style>} tag or a CSS include).
 
 This approach may also be combined with code generation from WebIDL, an
 interface definition language for the Web \cite{webidl} used e.g.~in the Chromium
@@ -1509,8 +1560,20 @@ browser, to produce an API that exactly corresponds to the underlying JavaScript
 one, only with strong types. Generating an API from WebIDL has a precedent in
 the library \texttt{ghcjs-dom}, a library that provides a strongly-typed interface to
 most browser APIs, which generates most of its code in this way.
+
 \section{Storage}
-\label{sec:orgcf114e3}
+\label{sec:orgca77606}
+\begin{listing}[!b]
+\begin{minted}[,frame=single]{haskell}
+class MonadKVStore e t m | m -> t where
+  get :: Dynamic t (StoreKey e) -> m (Dynamic t (Maybe e))
+  getAll :: m (Dynamic t (Map (StoreKey e) e))
+  put :: Event t (StoreKey e, Maybe e) -> m ()
+  putAll :: Event t (Map (StoreKey e) e) -> m ()
+\end{minted}
+\caption{Storage: the implemented API \label{storage-api}}
+\end{listing}
+
 A storage library can be implemented in many ways, from the simplest variations
 that store single values or key-value maps, all the way to a full-fledged
 database and query engine.
@@ -1525,38 +1588,55 @@ The API of this storage is simple, as shown by Listing \ref{storage-api}, but it
 can serve several purposes: as a cache, as an offline storage, or as a way to
 directly access a database when rendering a Reflex application on the server.
 
-\begin{listing}[htbp]
+Implementing an instance for such a type is not complicated. To bind to a
+database backend on the server, we can run arbitrary code in the underlying
+monad, so if we have a function to execute database queries available
+e.g.~using a \texttt{ReaderT} monad, we can sequentially construct the query, run
+it and wait for the result, and then return a \texttt{Dynamic} with the query's result.
+
+On the frontend, we can use a combination of a \texttt{ReaderT}, to make the underlying
+map available for reading anywhere, and an \texttt{EventWriterT}, to collect the \texttt{put}
+events. The implementation is short enough to include here in its entirety: in
+the Listing \ref{storage-impl}, we can see both the definition of the monad
+transformer \texttt{KVStoreT} and its instance of \texttt{MonadKVStore,} and also how it can be
+interpreted using an in-memory map and how it can be used in application code.
+
+\begin{listing}[tb]
 \begin{minted}[,frame=single]{haskell}
-class MonadKVStore e t m | m -> t where
-  get :: Dynamic t (StoreKey e) -> m (Dynamic t (Maybe e))
-  getAll :: m (Dynamic t (Map (StoreKey e) e))
-  put :: Event t (StoreKey e, Maybe e) -> m ()
-  putAll :: Event t (Map (StoreKey e) e) -> m ()
+newtype KVStoreT t k m a = KVStoreT
+  { unKVStoreT :: ReaderT (Dynamic t (Map (StoreKey k) k))
+     (EventWriterT t [KVStoreRequest k] m) a
+  } deriving (...)
+
+data KVStoreRequest e
+  = KVUpdateOne (StoreKey e, Maybe e)
+  | KVUpdateAll (Map (StoreKey e) e)
+
+runKVStoreTPure :: _ => Map (StoreKey k) k -> KVStoreT t k m a -> m a
+runKVStoreTPure i f = mdo
+  dMap <- foldDyn (foldr ((.) . runReq) id) i eReq
+  (a, eReq) <- runEventWriterT (runReaderT (unKVStoreT f) dMap)
+  pure a
+  where
+    runReq (KVUpdateOne (k, mv)) = Map.alter (const mv) k
+    runReq (KVUpdateAll m) = const m
+
+app :: MonadWidget t m => m ()
+app = runKVStoreTPure Map.empty $ do
+  eIns <- button "Insert"
+  eDel <- button "Delete"
+  putKV ((UserId 5, Just User) <$ eIns)
+  putKV ((UserId 5, Nothing) <$ eDel)
+  display =<< getKVAll @User
 \end{minted}
-\caption{Storage API \label{storage-api}}
+\caption{Storage: monad transformer definition and usage \label{storage-impl}}
 \end{listing}
 
-Implementing an instance for such a type is not complicated. To
-bind to a database backend on the server, we can run arbitrary code in the
-underlying monad, so if we have a function to execute database
-queries available e.g.~using a \texttt{ReaderT} monad, we can sequentially construct the
-query, run it and wait for the result, and then return a \texttt{Dynamic} with the
-query's result.
-
-On the frontend, we can use a combination of a \texttt{ReaderT}, to
-make the underlying map available for reading from anywhere, and an
-\texttt{EventWriterT}, to collect all \texttt{put} events.
-
-The code is very similar to the code we saw in the implementation of the router,
-so I will not include it here. There are three implemented variants on the
-attached data storage: client-side bindings using an in-memory map or persisted
-using LocalStorage, and a single serve-side binding to the Persistent database library.
-
-TODO: include listing demonstrating basic usage
-
+\subsection{Possible extensions}
+\label{sec:orgfd9f625}
 There are several ways to extend this storage library. The first one is simply
-adding more backends, e.g.~to support IndexedDB in the browser or other database
-engines on the backend.
+adding more backends, e.g.~to support IndexedDB in the browser or other
+database engines on the backend.
 
 The storage can also be specialized to work as a cache, which would mean
 extending the API e.g.~with expiration, automatic or manual, so that it can
@@ -1566,19 +1646,57 @@ Another option would be to expand the API to support more complicated SQL-like
 queries, so that it can better serve as a client-side database.
 
 \section{Web App Manifest}
-\label{sec:org8337671}
-This component does not require much description. It only contains several data
-types, transcribed almost line for line from the official manifest specification
-\cite{webapp-manifest}, and the functions to serialize it to and from JSON.
+\label{sec:org819fd2f}
+A Web App Manifest is a special file containing JSON data linked from the HTML
+of an application. Its structure is defined in the official manifest
+specification \cite{webapp-manifest}. There is not much code to write in this
+component, it suffices to transcribe the data types from the specification and
+write the functions to serialize the data types to and from JSON, together with
+a few helper functions to simplify the manifest definition. The main type
+\texttt{WebManifest} is included in Listing \ref{manifest-type}.
+
+\begin{listing}[tb]
+\begin{minted}[,frame=single]{haskell}
+data WebManifest = WebManifest
+  { dir :: Maybe TextDirectionType
+  , lang :: Maybe Text
+  , name :: Maybe Text
+  , short_name :: Maybe Text
+  , description :: Maybe Text
+  , icons :: [ImageResource]
+  , screenshots :: [ImageResource]
+  , categories :: [Text]
+  , oarc_rating_id :: Maybe Text
+  , start_url :: Maybe AppURI
+  , display :: Maybe DisplayModeType
+  , orientation :: Maybe OrientationLockType
+  , theme_color :: Maybe AppURI
+  , background_color :: Maybe Text
+  , scope :: Maybe AppURI
+  , serviceworker :: Maybe ServiceWorkerRegistrationObject
+  , related_applications :: [ExternalApplicationResource]
+  , prefer_related_applications :: Maybe Bool
+  } deriving (Generic, FromJSON, ToJSON)
+\end{minted}
+\caption{Web App Manifest: main data type \label{manifest-type}}
+\end{listing}
+
+As with the ``Possible extensions'' section in the chapter on service workers,
+however, it is possible to mostly obsolete this component by generating all its
+data types from WebIDL, the Web interface definition language, which should
+remove the need to write any code manually while guaranteeing correctness.
+However, I have only discovered the possibility of this approach only in the
+final stages of writing this thesis, which means that it is left as a potential
+follow-up project.
 
 \chapter{Application development}
-\label{sec:org309e107}
+\label{sec:org69ab61d}
 In this chapter we will go through some principles and techniques that I used
 while creating the case studies described in the next chapter, of which most can
 be applied to developing Reflex applications in general.
 
 \section{Design}
-\label{sec:orgcd10802}
+\label{sec:org417629c}
 While there are not yet many patterns specific to FRP or frontend applications,
 one common way to structure a Haskell application in general is the so-called
 \emph{three layer cake} \cite{three-layer}, which is as applicable to Reflex applications as
@@ -1612,17 +1730,17 @@ working solution (the outermost layer), slowly formalizing the effects and
 domain of an application.
 
 While I used the top-down approach when initially creating the applications
-described in Chapter \ref{sec:orgcb3aecb}, we will walk through them the other way
+described in Chapter \ref{sec:orge92bdd3}, we will walk through them the other way
 around, as top-down development is often iterative in nature and describing the
 individual iterations I went through would make for an unnecessarily long text.
 
 \section{Tools}
-\label{sec:org0450b90}
+\label{sec:org8fa7daa}
 Haskell developer tooling is often said to be one of its weakest points, and
 that is also true in Haskell on the frontend. While the situation is improving,
 the tooling is still not on par with more mainstream languages. Despite that, my
 personal developer experience with Haskell has been rather more pleasant than my
-experience when writing React.js applications in JavaScript.
+experience with writing React.js applications in JavaScript.
 
 What follows is a description of the specific tooling used in the creation of
 this thesis, both the libraries and applications described here. While all of
@@ -1718,53 +1836,15 @@ for any errors or warnings, which are then reported on the relevant lines.
 Other editors like Visual Studio Code or Atom are also supported using the
 Language Server Protocol and its Haskell server Haskell IDE Engine.
 
-The interested reader can try editing Haskell in a preconfigured Emacs or Visual
-Studio Code using the Nix expressions in the directories
-\texttt{src-snippets/editor-emacs/} or \texttt{src-snippets/editor-vscode/} in the included files.
-
-TODO: Niceties: hlint for code style and avoiding dumb errors, it is possible to
-extend using project-specific rules/suggestions; hoogle for easy access
-to the correct versions of API doc.
-
-\section{Workflow}
-\label{sec:org362393f}
-TODO: When starting a project, create a project skeleton - *.cabal file,
-default.nix and possibly a submodule of reflex-platform, .envrc for direnv
-support, and source code stubs (src/Main.hs).
-
-TODO: include a listing of src/default.nix for a multi-package
-TODO: include a \texttt{\$ tree} of a project directory of full-stack app (src-bin/main x
-src/Project.hs (main)
-
-TODO: ghcid + cabal new-repl for testing localhost server, included as the
-script ghcid-here in \texttt{src-snippets/ghcid-here/}.
-
-TODO: If external services are necessary, use the orchestration service needed -
-NixOS containers, NixOps machines, Docker containers - according to the
-deployment strategy. It is also possible to run a database without a container,
-SQLite or gargoyle for postgres.
-
-TODO: Regarding code structure:
-\begin{itemize}
-\item splitting frontend, common, backend packages
-\item common = entities and logic, inner layer of 3layer + API definition, routes, \ldots{}
-\item src-bin/main.hs only a redirect to src/Project.hs (main)
-\item project-specific Prelude
-\end{itemize}
-
-TODO: Components:
-\begin{itemize}
-\item sketch HTML, then animate/bind events
-\item prefer top-down data flow, do not often use top-level storage/\ldots{} constraints
-=> more reusable components
-\item Dynamic inputs, Event outputs
-\item think hard about whether a piece of state should be local or global, it makes
-reuse harder
-\item limit recursive-do blocks, they lead to hard-to-debug errors (``causality loop'')
-\end{itemize}
+The interested reader can try editing Haskell in a preconfigured instance of the
+Emacs editor using the Nix expressions in the directory
+\texttt{src-snippets/editor-emacs/} on the attached data storage. Also included is a
+skeleton for a fresh project in \texttt{src-snippets/skeleton/}, which contains all
+necessary files for a browser application. The instructions for using the editor
+and running the skeleton are also included in those directories.
 
 \section{Deployment}
-\label{sec:org0799bdc}
+\label{sec:orgc00407c}
 The options for deploying a Haskell program are generally the same as deploying
 programs in any other compiled language that does not use intermediate object
 code like Java. The two most popular options in the Haskell community, not
@@ -1788,14 +1868,9 @@ different cloud providers, from Amazon Web Services to Google Compute Engine. An
 example of an expression that deploys a simple web server can be seen in Listing
 \ref{nixops-deploy}.
 
-\begin{listing}[htbp]
+\begin{listing}[b]
 \begin{minted}[,frame=single]{nix}
-{
-  network.description = "Web server";
-
-  webserver = { config, pkgs, ... }: let
-    appPkgs = (import ./release.nix { inherit pkgs; });
-  in {
+{ webserver = { config, pkgs, ... }: {
     networking.firewall.allowedTCPPorts = [ 80 ];
     services.nginx.enable = true;
     services.nginx.virtualHosts.default.locations."/" = {
@@ -1803,9 +1878,9 @@ example of an expression that deploys a simple web server can be seen in Listing
     };
     systemd.services.app-server = {
       wantedBy = [ "multi-user.target" ];
-      serviceConfig.ExecStart = "${appPkgs.server}/bin/server";
+      serviceConfig.ExecStart =
+        "${(import ./release.nix { inherit pkgs; }).server}/bin/server";
     };
-
     deployment.targetEnv = "virtualbox";
   };
 }
@@ -1822,22 +1897,22 @@ but we can also bundle them into the same package using an additional Nix build
 recipe.
 
 For a GHCJS application, such a post-processing step is nearly mandatory, as the
-JavaScript files produced by the compiler are rather large (over 5.9~MB for a
-simple Reflex application), but processing them with a minification tool like
-\texttt{closure-compiler} and further shrinking them with a GZIP compressor reduces the
-size to a reasonable size (1.9~MB minified and 350~kB compressed for the same
-application).
+JavaScript files produced by the compiler are rather large (over 5.9~MB
+for a simple Reflex application), but processing them with a minification tool
+like \texttt{closure-compiler} and further shrinking them with a GZIP compressor reduces
+the size to a reasonable size (1.9~MB minified and 350~kB compressed
+for the same application).
 
 \chapter{Case studies}
-\label{sec:orgcb3aecb}
+\label{sec:orge92bdd3}
 In this chapter we will go through three Reflex application in the order of
 increasing complexity, applications that use the components created in previous
-chapters. I have used applications with publicly available specifications that
-are intended to help developers compare frontend web frameworks. The interested
-reader can compare the implementations created here and the implementations
-available for comparison side-by-side, but in this chapter, we will only go
-through the basics of each case study, the overall structure and interesting
-parts of each application.
+chapters. I have selected applications with publicly available specifications
+that are intended to help developers compare frontend web frameworks. The
+interested reader can compare the implementations created here and the
+implementations available for comparison side-by-side, but in this chapter, we
+will only go through the basics of each case study, the overall structure and
+interesting parts of each application.
 
 The applications chosen are:
 \begin{itemize}
@@ -1849,7 +1924,7 @@ routing, and service worker components).
 \end{itemize}
 
 \section{TodoMVC}
-\label{sec:org1efeb26}
+\label{sec:orgc48adb6}
 There is an abundance of web frameworks, and there are several projects that aim
 to give developers a side-by-side comparison of them. Out of these, the original
 and most well-known one is TodoMVC \cite{todomvc}, which is aimed at ``MV* frontend
@@ -1857,26 +1932,26 @@ frameworks''. There are currently 64 implementations of their specification, alt
 some frameworks are represented multiple times.
 
 We will start with TodoMVC as it is the simplest of the three. TodoMVC is, as
-the name hints, a web application for managing a to-do list. It is not a complex
-project but it is intended to exercise fundamental features of a framework: DOM
-manipulation, forms and validation, state management (in-memory and in
+the name suggests, a web application for managing a to-do list. It is not a
+complex project but it is intended to exercise the fundamental features of a
+framework: DOM manipulation, forms and validation, state management (in
 LocalStorage), and routing.
 
-Going from the bottom up, the definition of a task is as simple as possible: a
-task consists of a title, a binary value indicating whether it is complete, and
-according to the specification, a~task saved in persistent storage also
-needs a unique identifier. One possible representation is having a task be a
-two-member record and the application state a mapping from an integer to a task,
-as shown in Listing \ref{todomvc-entities}.
+Going from the bottom up, the definition of a task is simple: a task consists of
+a title, a binary value indicating whether it is complete, and according to the
+specification, a~task saved in persistent storage also needs a unique
+identifier. One possible representation is having a task be a two-member record
+and the application state a mapping from an integer to a task, as shown in
+Listing \ref{todomvc-entities}.
 
-If the tasks were to be also transferred from/to a server and saved in a
+If the tasks were to be also transferred to and from a server and saved in a
 database, the record would look quite different: the identifier might be a UUID
 (Universally Unique Identifier), the entity would likely contain information
 about when and who created or modified it, but considering this is a client-only
 application that does not need this kind of complexity, we can use the simplest
 possible solution.
 
-\begin{listing}[htbp]
+\begin{listing}[tb]
 \begin{minted}[,frame=single]{haskell}
 data Task = Task
   { title :: Text
@@ -1885,7 +1960,7 @@ data Task = Task
 
 type DB = Map Int Task
 \end{minted}
-\caption{TodoMVC entities \label{todomvc-entities}}
+\caption{TodoMVC: application entities \label{todomvc-entities}}
 \end{listing}
 
 Further describing the application domain, we can now define the operations on
@@ -1898,18 +1973,39 @@ completed), toggle all tasks' completed status, and delete all completed tasks.
 These operations can all be implemented using plain functions over a task or a
 map of tasks, which will then be tied into the storage component implemented in
 the previous chapter. The implementation of the operations is not particularly
-interesting, the interested reader can look them up in the attached files
-(\texttt{src-demo/todomvc/src/Main.hs}).
+interesting, the interested reader can look them up in the attached files.
 
 The HTML structure of the application is given by the specification, and
 contains three natural sections: an input for creating new tasks at the top, a
 task list for editing or deleting existing tasks, and a navigation bar at the
 bottom.
 
+\begin{listing}[b]
+\begin{minted}[,frame=single]{haskell}
+newTaskBox :: MonadWidget t m => m (Event t Text)
+newTaskBox = elClass "header" "header" $ do
+  el "h1" (text "todos")
+  rec
+    textbox <- inputElement $ def
+      & elementConfig . initialAttributes .~
+        ("class" =: "new-todo" <> "autofocus" =: "autofocus" <>
+         "placeholder" =: "What needs to be done?")
+      & setValue .~ ("" <$ keypress Enter textbox)
+  return . ffilter T.null $
+    T.strip <$> current (value textbox) <@ keypress Enter textbox
+\end{minted}
+\caption{TodoMVC: component for creating a new task \label{new-task-box}}
+\end{listing}
+
 As this the first application we are going through, we can look at a single
 component in more detail: the component \texttt{newTaskBox} is included in Listing
 \ref{new-task-box}, where we can see what a simple GUI component in Reflex might
-look like. The functions \texttt{el} and \texttt{elClass} generate static HTML elements, the
+look like. This component contains a header and a simple text input box that
+emits an event when we press Enter in it, so it is not a complex component,
+although the abundance of custom operators (\texttt{\&}, \texttt{\$}, \texttt{<\$}, \texttt{<\$>}, \texttt{<@}, \texttt{=:}, \texttt{.\textasciitilde{}}, \texttt{<>}) may
+make reading the code a bit difficult.
+
+The functions \texttt{el} and \texttt{elClass} generate static HTML elements, the
 \texttt{inputElement} function generates an \texttt{<input>}, and the last line prepares the
 return value of the function, an event containing the current value of the text
 box whenever the Enter key is pressed in it. The \texttt{rec} mark the beginning of a
@@ -1919,50 +2015,22 @@ which is translated into a fixpoint computation by the compiler (in the form of
 emptied when we press Enter in it, as can be seen on the last but one line of
 the listing.
 
-The next component, \texttt{taskListItem}, is slightly more complicated. According to the
-specification, double-clicking on a list item switches it to \emph{edit mode}, which is,
-however, not captured anywhere in the global application state. When in edit
-mode, the component may revert to previous state when the Escape key is pressed,
-or update the task with new contents of the text box when Enter is pressed
-instead. This is achieved by adding a small piece of state in the component, a
-boolean value saying whether this task is currently being edited.
+Moving on to the large-scale structure of the application: it uses two global
+pieces of state, the task list, persisted to LocalStorage on each change, and
+the router. Both can be represented using a monad transformer each, in our case
+the \texttt{KVStoreT} and \texttt{RoutedT} created in the previous chapters. While the order of
+the monad transformers may matter in some special cases like \texttt{ExceptT} or \texttt{ContT},
+the exception and continuation transformers, neither of the transformers we want
+to use affect program flow, they simply add new capabilities to the base
+monad. Also, neither transformer uses the capabilities of the other, which means
+we can nest them in an arbitrary order. The newtype of the resulting monad can
+be seen in Listing \ref{todomvc-mtl}, as is the type synonym that contains most
+constraints needed in application code.
 
-The code of this and the remaining components is not too interesting, so we can
-skip directly on the next step, the structure of the application's monad
-transformer stack.
-
-\begin{listing}[htbp]
-\begin{minted}[,frame=single]{haskell}
-newTaskBox :: MonadWidget t m => m (Event t Text)
-newTaskBox =
-  elClass "header" "header" $ do
-    el "h1" (text "todos")
-    rec
-      textbox <- inputElement $ def
-        & elementConfig . initialAttributes .~
-          ("class" =: "new-todo" <> "autofocus" =: "autofocus" <>
-           "placeholder" =: "What needs to be done?")
-        & inputElementConfig_setValue .~ ("" <$ keypress Enter textbox)
-    return . ffilter T.null $
-      T.strip <$> current (value textbox) <@ keypress Enter textbox
-\end{minted}
-\caption{TodoMVC: New task box \label{new-task-box}}
-\end{listing}
-
-The application uses two global pieces of state, the task list, persisted to
-LocalStorage on each change, and the router. While the order of the monad
-transformers may matter in some special cases like \texttt{ExceptT} or \texttt{ContT}, the
-exception and continuation transformers, neither of the transformers we want to
-use, \texttt{StorageT} and \texttt{RoutedT}, affect program flow, they simply add new capabilities
-to the base monad. Also, neither transformer uses the capabilities of the other,
-which means we can nest them in an arbitrary order. The newtype of the resulting
-monad can be seen in Listing \ref{todomvc-mtl}, as is the type synonym that
-contains most constraints needed in application code.
-
-\begin{listing}[htbp]
+\begin{listing}[!b]
 \begin{minted}[,frame=single]{haskell}
 newtype AppT t m a = AppT
-  { unAppT :: RoutedT t AppRoute (StorageT t Task m) a
+  { unAppT :: RoutedT t AppRoute (KVStoreT t Task m) a
   } deriving ( Functor
              , Applicative
              , Monad
@@ -1972,15 +2040,15 @@ newtype AppT t m a = AppT
 
 type AppM t m =
    ( MonadRouted t AppRoute
-   , MonadStorage t Task
+   , MonadKVStore t Task
    , DomBuilder t m
    , PostBuild t m
    )
 
 runAppT :: _ => AppT t m a -> m a
-runAppT = runLocalStorageT . runHashRoutedT . unAppT
+runAppT = runKVStoreTStorage . runRoutedTHash . unAppT
 \end{minted}
-\caption{TodoMVC: Base monad transformer \label{todomvc-mtl}}
+\caption{TodoMVC: base monad transformer \label{todomvc-mtl}}
 \end{listing}
 
 The top-level interpreter of the monad is also included. As we can see, we
@@ -1988,22 +2056,27 @@ unwrap the \texttt{AppT} from the outside, starting from the newtype wrapper, ru
 router, and running the storage last. The router is not interpreted with the
 default interpreter that uses the Location API as, according to the
 specification, we need to route using the hash fragment only (the part after \texttt{\#}
-in e.g.~$\backslash$ \texttt{http://localhost/\#!/active}). The storage needs to be persisted
+in e.g. the \texttt{!/active} in \texttt{http://localhost/\#!/active}). The storage needs to be persisted
 from and to LocalStorage, so we do not use the simple in-memory interpreter, but
 \texttt{runLocalStorageT} instead.
 
-TODO: screenshot
+\begin{figure}[!t]
+\centering
+\includegraphics[height=7cm]{obrazky-figures/screenshot-todomvc.png}
+\caption{The TodoMVC application \label{todomvc-app}}
+\end{figure}
 
-This concludes the TodoMVC application, implemented according to its
-specification. If compiled using GHCJS, we get a bundle of JavaScript files and
-an \texttt{index.html} which is the entry point. As described in Chapter \ref{sec:org0799bdc}, we
-can add a post-compile step that compresses these files and adds any necessary
-assets like CSS or icons. It is possible to go a step further and include a
-service worker using the service worker component implemented in this work, but
-that is what we do in the next application.
+This concludes the TodoMVC application, which can be seen in Figure
+\ref{todomvc-app}, implemented according to its specification. If compiled using
+GHCJS, we get a bundle of JavaScript files and an \texttt{index.html} which is the entry
+point. As described in Chapter \ref{sec:orgc00407c}, we can add a post-compile step that
+compresses these files and adds any necessary assets like CSS or icons. It is
+possible to go a step further and include a service worker using the service
+worker component implemented in this work, but that is what we do in the next
+application.
 
 \section{HNPWA}
-\label{sec:org9047238}
+\label{sec:org262ed81}
 HNPWA \cite{hnpwa} is a client for Hacker News, a technological news site. Unlike
 TodoMVC, HNPWA does not provide a rigid specification and consists only of a
 rough guideline of what to implement. The task is to create a Progressive Web
@@ -2049,12 +2122,17 @@ it is very similar to the structure in TodoMVC, there are again larger
 components that work with the top-level application state and small components
 with dynamics as their inputs and events as outputs.
 
-TODO: screenshot
+\begin{figure}[!b]
+\centering
+\includegraphics[height=7.1cm]{obrazky-figures/screenshot-hnpwa.png}
+\caption{The HNPWA application \label{hnpwa-app}}
+\end{figure}
 
 The resulting application is a valid PWA that works offline, showing cached
-data. Its only major deficiency is that it uses the official hierarchical API
-and therefore it loads content gradually and not as fast as it could if it had a
-dedicated server that preprocessed the data into a more suitable format.
+data. What it looks like can be seen in Figure \ref{hnpwa-app}. Its only major
+deficiency is that it uses the official hierarchical API and therefore it loads
+content gradually and not as fast as it could if it had a dedicated server that
+preprocessed the data into a more suitable format.
 
 If we had a server, we could also implement another feature, prerendering. By
 using the server instance of the storage component, we would be able to generate
@@ -2062,7 +2140,7 @@ fully filled-out HTML in such a way that even browsers without JavaScript
 support would be able to interact with the application without obstacle.
 
 \section{RealWorld}
-\label{sec:org47c07e9}
+\label{sec:orgc357db4}
 RealWorld \cite{realworld} is the most complex of the comparison projects. It is a
 clone of Medium, an online publishing platform, so it requires everything a
 ``real world'' application would. This comparison project also contains a server
@@ -2100,31 +2178,42 @@ application, using only the service worker cache is an easier approach.
 The routing and service worker components are the same as in the HNPWA
 application, routing using Location API and caching requests to the API.
 
-TODO: interesting components?
-TODO: screenshot
+\begin{figure}[!b]
+\centering
+\includegraphics[height=7.1cm]{obrazky-figures/screenshot-realworld.png}
+\caption{The RealWorld application \label{realworld-app}}
+\end{figure}
 
-The created application fulfills all requirements of the specification and of
-the PWA checklist. As with HNPWA, it would be possible to improve the
-application by using a custom server for prerendering and for unifying the
-Servant types of the API and the application into a single large type.
+The created application, illustrated in \ref{realworld-app}, fulfills all
+requirements of the specification and of the PWA checklist. As with HNPWA, it
+would be possible to improve the application by using a custom server for
+prerendering and for unifying the Servant types of the API and the application
+into a single large type.
 
 \chapter{Conclusion}
-\label{sec:org9e109d9}
+\label{sec:org10588ea}
 In this work, I have led the reader from a general introduction to modern Web
 technologies, through an overview of the capabilities of contemporary Web
 frameworks, to an analysis of the capabilities of Haskell on the frontend and
-specifically the state of available features in its library ecosystem.
+specifically the state of available features in its library ecosystem. In the
+second half of this work, I have designed and implemented three components, a
+router, a service worker generator with supporting libraries, and a key-value
+browser storage library.
 
-In the second half of this work, I have designed and implemented three
-components, a router, a service worker generator with supporting libraries, and
-a key-value browser storage library, that together make a significant
-contribution to the ecosystem of Haskell on the frontend. These components do not
-comprise a framework equivalent to most popular JavaScript frameworks, but they
-enable creating Progressive Web Applications in Haskell, which was the set goal
-of this work.
+\section{Evaluation}
+\label{sec:org14140bf}
+While these components do not comprise a framework equivalent to the most
+popular JavaScript frameworks, they together give developers a set of
+functionality that is mostly equivalent to minimalist frameworks in JavaScript,
+and they make a significant contribution to the ecosystem of Haskell on the
+frontend. They enable creating Progressive Web Applications in Haskell, which
+was the set goal of this work, and they also set the groundwork for further work
+in this area. I also believe that the analysis done in the first part of this
+work is a significant contribution itself, identifying the deficiencies in the
+Haskell ecosystem, possibly guiding future projects.
 
 \section{Future work}
-\label{sec:orgc0c7da4}
+\label{sec:org7990832}
 The work that needs to immediately follow the submission of this thesis is
 publishing the components created here and seeking feedback from the Haskell
 community. This includes fulfilling all the formal requirements necessary for
@@ -2203,6 +2292,33 @@ remaining deficiencies compared to the features available in JavaScript.
 \iftwoside\cleardoublepage\fi
 
 \chapter{Contents of the attached data storage}
-\label{sec:org214d83f}
-TODO: fill in
+\label{sec:orga9fb439}
+
+\begin{itemize}
+\item \texttt{doc-final-thesis/}, the source files for this thesis and its rendered PDF
+version,
+\item \texttt{doc-midterm-report/}, the source files and rendered PDF version of the midterm
+report of this work,
+\item \texttt{doc-midterm-presentation/}, the source files and rendered PDF version of the midterm
+presentation of this work,
+\item \texttt{README.md}, the usage instructions for the following source files,
+\item \texttt{src/tapaw-route/}, the routing library created in this work,
+\item \texttt{src/tapaw-serviceworker/}, the service worker library created in this work,
+\item \texttt{src/tapaw-storage/}, the storage library created in this work,
+\item \texttt{src/tapaw-webmanifest/}, the Web App Manifest library created in this work,
+\item \texttt{src-demo/tapaw-7guis/}, a simple set of GUI components originally intended as
+another demonstration application,
+\item \texttt{src-demo/tapaw-todomvc/}, the TodoMVC demonstration application,
+\item \texttt{src-demo/tapaw-hnpwa/}, the HNPWA demonstration application,
+\item \texttt{src-demo/tapaw-realworld/}, the RealWorld demonstration application,
+\item \texttt{src-snippets/}, a set of code snippets written during the process of writing
+this thesis, especially:
+\begin{itemize}
+\item \texttt{deployment-nixops/}, an example of application deployment using NixOps,
+\item \texttt{skeleton/}, a minimal project skeleton for a browser application,
+\item \texttt{storage-tagged/}, an alternate version of the storage library, and
+\item \texttt{editor-emacs/}, a pre-configured instance of the Emacs editor usable for
+exploring the packages in this work
+\end{itemize}
+\end{itemize}
 \end{document}

@@ -187,7 +187,7 @@ requirements are the Web Share API and Credentials API that expose more of the
 underlying device capabilities, sharing via other applications and the device
 credential storage.
 
-* Web frameworks of today
+* Web frameworks today
 As frontend applications grow more complex, so do the frameworks in which they
 are build. Today's frontend framework is no less complex than a desktop or a
 server framework, with a large number of capabilities. In this section, we will
@@ -753,7 +753,7 @@ renderRoute :: Route app -> URL
 There are several widely used options for a server-side router, which has the
 same responsibilities as a client-side one, and a very similar interface, for
 the most part. These options differ in several ways, the most fundamental one
-being the representation of the route, which in turn defines the basis of the
+being the representation of a route, which in turn defines the basis of the
 client API.
 
 We will go through the routers of Yesod, Happstack, and Snap, all of them
@@ -966,7 +966,7 @@ handlers. This is where we will see how to create a new interpretation of a
 Servant API type.
 
 #+CAPTION: Router: transformation of a Servant API into a client router label:router-hasapp
-#+ATTR_LATEX: :placement [!b] :options frame=single
+#+ATTR_LATEX: :placement [!t] :options frame=single
 #+BEGIN_SRC haskell
   data App :: Type
 
@@ -978,14 +978,14 @@ Servant API type.
     type MkApp (a :<|> b) m = MkApp a m :<|> MkApp b m
     route _ (a :<|> b) = route (Proxy @a) a <> route (Proxy @b) b
 
-  instance (FromHttpApiData a, HasApp s) => HasApp (Capture sy a :> s) where
+  instance (FromHttpApiData a, HasApp s) => HasApp (Capture sym a :> s) where
     type MkApp (Capture s a :> sub) m = a -> MkApp s m
     route _ f loc = case locPath loc of
       [] -> Left Err404
       x:xs -> case parseUrlPiece x of
         Right p -> route (Proxy @sub) (f p) (loc { locPath = xs })
         Left _ ->
-          let s = T.pack $ symbolVal (Proxy @sy)
+          let s = T.pack $ symbolVal (Proxy @sym)
           in Left Err400
 
   instance HasApp App where
@@ -1029,7 +1029,7 @@ and returning the final handler. This, in summary, is what it looks like to
 interpret a Servant type.
 
 #+CAPTION: Router: the top-level route dispatcher label:router-url
-#+ATTR_LATEX: :options frame=single
+#+ATTR_LATEX: :placement [!t] :options frame=single
 #+BEGIN_SRC haskell
   runRouter ::
        forall t m api. _
@@ -1078,7 +1078,7 @@ use it. The =toAppLink= function is again recursive, and it builds up a URL from
 the endpoint type and from the provided arguments, starting from an empty URL.
 
 #+CAPTION: Router: in-application links label:router-link
-#+ATTR_LATEX: :placement [!b] :options frame=single
+#+ATTR_LATEX: :placement [!t] :options frame=single
 #+BEGIN_SRC haskell
   viewUserItemsLink :: Event t (UserId, ItemType) -> m ()
   viewUserItemsLink = appLink viewUserItemsRoute
@@ -1176,7 +1176,7 @@ push notifications), and on the server for sending the notifications, as
 illustrated by Listing ref:service-worker-api.
 
 #+CAPTION: Service Worker: the intended API label:service-worker-api
-#+ATTR_LATEX: :options frame=single
+#+ATTR_LATEX: :placement [b] :options frame=single
 #+BEGIN_SRC haskell
   generateWorker :: ServiceWorker push -> ByteString
   runServiceWorkerClientT ::
@@ -1230,7 +1230,7 @@ in Listing ref:jmacro.
 
 *** Implementation
 #+CAPTION: Service Worker: generating prefetch JavaScript label:prefetch
-#+ATTR_LATEX: :placement [b] :options frame=single
+#+ATTR_LATEX: :placement [t] :options frame=single
 #+BEGIN_SRC haskell
   generatePrefetch :: Text -> [Text] -> JExpr
   generatePrefetch cacheName urls = [jmacroE|
@@ -1254,7 +1254,7 @@ cover the most common ones, namely the ones available in Workbox cite:workbox, a
 suite of utilities for service workers from Google.
 
 #+CAPTION: Service Worker: cache strategies type and generation label:cache-strategy
-#+ATTR_LATEX: :placement [p] :options frame=single
+#+ATTR_LATEX: :placement [!b] :options frame=single
 #+BEGIN_SRC haskell
   data CacheStrategy
     = CacheOnly Text
@@ -1262,22 +1262,19 @@ suite of utilities for service workers from Google.
     | CacheFirst Text
     | NetworkFirst Text
     | StaleWhileRevalidate Text
-    deriving (Eq, Ord, Show)
 
   renderCacheStrategy :: JExpr -> JExpr -> CacheStrategy -> JStat
   renderCacheStrategy evt req (CacheFirst cacheName) = [jmacro|
-    return `evt`.respondWith(
-      caches.open(`cacheName`).then(function (cache) {
-        return cache.match(`req`).then(function (res) {
-          return res || fetch(`req`);
-        });
-      })
-    );
+    return `evt`.respondWith(caches.open(`cacheName`).then(function (cache) {
+      return cache.match(`req`).then(function (res) {
+        return res || fetch(`req`);
+      });
+    }));
   |]
 #+END_SRC
 
 #+CAPTION: Service Worker: request matching types label:request-types
-#+ATTR_LATEX: :placement [p] :options frame=single
+#+ATTR_LATEX: :placement [!t] :options frame=single
 #+BEGIN_SRC haskell
   data RequestMatcher = RequestMatcher
     { rmMethod :: MethodMatcher
@@ -1343,9 +1340,7 @@ limited palette of cache strategies.
   renderMethodMatcher :: JExpr -> MethodMatcher -> JExpr
   renderMethodMatcher req = \case
     MethodAny -> jsv "true"
-    MethodList ms -> [jmacroE|`req`.method.some(function (y) {
-      return y == `method`;
-    })|]
+    MethodList ms -> [jmacroE|`req`.method.some(\y -> y == `method`)|]
 #+END_SRC
 
 Generating the JavaScript code corresponding to such a structure is then only a
@@ -1378,7 +1373,7 @@ A part of the JavaScript generation code is also included in ref:push-behaviors,
 demonstrating the simplest =PushViewOnly= variant.
 
 #+CAPTION: Service Worker: implemented push behaviors label:push-behaviors
-#+ATTR_LATEX: :placement [!b] :options frame=single
+#+ATTR_LATEX: :placement [p] :options frame=single
 #+BEGIN_SRC haskell
   data PushBehavior a where
     PushIgnore :: PushConfig Void
@@ -1403,7 +1398,7 @@ demonstrating the simplest =PushViewOnly= variant.
 #+END_SRC
 
 #+CAPTION: Service Worker: client monad transformer label:sw-client-mtl
-#+ATTR_LATEX: :options frame=single
+#+ATTR_LATEX: :placement [p] :options frame=single
 #+BEGIN_SRC haskell
   newtype ServiceWorkerT t n m a = ServiceWorkerT
     { unServiceWorkerT :: ReaderT (ServiceWorkerState t)
@@ -1444,7 +1439,7 @@ we can do by listening to updates to the notification subscription, as can be
 seen in ref:sw-client-demo.
 
 #+CAPTION: Service Worker: application code demonstration label:sw-client-demo
-#+ATTR_LATEX: :placement [b] :options frame=single
+#+ATTR_LATEX: :placement [t] :options frame=single
 #+BEGIN_SRC haskell
   app :: MonadWidget t m => m ()
   app = runServiceWorkerT "/sw.js" serviceWorkerOptions $ do
@@ -1480,13 +1475,8 @@ of the underlying logic. However, as of the time of writing, this library is
 still unfinished, so writing a service worker builder using a typed DSL stays a
 project for the future.
 
-A hypothetical example of such approach can be seen in Listing ref:jshark, which
-demonstrates more complex usage of fetch control, dispatching requests based on
-their destination (the originator of a request, e.g.\nbsp{}\ ="style"= corresponds
-to a =<style>= tag or a CSS include).
-
 #+CAPTION: Service Worker: alternative style using a JavaScript DSL label:jshark
-#+ATTR_LATEX: :placement [t] :options frame=single
+#+ATTR_LATEX: :placement [!b] :options frame=single
 #+BEGIN_SRC haskell
   sw :: WorkerM ()
   sw = self `on` fetch $ \event -> do
@@ -1499,6 +1489,11 @@ to a =<style>= tag or a CSS include).
       default_ $
         respondWith event networkOnly
 #+END_SRC
+
+A hypothetical example of such approach can be seen in Listing ref:jshark, which
+demonstrates more complex usage of fetch control, dispatching requests based on
+their destination (the originator of a request, e.g. ="style"= corresponds
+to a =<style>= tag or a CSS include).
 
 This approach may also be combined with code generation from WebIDL, an
 interface definition language for the Web cite:webidl used e.g.\nbsp{}in the Chromium
@@ -1677,7 +1672,7 @@ Haskell developer tooling is often said to be one of its weakest points, and
 that is also true in Haskell on the frontend. While the situation is improving,
 the tooling is still not on par with more mainstream languages. Despite that, my
 personal developer experience with Haskell has been rather more pleasant than my
-experience when writing React.js applications in JavaScript.
+experience with writing React.js applications in JavaScript.
 
 What follows is a description of the specific tooling used in the creation of
 this thesis, both the libraries and applications described here. While all of
@@ -1805,7 +1800,7 @@ example of an expression that deploys a simple web server can be seen in Listing
 ref:nixops-deploy.
 
 #+CAPTION: NixOps deployment label:nixops-deploy
-#+ATTR_LATEX: :options frame=single
+#+ATTR_LATEX: :placement [b] :options frame=single
 #+BEGIN_SRC nix
   { webserver = { config, pkgs, ... }: {
       networking.firewall.allowedTCPPorts = [ 80 ];
@@ -1841,12 +1836,12 @@ for the same application).
 * Case studies
 In this chapter we will go through three Reflex application in the order of
 increasing complexity, applications that use the components created in previous
-chapters. I have used applications with publicly available specifications that
-are intended to help developers compare frontend web frameworks. The interested
-reader can compare the implementations created here and the implementations
-available for comparison side-by-side, but in this chapter, we will only go
-through the basics of each case study, the overall structure and interesting
-parts of each application.
+chapters. I have selected applications with publicly available specifications
+that are intended to help developers compare frontend web frameworks. The
+interested reader can compare the implementations created here and the
+implementations available for comparison side-by-side, but in this chapter, we
+will only go through the basics of each case study, the overall structure and
+interesting parts of each application.
 
 The applications chosen are:
 - TodoMVC, a to-do list application (storage and routing components),
@@ -1863,19 +1858,19 @@ frameworks". There are currently 64 implementations of their specification, alth
 some frameworks are represented multiple times.
 
 We will start with TodoMVC as it is the simplest of the three. TodoMVC is, as
-the name hints, a web application for managing a to-do list. It is not a complex
-project but it is intended to exercise fundamental features of a framework: DOM
-manipulation, forms and validation, state management (in-memory and in
+the name suggests, a web application for managing a to-do list. It is not a
+complex project but it is intended to exercise the fundamental features of a
+framework: DOM manipulation, forms and validation, state management (in
 LocalStorage), and routing.
 
-Going from the bottom up, the definition of a task is as simple as possible: a
-task consists of a title, a binary value indicating whether it is complete, and
-according to the specification, a\nbsp{}task saved in persistent storage also
-needs a unique identifier. One possible representation is having a task be a
-two-member record and the application state a mapping from an integer to a task,
-as shown in Listing ref:todomvc-entities.
+Going from the bottom up, the definition of a task is simple: a task consists of
+a title, a binary value indicating whether it is complete, and according to the
+specification, a\nbsp{}task saved in persistent storage also needs a unique
+identifier. One possible representation is having a task be a two-member record
+and the application state a mapping from an integer to a task, as shown in
+Listing ref:todomvc-entities.
 
-If the tasks were to be also transferred from/to a server and saved in a
+If the tasks were to be also transferred to and from a server and saved in a
 database, the record would look quite different: the identifier might be a UUID
 (Universally Unique Identifier), the entity would likely contain information
 about when and who created or modified it, but considering this is a client-only
@@ -1903,8 +1898,7 @@ completed), toggle all tasks' completed status, and delete all completed tasks.
 These operations can all be implemented using plain functions over a task or a
 map of tasks, which will then be tied into the storage component implemented in
 the previous chapter. The implementation of the operations is not particularly
-interesting, the interested reader can look them up in the attached files
-(=src-demo/todomvc/src/Main.hs=).
+interesting, the interested reader can look them up in the attached files.
 
 The HTML structure of the application is given by the specification, and
 contains three natural sections: an input for creating new tasks at the top, a
@@ -1948,7 +1942,7 @@ the listing.
 Moving on to the large-scale structure of the application: it uses two global
 pieces of state, the task list, persisted to LocalStorage on each change, and
 the router. Both can be represented using a monad transformer each, in our case
-the =KVStoreT= and =RoutedT= created in the previous sections. While the order of
+the =KVStoreT= and =RoutedT= created in the previous chapters. While the order of
 the monad transformers may matter in some special cases like =ExceptT= or =ContT=,
 the exception and continuation transformers, neither of the transformers we want
 to use affect program flow, they simply add new capabilities to the base
@@ -2182,10 +2176,6 @@ To summarize this work, I have studied the current state of Haskell on the
 frontend, expanded the library ecosystem with three new additions, implemented a
 number of example applications, and suggested follow-up projects to remedy the
 remaining deficiencies compared to the features available in JavaScript.
-
-The source code for this work is available online
-https://github.com/zarybnicky/thesis, and also at https://tapaw.dev, where the
-live versions of the applications created here are also available.
 
 * (bibliography, start of appendix)                           :ignoreheading:
 #+BEGIN_EXPORT latex
