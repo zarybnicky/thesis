@@ -18,6 +18,7 @@ module Tapaw.WebManifest
   , ServiceWorkerUpdateViaCache(..)
   , ExternalApplicationResource(..)
   , Fingerprint(..)
+  , emptyManifest
   ) where
 
 import Data.Aeson as A
@@ -50,6 +51,27 @@ data WebManifest = WebManifest
   , prefer_related_applications :: Maybe Bool
   } deriving (Generic, FromJSON, ToJSON)
 
+emptyManifest :: WebManifest
+emptyManifest = WebManifest
+  { dir = Nothing
+  , lang = Nothing
+  , name = Nothing
+  , short_name = Nothing
+  , description = Nothing
+  , icons = []
+  , screenshots = []
+  , categories = []
+  , oarc_rating_id = Nothing
+  , start_url = Nothing
+  , display = Nothing
+  , orientation = Nothing
+  , theme_color = Nothing
+  , background_color = Nothing
+  , scope = Nothing
+  , serviceworker = Nothing
+  , related_applications = []
+  , prefer_related_applications = Nothing
+  }
 
 newtype AppURI = AppURI
   { unAppURL :: URI

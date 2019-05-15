@@ -1,0 +1,60 @@
+cabal-version:       2.2
+name:                skeleton
+version:             0.1.0.0
+license:             BSD-3-Clause
+author:              Jakub Zárybnický
+maintainer:          jakub@zarybnicky.com
+category:            Web
+build-type:          Simple
+
+common common
+  default-language:    Haskell2010
+  ghc-options:        -Wall
+                      -Wcompat
+                      -Wincomplete-uni-patterns
+                      -Wincomplete-record-updates
+                      -Wredundant-constraints
+                      -Wmonomorphism-restriction
+                      -fwarn-tabs
+
+  hs-source-dirs:      src
+  other-modules:       Project
+                       Project.Prelude
+                       Project.Types
+
+  build-depends:       base
+                     , aeson
+                     , bytestring
+                     , containers
+                     , generic-lens
+                     , ghcjs-dom
+                     , lens
+                     , jsaddle
+                     , jsaddle-warp
+                     , mtl
+                     , reflex-dom-core
+                     , tapaw-serviceworker
+                     , tapaw-webmanifest
+                     , text
+                     , time
+
+executable project
+  import: common
+  hs-source-dirs:      src-bin
+  if impl(ghcjs -any)
+    main-is:           main-ghcjs.hs
+    ghc-options:      -dedupe
+    cpp-options:      -DGHCJS_BROWSER
+  else
+    main-is:           main-warp.hs
+    build-depends:     base
+                     , filepath
+                     , wai
+                     , wai-app-static
+                     , warp
+                     , websockets
+
+executable project-gen
+  import: common
+  hs-source-dirs:      src-bin
+  main-is:             main-gen.hs

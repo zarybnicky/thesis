@@ -1,0 +1,3 @@
+packages: ../../src/tapaw-serviceworker
+          ../../src/tapaw-webmanifest
+optional-packages: *

@@ -33,12 +33,23 @@ frontend = mainWidgetWithHead (pure ()) $ runServiceWorkerT "sw.js" (ServiceWork
   let eSub = fmap unPushSubscription <$> updated dSub
   _ <- performEvent $ ffor eSub $ \sub -> liftJSM $ jsg ("console" :: Text) ^. js1 ("log" :: Text) sub
   el "br" blank
-  dynText . fmap (T.pack . show . toJSON) =<< getPushPermissionState
+  dState <- getPushPermissionState
+  dynText $ ("Notifications: " <>) . T.pack . show . toJSON <$> dState
 
-  eNotify <- button "Notify"
+  eNotify <- buttonMaybe (stateToMaybe <$> dState) "Notify"
   showNotification $ ("Test", Nothing) <$ eNotify
 
   eDoSub <- button "Subscribe"
   key <- vapidKeyToArray "BHV6HuBAGpuVOBxI8Ko5epUlgUGF7YA7PPnMC-pLmhi0quC9EEVRpIsCYa5RG9rxi8LotD5V7iWO43qwBUTqy_0"
   subscribe $ PushSubscriptionOptions True (Just key) <$ gate (isNothing <$> current dSub) eDoSub
   unsubscribe $ gate (isJust <$> current dSub) eDoSub
+
+stateToMaybe :: PermissionState -> Maybe ()
+stateToMaybe PermissionGranted = Just ()
+stateToMaybe _ = Nothing
+
+buttonMaybe :: (Reflex t, DomBuilder t m, PostBuild t m) => Dynamic t (Maybe a) -> Text -> m (Event t a)
+buttonMaybe dDisabled txt = do
+  let attrs = maybe ("disabled" =: "disabled") (const mempty) <$> dDisabled
+  (e, ()) <- elDynAttr' "button" attrs (text txt)
+  pure . fmapMaybe id $ current dDisabled <@ domEvent Click e
