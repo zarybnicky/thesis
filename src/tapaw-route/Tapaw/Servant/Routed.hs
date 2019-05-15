@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RankNTypes #-}
@@ -14,6 +15,8 @@
 module Tapaw.Servant.Routed
   ( MonadRouted(..)
   , RoutedT(..)
+  , SomeRoute(..)
+  , someRouteToLoc
   ) where
 
 import Control.Monad.Fix (MonadFix)
@@ -30,11 +33,7 @@ import Servant.API (IsElem)
 import Servant.API.Generic (AsApi, GenericServant, ToServantApi, genericApi)
 
 class MonadRouted (r :: * -> *) t m | m -> r t where
-  setRoute ::
-       (HasAppLink e, IsElem e (ToServantApi r))
-    => (r AsApi -> e)
-    -> Event t (TupleProductOf (GatherLinkArgs e))
-    -> m ()
+  setRoute :: Event t (SomeRoute r) -> m ()
   getRoute :: m (Dynamic t (Either Err Loc))
   runRouter :: MkApp (ToServantApi r) m -> (Err -> m ()) -> m ()
 
@@ -78,16 +77,21 @@ instance ( HasApp (ToServantApi r)
          , Reflex t
          ) =>
          MonadRouted r t (RoutedT t r m) where
-  setRoute ::
-       forall e. (HasAppLink e, IsElem e (ToServantApi r))
-    => (r AsApi -> e)
-    -> Event t (TupleProductOf (GatherLinkArgs e))
-    -> RoutedT t r m ()
-  setRoute _ args =
-    RoutedT . tellEvent $
-    safeAppLink (genericApi (Proxy @r)) (Proxy @e) (Loc [] []) <$> args
+  setRoute e = RoutedT $ tellEvent (someRouteToLoc <$> e)
   getRoute = RoutedT ask
   runRouter ws onError = do
     dUrl <- getRoute
-    _ <- dyn $ either onError id . (route (Proxy @(ToServantApi r)) ws =<<) <$> dUrl
+    _ <-
+      dyn $
+      either onError id . (route (Proxy @(ToServantApi r)) ws =<<) <$> dUrl
     pure ()
+
+data SomeRoute api where
+  SomeRoute
+    :: forall e api. (HasAppLink e, IsElem e (ToServantApi api))
+    => (api AsApi -> e, TupleProductOf (GatherLinkArgs e))
+    -> SomeRoute api
+
+someRouteToLoc :: GenericServant r AsApi => SomeRoute r -> Loc
+someRouteToLoc (SomeRoute (_ :: r AsApi -> e, args)) =
+  safeAppLink (genericApi (Proxy @r)) (Proxy @e) (Loc [] []) args

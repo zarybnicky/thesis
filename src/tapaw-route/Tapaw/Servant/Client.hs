@@ -10,15 +10,19 @@ module Tapaw.Servant.Client
   , getInitialRouteHash
   , runRoutedTHistory
   , runRoutedTHash
+  , appLink
+  , appLinkDyn
   , serve
   , url
   ) where
 
+import Control.Lens ((%~))
 import Control.Monad.Fix (MonadFix)
 import Control.Monad.Reader (runReaderT)
 import Data.Bifunctor (bimap, first)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BC
+import Data.Map (Map)
 import Data.Proxy (Proxy(..))
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -30,8 +34,9 @@ import GHCJS.DOM.Types (MonadJSM)
 import GHCJS.DOM.Window (getHistory, getLocation)
 import GHCJS.DOM.WindowEventHandlers (popState, hashChange)
 import Reflex.Dom.Core
+import Servant.API.Generic (AsApi, GenericServant)
 import Tapaw.Servant.AsApp (HasApp(..))
-import Tapaw.Servant.Routed (RoutedT(..))
+import Tapaw.Servant.Routed (MonadRouted(..), RoutedT(..), SomeRoute(..), someRouteToLoc)
 import Tapaw.Servant.Types (Err(..), Loc(..))
 import URI.ByteString
   (Query(..), URI, URIRef(..), laxURIParserOptions, parseURI, parseRelativeRef, serializeURIRef')
@@ -39,15 +44,35 @@ import URI.ByteString
 -- error page :: (api -> MkApp) -> Err -> m ()
 -- /error?redirect=/admin/x
 
-getInitialRouteHistory :: MonadJSM m => m (Either Err (URI, Loc))
-getInitialRouteHistory = do
-  href <- getHref =<< getLocation =<< currentWindowUnchecked
-  pure $ (\x -> (x, uriToLoc x)) <$> textToUri href
 
-getInitialRouteHash :: MonadJSM m => m (Either Err Loc)
-getInitialRouteHash = do
-  href <- getHref =<< getLocation =<< currentWindowUnchecked
-  pure $ hashToLoc href
+appLink ::
+     (GenericServant r AsApi, MonadRouted r t m, Reflex t, PostBuild t m, DomBuilder t m)
+  => SomeRoute r
+  -> Dynamic t (Map Text Text)
+  -> Dynamic t Bool
+  -> m ()
+  -> m ()
+appLink = appLinkDyn . pure
+
+appLinkDyn ::
+     forall t r m.
+     (GenericServant r AsApi, MonadRouted r t m, Reflex t, PostBuild t m, DomBuilder t m)
+  => Dynamic t (SomeRoute r)
+  -> Dynamic t (Map Text Text)
+  -> Dynamic t Bool
+  -> m ()
+  -> m ()
+appLinkDyn dR dAttrs dDisabled inner = do
+  modifyAttrs <- dynamicAttributesToModifyAttributes $
+    ffor2 dR dAttrs (\r attrs -> "href" =: locToHash (someRouteToLoc r) <> attrs)
+  (e, ()) <- element "a" ((def :: ElementConfig EventResult t (DomBuilderSpace m))
+    & modifyAttributes .~ fmapCheap mapKeysToAttributeName modifyAttrs
+    & elementConfig_eventSpec %~
+        addEventSpecFlags
+        (Proxy :: Proxy (DomBuilderSpace m))
+        Click
+        (const preventDefault)) inner
+  setRoute $ current dR <@ gate (current dDisabled) (domEvent Click e)
 
 runRoutedTHistory ::
      ( MonadJSM m
@@ -92,6 +117,17 @@ runRoutedTHash loc0 f = do
     (a, eUrl) <- runEventWriterT $ runReaderT (unRoutedT f) loc
   pure a
 
+getInitialRouteHistory :: MonadJSM m => m (Either Err (URI, Loc))
+getInitialRouteHistory = do
+  href <- getHref =<< getLocation =<< currentWindowUnchecked
+  pure $ (\x -> (x, uriToLoc x)) <$> textToUri href
+
+getInitialRouteHash :: MonadJSM m => m (Either Err Loc)
+getInitialRouteHash = do
+  href <- getHref =<< getLocation =<< currentWindowUnchecked
+  pure $ hashToLoc href
+
+
 hashToLoc :: Text -> Either Err Loc
 hashToLoc x = case parseRelativeRef laxURIParserOptions (pre x) of
   Left e -> Left (Err500 e)
@@ -103,7 +139,7 @@ hashToLoc x = case parseRelativeRef laxURIParserOptions (pre x) of
     pre = s2b . T.dropWhile (== '!')
 
 locToHash :: Loc -> Text
-locToHash loc = b2s . serializeURIRef' $ RelativeRef
+locToHash loc = b2s . ("!" <>) . serializeURIRef' $ RelativeRef
   { rrAuthority = Nothing
   , rrFragment = Nothing
   , rrPath = "/" <> s2b (T.intercalate "/" $ locPath loc)
