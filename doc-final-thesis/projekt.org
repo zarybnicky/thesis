@@ -1345,9 +1345,9 @@ limited palette of cache strategies.
 
 Generating the JavaScript code corresponding to such a structure is then only a
 matter of following the types, deconstructing large types into smaller ones and
-piecing together the overall functionality. A part of this code is included
-in ref:request-gen, where in =renderFetchMatchers= we can see the topmost function
-generating a single branch of a request handler.
+piecing together the overall functionality. Part of this code is included in
+Listing ref:request-gen, where in =renderFetchMatchers= we can see the topmost
+function generating a single branch of a request handler.
 
 Moving on to push notifications, an =onPush= event handler in the service worker
 is called with an incoming notification object, and there are several things
@@ -1369,8 +1369,8 @@ window if it is open. =PushViewAndProcess= and =PushProcessOnly= will send the
 payload of the message to the application  for further processing via
 =postMessage=.
 
-A part of the JavaScript generation code is also included in ref:push-behaviors,
-demonstrating the simplest =PushViewOnly= variant.
+A part of the JavaScript generation code is also included in Listing
+ref:push-behaviors, demonstrating the simplest =PushViewOnly= variant.
 
 #+CAPTION: Service Worker: implemented push behaviors label:push-behaviors
 #+ATTR_LATEX: :placement [p] :options frame=single
@@ -1436,7 +1436,7 @@ corresponding browser methods and manages its internal state, and then call
 =subscribe= somewhere in the application code. We then need to send the details of
 the subscription to the server so that it can generate push notifications, which
 we can do by listening to updates to the notification subscription, as can be
-seen in ref:sw-client-demo.
+seen in Listing ref:sw-client-demo.
 
 #+CAPTION: Service Worker: application code demonstration label:sw-client-demo
 #+ATTR_LATEX: :placement [t] :options frame=single
@@ -2096,10 +2096,10 @@ The routing and service worker components are the same as in the HNPWA
 application, routing using Location API and caching requests to the API.
 
 #+CAPTION: The RealWorld application label:realworld-app
-#+ATTR_LaTeX: :height 7.1cm :placement [!b]
+#+ATTR_LaTeX: :placement [p]
 [[file:obrazky-figures/screenshot-realworld.png]]
 
-The created application, illustrated in ref:realworld-app, fulfills all
+The created application, illustrated in Figure ref:realworld-app, fulfills all
 requirements of the specification and of the PWA checklist. As with HNPWA, it
 would be possible to improve the application by using a custom server for
 prerendering and for unifying the Servant types of the API and the application

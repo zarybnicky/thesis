@@ -1,4 +1,4 @@
-% Created 2019-05-15 Wed 11:21
+% Created 2019-05-15 Wed 12:52
 % Intended LaTeX compiler: pdflatex
 \documentclass[english,zadani,odsaz]{fitthesis}
 \renewcommand\title[1]{}
@@ -27,7 +27,7 @@
 \setlength{\parskip}{0.5\bigskipamount}
 
 \chapter{Introduction}
-\label{sec:org2128abd}
+\label{sec:orgbe06a57}
 Imagine you are building an application for an event your company is
 organizing. There will not be reliable internet connection in the area of the
 event, so it needs to work offline. You are on a tight budget, so implementing
@@ -65,9 +65,9 @@ The source code for this work is available online
 live versions of the applications created here are also available.
 
 \chapter{What is a PWA?}
-\label{sec:orgc9d286d}
+\label{sec:org0b3f122}
 \section{Web development trends}
-\label{sec:orgcb43bb9}
+\label{sec:orgeba9d43}
 Today, web pages are more than just static HTML markup. We have moved from the
 Web without JavaScript where any interactions needed to be processed by the
 server, through using JavaScript just for animations and small ease-of-use
@@ -107,7 +107,7 @@ the capabilities of web and mobile applications is still ongoing, and a large
 step towards this goal is the concept of a Progressive Web Application.
 
 \section{Progressive Web Applications}
-\label{sec:org9cbfaa7}
+\label{sec:org42be0c2}
 The term Progressive Web Application (PWA) is an umbrella term for several
 relatively new, closely related technologies. While many of them are useful on
 all devices, the main target audience are mobile Web browsers.
@@ -199,7 +199,7 @@ underlying device capabilities, sharing via other applications and the device
 credential storage.
 
 \chapter{Web frameworks today}
-\label{sec:org557e11b}
+\label{sec:org3227216}
 As frontend applications grow more complex, so do the frameworks in which they
 are build. Today's frontend framework is no less complex than a desktop or a
 server framework, with a large number of capabilities. In this section, we will
@@ -207,7 +207,7 @@ look into what is expected of a frontend framework, which features they usually
 support and what we will need to look for in Haskell libraries.
 
 \section{Features of Web frameworks}
-\label{sec:org957fed4}
+\label{sec:org7195e22}
 The basis of a web framework is the \emph{UI toolkit}, which defines the structure,
 architecture, and paradigm of the rest of the application. I am intentionally
 using the now-uncommon term toolkit, as the UI frameworks we will see vary in
@@ -301,7 +301,7 @@ need to render the HTML for every request. These techniques are usually part of
 a framework's \emph{supporting tools}, about which we will talk next.
 
 \subsection{Supporting tools}
-\label{sec:org4ef450c}
+\label{sec:orge77c1df}
 Developers from different ecosystems have wildly varying expectations on their
 tools. A~Python developer might expect just a text editor and an
 interpreter, whereas a JVM or .NET developer might not be satisfied with
@@ -369,7 +369,7 @@ website. While they are less common, they are indispensable especially in
 frameworks that require large amounts of boilerplate code.
 
 \section{Web frameworks in JavaScript}
-\label{sec:org5cb1037}
+\label{sec:orga6e1cd0}
 The features we just went through are features that are widely available in
 JavaScript and its frameworks. We will now go through some of them to see how
 they approach the implementation of these features.
@@ -395,9 +395,9 @@ several projects that attempt to alleviate this problem by combining a set of
 libraries into a more cohesive framework closer in scope to Angular.
 
 \chapter{Haskell and the Web}
-\label{sec:org60b4e51}
+\label{sec:org8d282c8}
 \section{Haskell}
-\label{sec:orgd7d41fa}
+\label{sec:orgc091c61}
 \begin{listing}[!bp]
 \begin{minted}[,frame=single]{haskell}
 type HackageAPI =
@@ -460,7 +460,7 @@ process of creating a Haskell-to-WebAssembly compiler: WebGHC \cite{webghc} and
 Asterius \cite{asterius}.
 
 \section{Haskell ecosystem for the Web}
-\label{sec:org476ce47}
+\label{sec:orgc463d0f}
 We will now go through Haskell libraries for Web development, using the same
 structure as we did in the chapter describing general Web framework features.
 
@@ -609,7 +609,7 @@ so that is not a critical concern. \emph{Prerendering} is also supported by Miso
 Reflex, which helps to speed up load times as well.
 
 \subsection{Supporting tools}
-\label{sec:org14b24de}
+\label{sec:orgb95b3ad}
 Moving on to the topic of \emph{build tools}: there are three main options in Haskell:
 Cabal v2 \cite{cabal}, Stack \cite{stack}, and Nix. Cabal is the original build tool
 for Haskell, which gained a bad reputation for some of its design decisions (the
@@ -695,9 +695,9 @@ application development are either not available at all or not too well
 developed.
 
 \chapter{Creating the framework}
-\label{sec:org42cbbc5}
+\label{sec:org0cf294f}
 \section{Implementation plan}
-\label{sec:orgdcad0af}
+\label{sec:org746e531}
 In the previous chapter, I presented my research into Haskell and its library
 ecosystem for browser applications. Now it is time to select which components
 need to be created to fulfill the goal of this thesis, i.e. creating a framework
@@ -764,7 +764,7 @@ process and some interesting parts of the implementations, as I believe that
 will make for a more concise and informative presentation.
 
 \section{Routing}
-\label{sec:orgf0e42c3}
+\label{sec:org487d75e}
 A router is one of the basic components of a modern web application. There are
 several features a router is concerned with: parsing the initial URL on
 application start-up, changing it according to user navigation actions, storing
@@ -781,7 +781,7 @@ renderRoute :: Route app -> URL
 \end{listing}
 
 \subsection{Previous work}
-\label{sec:org2dbefc5}
+\label{sec:orgd89ee83}
 There are several widely used options for a server-side router, which has the
 same responsibilities as a client-side one, and a very similar interface, for
 the most part. These options differ in several ways, the most fundamental one
@@ -823,7 +823,7 @@ compared to the simplicity of the other two approaches which use plain functions
 and simple sum types at their core.
 
 \subsection{Servant}
-\label{sec:org2402350}
+\label{sec:org6aa912b}
 Servant is a general type-level DSL (Domain-Specific Language) in the domain of
 web routing. An API defined using Servant is merely a type, a tree of type-level
 terms composed using type operators. This API type is then interpreted using
@@ -909,7 +909,7 @@ and when extending an existing interpretation to support prerendering of
 applications on the server.
 
 \subsection{Reflex}
-\label{sec:orgf1b6cb9}
+\label{sec:org9261012}
 Before we dive into the implementation of the router, we also need to go through
 the basics of Reflex, as its philosophy and building blocks constrain the
 shape of any function we design.
@@ -990,7 +990,7 @@ runAppM :: MonadWidget t m => RouterT AppRoute (ReaderT State m) a -> m a
 \end{listing}
 
 \subsection{Implementation}
-\label{sec:org63d6b5d}
+\label{sec:orgecf03fa}
 I have decided to use Servant's approach in my work, as it seems to be the most
 flexible and extendable one. My contributions in this area is a client-side
 router using Reflex's FRP types composed of a dispatch component and
@@ -1155,7 +1155,7 @@ combinator, are included only in the attached source files, as they are only
 trivial extensions of the ideas presented above.
 
 \subsection{Possible extensions}
-\label{sec:org53cc193}
+\label{sec:orgd6fa733}
 There are several possible directions in which to expand this router. One idea
 available in server-side API routes is encoding authentication constraints in
 the endpoint type itself using a combinator like \texttt{AuthProtect User}. I would like
@@ -1177,7 +1177,7 @@ to other approaches, but I expect that a more skilled Servant developer would
 find a way.
 
 \section{Service workers}
-\label{sec:org4af91cb}
+\label{sec:org6977fd6}
 To reiterate the description of a service worker from the introductory chapters:
 it is a JavaScript script that can, among other things, intercept requests
 initiated by the application that installed it and respond to them from cache,
@@ -1188,7 +1188,7 @@ device goes online, regardless of whether the application is running or not
 (Background Sync API).
 
 \subsection{Requirements}
-\label{sec:orgb6ce156}
+\label{sec:org7cbe998}
 The Service Worker features that we aim to support are: precaching, fetch
 control, and push notifications, keeping Background Sync for a possible
 extension of this library.
@@ -1245,7 +1245,7 @@ browser. That means that we cannot use GHCJS to create Service Workers and need
 to generate plain JavaScript code instead.
 
 \subsection{JMacro}
-\label{sec:org74bd2ce}
+\label{sec:org3e14ecd}
 Of the options available for generation of JavaScript in Haskell, only the
 library JMacro is suitable for this task, as it is the only library intended for
 this purpose, none of the other libraries are very user-friendly.
@@ -1278,7 +1278,7 @@ function(evt) {
 \end{listing}
 
 \subsection{Implementation}
-\label{sec:org005f77e}
+\label{sec:org4bb90b6}
 \begin{listing}[t]
 \begin{minted}[,frame=single]{haskell}
 generatePrefetch :: Text -> [Text] -> JExpr
@@ -1399,9 +1399,9 @@ renderMethodMatcher req = \case
 
 Generating the JavaScript code corresponding to such a structure is then only a
 matter of following the types, deconstructing large types into smaller ones and
-piecing together the overall functionality. A part of this code is included
-in \ref{request-gen}, where in \texttt{renderFetchMatchers} we can see the topmost function
-generating a single branch of a request handler.
+piecing together the overall functionality. Part of this code is included in
+Listing \ref{request-gen}, where in \texttt{renderFetchMatchers} we can see the topmost
+function generating a single branch of a request handler.
 
 Moving on to push notifications, an \texttt{onPush} event handler in the service worker
 is called with an incoming notification object, and there are several things
@@ -1423,8 +1423,8 @@ window if it is open. \texttt{PushViewAndProcess} and \texttt{PushProcessOnly} w
 payload of the message to the application  for further processing via
 \texttt{postMessage}.
 
-A part of the JavaScript generation code is also included in \ref{push-behaviors},
-demonstrating the simplest \texttt{PushViewOnly} variant.
+A part of the JavaScript generation code is also included in Listing
+\ref{push-behaviors}, demonstrating the simplest \texttt{PushViewOnly} variant.
 
 \begin{listing}[p]
 \begin{minted}[,frame=single]{haskell}
@@ -1492,7 +1492,7 @@ corresponding browser methods and manages its internal state, and then call
 \texttt{subscribe} somewhere in the application code. We then need to send the details of
 the subscription to the server so that it can generate push notifications, which
 we can do by listening to updates to the notification subscription, as can be
-seen in \ref{sw-client-demo}.
+seen in Listing \ref{sw-client-demo}.
 
 \begin{listing}[t]
 \begin{minted}[,frame=single]{haskell}
@@ -1510,7 +1510,7 @@ app = runServiceWorkerT "/sw.js" serviceWorkerOptions $ do
 \end{listing}
 
 \subsection{Possible extensions}
-\label{sec:org9909b7b}
+\label{sec:org75cc45e}
 The obvious follow-up work is supporting more features of service workers:
 fine-grained cache control with resource expiration based on its age or
 available storage space; or \emph{Background Sync}, an API for retrying requests made
@@ -1562,7 +1562,7 @@ the library \texttt{ghcjs-dom}, a library that provides a strongly-typed interfa
 most browser APIs, which generates most of its code in this way.
 
 \section{Storage}
-\label{sec:orgca77606}
+\label{sec:org51669db}
 \begin{listing}[!b]
 \begin{minted}[,frame=single]{haskell}
 class MonadKVStore e t m | m -> t where
@@ -1633,7 +1633,7 @@ app = runKVStoreTPure Map.empty $ do
 \end{listing}
 
 \subsection{Possible extensions}
-\label{sec:orgfd9f625}
+\label{sec:org5318433}
 There are several ways to extend this storage library. The first one is simply
 adding more backends, e.g.~to support IndexedDB in the browser or other
 database engines on the backend.
@@ -1646,7 +1646,7 @@ Another option would be to expand the API to support more complicated SQL-like
 queries, so that it can better serve as a client-side database.
 
 \section{Web App Manifest}
-\label{sec:org819fd2f}
+\label{sec:orga872acd}
 A Web App Manifest is a special file containing JSON data linked from the HTML
 of an application. Its structure is defined in the official manifest
 specification \cite{webapp-manifest}. There is not much code to write in this
@@ -1690,13 +1690,13 @@ final stages of writing this thesis, which means that it is left as a potential
 follow-up project.
 
 \chapter{Application development}
-\label{sec:org69ab61d}
+\label{sec:orgd636079}
 In this chapter we will go through some principles and techniques that I used
 while creating the case studies described in the next chapter, of which most can
 be applied to developing Reflex applications in general.
 
 \section{Design}
-\label{sec:org417629c}
+\label{sec:orgb651dd2}
 While there are not yet many patterns specific to FRP or frontend applications,
 one common way to structure a Haskell application in general is the so-called
 \emph{three layer cake} \cite{three-layer}, which is as applicable to Reflex applications as
@@ -1730,12 +1730,12 @@ working solution (the outermost layer), slowly formalizing the effects and
 domain of an application.
 
 While I used the top-down approach when initially creating the applications
-described in Chapter \ref{sec:orge92bdd3}, we will walk through them the other way
+described in Chapter \ref{sec:org11d8feb}, we will walk through them the other way
 around, as top-down development is often iterative in nature and describing the
 individual iterations I went through would make for an unnecessarily long text.
 
 \section{Tools}
-\label{sec:org8fa7daa}
+\label{sec:orgdc8c02a}
 Haskell developer tooling is often said to be one of its weakest points, and
 that is also true in Haskell on the frontend. While the situation is improving,
 the tooling is still not on par with more mainstream languages. Despite that, my
@@ -1844,7 +1844,7 @@ necessary files for a browser application. The instructions for using the editor
 and running the skeleton are also included in those directories.
 
 \section{Deployment}
-\label{sec:orgc00407c}
+\label{sec:org02940bb}
 The options for deploying a Haskell program are generally the same as deploying
 programs in any other compiled language that does not use intermediate object
 code like Java. The two most popular options in the Haskell community, not
@@ -1904,7 +1904,7 @@ the size to a reasonable size (1.9~MB minified and 350~kB compressed
 for the same application).
 
 \chapter{Case studies}
-\label{sec:orge92bdd3}
+\label{sec:org11d8feb}
 In this chapter we will go through three Reflex application in the order of
 increasing complexity, applications that use the components created in previous
 chapters. I have selected applications with publicly available specifications
@@ -1924,7 +1924,7 @@ routing, and service worker components).
 \end{itemize}
 
 \section{TodoMVC}
-\label{sec:orgc48adb6}
+\label{sec:org47fa21d}
 There is an abundance of web frameworks, and there are several projects that aim
 to give developers a side-by-side comparison of them. Out of these, the original
 and most well-known one is TodoMVC \cite{todomvc}, which is aimed at ``MV* frontend
@@ -2069,14 +2069,14 @@ from and to LocalStorage, so we do not use the simple in-memory interpreter, but
 This concludes the TodoMVC application, which can be seen in Figure
 \ref{todomvc-app}, implemented according to its specification. If compiled using
 GHCJS, we get a bundle of JavaScript files and an \texttt{index.html} which is the entry
-point. As described in Chapter \ref{sec:orgc00407c}, we can add a post-compile step that
+point. As described in Chapter \ref{sec:org02940bb}, we can add a post-compile step that
 compresses these files and adds any necessary assets like CSS or icons. It is
 possible to go a step further and include a service worker using the service
 worker component implemented in this work, but that is what we do in the next
 application.
 
 \section{HNPWA}
-\label{sec:org262ed81}
+\label{sec:orga6de672}
 HNPWA \cite{hnpwa} is a client for Hacker News, a technological news site. Unlike
 TodoMVC, HNPWA does not provide a rigid specification and consists only of a
 rough guideline of what to implement. The task is to create a Progressive Web
@@ -2140,7 +2140,7 @@ fully filled-out HTML in such a way that even browsers without JavaScript
 support would be able to interact with the application without obstacle.
 
 \section{RealWorld}
-\label{sec:orgc357db4}
+\label{sec:org9d38324}
 RealWorld \cite{realworld} is the most complex of the comparison projects. It is a
 clone of Medium, an online publishing platform, so it requires everything a
 ``real world'' application would. This comparison project also contains a server
@@ -2178,20 +2178,20 @@ application, using only the service worker cache is an easier approach.
 The routing and service worker components are the same as in the HNPWA
 application, routing using Location API and caching requests to the API.
 
-\begin{figure}[!b]
+\begin{figure}[p]
 \centering
-\includegraphics[height=7.1cm]{obrazky-figures/screenshot-realworld.png}
+\includegraphics[width=.9\linewidth]{obrazky-figures/screenshot-realworld.png}
 \caption{The RealWorld application \label{realworld-app}}
 \end{figure}
 
-The created application, illustrated in \ref{realworld-app}, fulfills all
+The created application, illustrated in Figure \ref{realworld-app}, fulfills all
 requirements of the specification and of the PWA checklist. As with HNPWA, it
 would be possible to improve the application by using a custom server for
 prerendering and for unifying the Servant types of the API and the application
 into a single large type.
 
 \chapter{Conclusion}
-\label{sec:org10588ea}
+\label{sec:org76fbcfd}
 In this work, I have led the reader from a general introduction to modern Web
 technologies, through an overview of the capabilities of contemporary Web
 frameworks, to an analysis of the capabilities of Haskell on the frontend and
@@ -2201,7 +2201,7 @@ router, a service worker generator with supporting libraries, and a key-value
 browser storage library.
 
 \section{Evaluation}
-\label{sec:org14140bf}
+\label{sec:orgd40c3a3}
 While these components do not comprise a framework equivalent to the most
 popular JavaScript frameworks, they together give developers a set of
 functionality that is mostly equivalent to minimalist frameworks in JavaScript,
@@ -2213,7 +2213,7 @@ work is a significant contribution itself, identifying the deficiencies in the
 Haskell ecosystem, possibly guiding future projects.
 
 \section{Future work}
-\label{sec:org7990832}
+\label{sec:org1d95258}
 The work that needs to immediately follow the submission of this thesis is
 publishing the components created here and seeking feedback from the Haskell
 community. This includes fulfilling all the formal requirements necessary for
@@ -2292,7 +2292,7 @@ remaining deficiencies compared to the features available in JavaScript.
 \iftwoside\cleardoublepage\fi
 
 \chapter{Contents of the attached data storage}
-\label{sec:orga9fb439}
+\label{sec:orgd5043bb}
 
 \begin{itemize}
 \item \texttt{doc-final-thesis/}, the source files for this thesis and its rendered PDF
