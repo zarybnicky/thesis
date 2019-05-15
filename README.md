@@ -1,9 +1,15 @@
-# A Haskell framework for full-stack web applications
+# A Haskell framework for Progressive Web Applications
+This repository contains all code and documentation related to my bachelor
+thesis:
+
+ZÁRYBNICKÝ, Jakub. A Haskell Platform for Creating Progressive Web
+Applications. Brno, 2019. Backelor's thesis. Brno University of Technology,
+Faculty of Information Technology. Supervisor Ing. Ondřej Lengál, Ph.D.
 
 ## Rendered PDFs
 - [Midterm progress report](doc-midterm-report/midterm-report.pdf)
 - [Midterm progress presentation](doc-midterm-presentation/midterm-presentation.pdf)
-- [Thesis (WIP)](doc-final-thesis/projekt.pdf)
+- [Thesis](doc-final-thesis/projekt.pdf)
 
 ## Tools
 For trying out the code in this repository, you either need to install
@@ -20,6 +26,6 @@ in [nix/vbox.nix](nix/vbox.nix)).
 - `doc-midterm-presentation/` - presentation for the midterm defence of the thesis
 - `doc-final-thesis/` - sources for the thesis itself
 - ~~`doc-final-presentation/` - presentation for the final defence of the thesis~~
-- `src-snippets/` - short projects demonstrating individual implementation details
-- ~~`src/` - source code for the framework, its CLI and component libraries~~
-- ~~`src-demo/` - demonstration projects that use the framework~~
+- `src/` - source code for the libraries
+- `src-demo/` - demonstration applications
+- `src-snippets/` - short snippets of code that weren't incorporated into other parts
