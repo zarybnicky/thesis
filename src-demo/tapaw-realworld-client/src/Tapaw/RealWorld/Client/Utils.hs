@@ -7,6 +7,7 @@ module Tapaw.RealWorld.Client.Utils
   , (<!>)
   , (=?)
   , (=!)
+  , link
   , form
   , formAttr
   , formDynAttr'
@@ -17,7 +18,7 @@ import Data.Map (Map)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
 import qualified Data.Text as T
-import Reflex.Dom.Core
+import Reflex.Dom.Core hiding (link)
 
 tshow :: Show a => a -> Text
 tshow = T.pack . show
@@ -62,3 +63,20 @@ formDynAttr' attrs child = do
         Submit
         (const preventDefault)) child
   pure (domEvent Submit e, ch)
+
+link ::
+     forall t m. (PostBuild t m, DomBuilder t m)
+  => Dynamic t (Map AttributeName Text)
+  -> Dynamic t Bool
+  -> m ()
+  -> m (Event t ())
+link dAttrs dDisabled inner = do
+  modifyAttrs <- dynamicAttributesToModifyAttributes dAttrs
+  (e, ()) <- element "a" ((def :: ElementConfig EventResult t (DomBuilderSpace m))
+    & modifyAttributes .~ modifyAttrs
+    & elementConfig_eventSpec %~
+        addEventSpecFlags
+        (Proxy :: Proxy (DomBuilderSpace m))
+        Click
+        (const preventDefault)) inner
+  pure $ gate (current dDisabled) (domEvent Click e)

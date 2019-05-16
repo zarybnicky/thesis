@@ -17,13 +17,13 @@ import Network.Wai (responseLBS)
 import Network.Wai.Handler.Warp (defaultSettings, runSettings, setPort, setTimeout)
 import Network.WebSockets (defaultConnectionOptions)
 import Network.Wai.Application.Static (StaticSettings(..), staticApp, defaultFileServerSettings)
-import Project (frontend, serviceWorker, webManifest)
+import Tapaw.RealWorld.Client (frontend, serviceWorker, webManifest)
 import System.FilePath ((</>))
 import Tapaw.ServiceWorker (generateWorker)
 import WaiAppStatic.Types (File(..), LookupResult(..), MaxAge(MaxAgeSeconds), fromPiece, toPiece)
 
 main :: IO ()
-main = devMain 3000
+main = devMain 8000
 
 devMain :: Int -> IO ()
 devMain port =

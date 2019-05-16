@@ -2,7 +2,7 @@ module Main where
 
 import Data.Aeson (encode)
 import qualified Data.ByteString.Lazy.Char8 as BLC
-import Project (serviceWorker, webManifest)
+import Tapaw.RealWorld.Client (serviceWorker, webManifest)
 import Tapaw.ServiceWorker (generateWorker)
 
 main :: IO ()

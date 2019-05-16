@@ -4,7 +4,7 @@ module Main
   ) where
 
 import Language.Javascript.JSaddle.Warp (run)
-import Project (frontend)
+import Tapaw.RealWorld.Client (frontend)
 
 main :: IO ()
-main = run 3000 frontend
+main = run 8000 frontend

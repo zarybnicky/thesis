@@ -21,7 +21,6 @@ common common
   other-modules:       Tapaw.RealWorld.API
                        Tapaw.RealWorld.Client
                        Tapaw.RealWorld.Client.API
-                       Tapaw.RealWorld.Client.Navigation
                        Tapaw.RealWorld.Client.Types
                        Tapaw.RealWorld.Client.Utils
                        Tapaw.RealWorld.Types

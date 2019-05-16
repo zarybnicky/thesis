@@ -3,7 +3,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecursiveDo #-}
@@ -13,12 +12,14 @@
 
 module Tapaw.RealWorld.Client
   ( frontend
+  , serviceWorker
+  , webManifest
   ) where
 
 import Control.Lens (Getting, (^.), (^?), (%~), _Just, _Right, re)
 import Control.Monad (forM_, void, when)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks, runReaderT)
+import Control.Monad.Reader (asks)
 import Data.Bool (bool)
 import Data.Char (chr)
 import Data.Generics.Product (field)
@@ -26,7 +27,6 @@ import Data.Map (Map)
 import Data.Proxy (Proxy(Proxy))
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.These (These(..))
 import Data.Time (getCurrentTime)
 import qualified GHCJS.DOM as DOM
 import qualified GHCJS.DOM.Storage as DOM
@@ -37,10 +37,27 @@ import Reflex.Dom.Core hiding (Client, link)
 import Servant.Reflex (BaseUrl(..), QParam(..), ReqResult(..), Scheme(..), reqSuccess)
 import Tapaw.RealWorld.Types
 import Tapaw.RealWorld.Client.API
-import Tapaw.RealWorld.Client.Navigation (makeHistoryRouter, link, appLink, appLinkDyn)
 import Tapaw.RealWorld.Client.Types
-import Tapaw.RealWorld.Client.Utils ((=!), form, formAttr, tshow)
+import Tapaw.RealWorld.Client.Utils ((=!), form, formAttr, tshow, link)
+import Tapaw.Servant
+import Tapaw.ServiceWorker
+import Tapaw.ServiceWorker.Client
+import Tapaw.WebManifest (WebManifest, emptyManifest)
 
+serviceWorker :: ServiceWorker ()
+serviceWorker = ServiceWorker
+  { swPrecache = ["/", "/sw.js", "/all.js"]
+  , swPush = PushViewAndOpen "http://localhost:8000/"
+  , swFetch =
+    [ (matchPath PathMatchEnd, StaleWhileRevalidate "precache")
+    , (matchPath (matchSegment "sw.js" PathMatchEnd), StaleWhileRevalidate "precache")
+    , (matchPath (matchSegment "all.js" PathMatchEnd), StaleWhileRevalidate "precache")
+    , (RequestMatcher MethodAny (QueryMatcher []) (PathRegexMatcher ".*firebaseio.*"), CacheFirst "firebase")
+    ]
+  }
+
+webManifest :: WebManifest
+webManifest = emptyManifest
 
 headWidget :: DomBuilder t m => m ()
 headWidget = do
@@ -62,33 +79,37 @@ readUserToken :: MonadJSM m => DOM.Storage -> m (Maybe Text)
 readUserToken st = DOM.getItem st ("userToken" :: JSString)
 
 app :: forall t m. MonadWidget t m => m ()
-app = do
+app = runServiceWorkerT "/sw.js" (ServiceWorkerOptions $ Just "/") (Just ()) $ do
   window <- DOM.currentWindowUnchecked
   storage <- DOM.getLocalStorage window
   t0 <- liftIO getCurrentTime
   dNow <- fmap _tickInfo_lastUTC <$> clockLossy 1 t0
-  let url = constDyn (BaseFullUrl Http "localhost" 3000 "/api") :: Dynamic t BaseUrl
+  let baseUrl = constDyn (BaseFullUrl Http "localhost" 3000 "/api") :: Dynamic t BaseUrl
 
   userToken <- liftJSM (readUserToken storage)
   rec
     let appState :: AppState t
-        appState = AppState dNow url dUser (demux dRoute)
+        appState = AppState dNow baseUrl dUser (demux dRoute)
 
     dUser <- holdDyn Nothing eSetUser
-    dRoute <- makeHistoryRouter RouteHome eSetRoute
-    let (eSetRoute, eSetUser) = fanThese eEW
-    ((), eEW) <- flip runReaderT appState . runEventWriterT $ do
-      eUser0 <- getCurrentUser (pure $ maybe (Left "no token") Right userToken)  =<< getPostBuild
-      tellEvent $ That <$> fmapMaybe reqSuccess eUser0 ^!. field @"user" . re _Just
-      topLevel . void . dyn . ffor dRoute $ \case
-        RouteHome -> homePage
-        RouteLogin -> loginPage
-        RouteRegister -> registerPage
-        RouteProfile x -> profilePage x
-        RouteProfileFavorites x -> profileFavoritesPage x
-        RouteSettings -> settingsPage
-        RouteEditor mx -> createEditArticlePage mx
-        RouteArticle x -> articlePage x
+    (dRoute, eSetUser) <- runEventWriterT . runAppT appState $ do
+      eUser0 <- getCurrentUser (pure $ maybe (Left "no token") Right userToken) =<< getPostBuild
+      tellEvent $ fmapMaybe reqSuccess eUser0 ^!. field @"user" . re _Just
+      topLevel . void . flip runRouter (const homePage) $ AppRoute
+        { rHome = homePage
+        , rLogin = loginPage
+        , rRegister = registerPage
+        , rProfile = profilePage
+        , rFavorites = profileFavoritesPage
+        , rSettings = settingsPage
+        , rEditor = createEditArticlePage
+        , rArticle = articlePage
+        }
+      flip runRouter (const $ pure RouteHome) $ AppRoute
+        (pure RouteHome) (pure RouteLogin) (pure RouteRegister) (pure RouteSettings)
+        (pure . RouteEditor) (pure . RouteArticle) (pure . RouteProfile)
+        (pure . RouteProfileFavorites)
+
   performEvent_ $ saveUserToken storage <$> fmapMaybe id (updated dUser) ^!. field @"token"
 
 topLevel :: AppStateM t m => m () -> m ()
@@ -98,33 +119,33 @@ topLevel contents =
 headerView :: forall t m. AppStateM t m => m ()
 headerView =
   elClass "nav" "navbar navbar-light" $ divClass "container" $ do
-    appLink RouteHome (pure $ "class" =: "navbar-brand") (pure True) (text "conduit")
+    appLink' rHome () (pure $ "class" =: "navbar-brand") (pure True) (text "conduit")
     elClass "ul" "nav navbar-nav pull-xs-right" $ do
       sel <- asks stateRoute
       dMenuItems <- fmap (maybe anonymRoutes userRoutes) <$> asks stateUser
       void $ simpleList dMenuItems (menuLink sel)
   where
-    menuLink :: Demux t Route -> Dynamic t (Route, m ()) -> m ()
-    menuLink sel drc = void . dyn . ffor drc $ \(r, c) -> elClass "li" "nav-item" $
-      appLink r (("class" =:) . bool "nav-link" "nav-link active" <$> demuxed sel r) (pure True) c
+    menuLink :: Demux t Route -> Dynamic t (Route, SomeRoute AppRoute, m ()) -> m ()
+    menuLink sel drc = void . dyn . ffor drc $ \(r, l, c) -> elClass "li" "nav-item" $
+      appLinkDyn' (pure l) (("class" =:) . bool "nav-link" "nav-link active" <$> demuxed sel r) (pure True) c
 
-    anonymRoutes :: [(Route, m ())]
+    anonymRoutes :: [(Route, SomeRoute AppRoute, m ())]
     anonymRoutes =
-      [ (RouteHome, text "Home")
-      , (RouteLogin, text "Sign in")
-      , (RouteRegister, text "Sign up")
+      [ (RouteHome, SomeRoute rHome (), text "Home")
+      , (RouteLogin, SomeRoute rLogin (), text "Sign in")
+      , (RouteRegister, SomeRoute rRegister (), text "Sign up")
       ]
     userRoutes u =
-      [ (RouteHome, text "Home")
-      , (RouteEditor Nothing, elClass "i" "ion-compose" blank >> nbsp >> text "New Post")
-      , (RouteSettings, elClass "i" "ion-gear-a" blank >> nbsp >> text "Settings")
-      , let un = u ^. field @"username" in (RouteProfile un, text ("@" <> un))
+      [ (RouteHome, SomeRoute rHome (), text "Home")
+      , (RouteEditor Nothing, SomeRoute rEditor Nothing, elClass "i" "ion-compose" blank >> nbsp >> text "New Post")
+      , (RouteSettings, SomeRoute rSettings (), elClass "i" "ion-gear-a" blank >> nbsp >> text "Settings")
+      , let un = u ^. field @"username" in (RouteProfile un, SomeRoute rProfile un, text ("@" <> un))
       ]
 
 footerView :: AppStateM t m => m ()
 footerView =
   el "footer" $ divClass "container" $ do
-    appLink RouteHome (pure $ "class" =: "logo-font") (pure True) (text "conduit")
+    appLink' rHome () (pure $ "class" =: "logo-font") (pure True) (text "conduit")
     elClass "span" "attribution" $ do
       text "An interactive learning project from "
       elAttr "a" ("href" =: "https://thinkster.io") (text "Thinkster")
@@ -175,6 +196,7 @@ homePage = divClass "home-page" $ do
       FeedGlobal -> getArticles (pure QNone) (pure QNone) (pure QNone) (pure QNone) (pure QNone) =<< getPostBuild
       FeedMy -> getArticlesFeed (asToken <$> dUser) (pure QNone) (pure QNone) =<< getPostBuild
       FeedTag t -> getArticles (pure $ QParamSome t) (pure QNone) (pure QNone) (pure QNone) (pure QNone) =<< getPostBuild
+    menuLink :: Dynamic t FeedSource -> Dynamic t (FeedSource, Text) -> m (Event t FeedSource)
     menuLink dFeedSource (splitDynPure -> (dTgt, dTxt)) = do
       eClick <- elClass "li" "nav-item" $ link
         (("href" =: "" <>) . ("class" =:) . ("nav-link " <>) . bool "" "active" <$>
@@ -186,7 +208,7 @@ articlePreview :: AppStateM t m => Dynamic t Article -> m ()
 articlePreview dArticle =
   divClass "article-preview" $ do
     divClass "article-meta" (articleMeta dArticle False)
-    appLinkDyn (RouteArticle . (^. field @"slug") <$> dArticle)
+    appLinkDyn rArticle ((^. field @"slug") <$> dArticle)
         (pure $ "class" =: "preview-link") (pure True) $ do
       el "h1" . dynText $ dArticle ^!. field @"title"
       el "p" . dynText $ dArticle ^!. field @"description"
@@ -202,7 +224,7 @@ loginPage =
       divClass "row" $ divClass "col-md-6 offset-md-3 col-xs-12" $ mdo
     elClass "h1" "text-xs-center" (text "Sign in")
     elClass "p" "text-xs-center" $
-      appLink RouteRegister (pure mempty) (pure True) (text "Need an account?")
+      appLink' rRegister () (pure mempty) (pure True) (text "Need an account?")
     elClass "ul" "error-messages" . el "li" . dynText =<< holdDyn "" eErr
 
     (eSubmit, dReq) <- form $ do
@@ -217,7 +239,8 @@ loginPage =
           ResponseSuccess _ r _ -> Right (r ^. field @"user")
           ResponseFailure _ e _ -> Left e
           RequestFailure _ e -> Left e
-    tellEvent $ These RouteHome . Just <$> eUser
+    setRoute $ SomeRoute rHome () <$ eUser
+    tellEvent $ Just <$> eUser
 
 registerPage :: AppStateM t m => m ()
 registerPage =
@@ -225,7 +248,7 @@ registerPage =
       divClass "row" $ divClass "col-md-6 offset-md-3 col-xs-12" $ mdo
     elClass "h1" "text-xs-center" (text "Sign up")
     elClass "p" "text-xs-center" $
-      appLink RouteLogin (pure mempty) (pure True) (text "Have an account?")
+      appLink' rLogin () (pure mempty) (pure True) (text "Have an account?")
     elClass "ul" "error-messages" . el "li" . dynText =<< holdDyn "" eErr
 
     (eSubmit, dReq) <- form $ do
@@ -242,7 +265,8 @@ registerPage =
           ResponseSuccess _ r _ -> Right (r ^. field @"user")
           ResponseFailure _ e _ -> Left e
           RequestFailure _ e -> Left e
-    tellEvent $ These RouteHome . Just <$> eUser
+    setRoute $ SomeRoute rHome () <$ eUser
+    tellEvent $ Just <$> eUser
 
 profileHeader :: AppStateM t m => Text -> m ()
 profileHeader userSlug = mdo
@@ -273,10 +297,10 @@ profilePage (T.dropWhile (== '@') -> userSlug) = divClass "profile-page" $ do
     divClass "col-xs-12 col-md-10 offset-md-1" $ do
       divClass "articles-toggle" . elClass "ul" "nav nav-pills outline-active" $ do
         elClass "li" "nav-item" $
-          appLink (RouteProfile userSlug) (pure $ "class" =: "nav-link active")
+          appLink' rProfile userSlug (pure $ "class" =: "nav-link active")
             (pure False) (text "My Articles")
         elClass "li" "nav-item" $
-          appLink (RouteProfileFavorites userSlug) (pure $ "class" =: "nav-link")
+          appLink' rFavorites userSlug (pure $ "class" =: "nav-link")
             (pure True) (text "Favorited Articles")
       void $ simpleList dFeed articlePreview
 
@@ -293,10 +317,10 @@ profileFavoritesPage (T.dropWhile (== '@') -> userSlug) = divClass "profile-page
     divClass "col-xs-12 col-md-10 offset-md-1" $ do
       divClass "articles-toggle" . elClass "ul" "nav nav-pills outline-active" $ do
         elClass "li" "nav-item" $
-          appLink (RouteProfile userSlug) (pure $ "class" =: "nav-link")
+          appLink' rProfile userSlug (pure $ "class" =: "nav-link")
             (pure True) (text "My Articles")
         elClass "li" "nav-item" $
-          appLink (RouteProfileFavorites userSlug) (pure $ "class" =: "nav-link active")
+          appLink' rFavorites userSlug (pure $ "class" =: "nav-link active")
             (pure False) (text "Favorited Articles")
       void $ simpleList dFeed articlePreview
 
@@ -395,11 +419,13 @@ settingsPage =
           ResponseSuccess _ a _ -> Right (a ^. field @"user")
           ResponseFailure _ e _ -> Left e
           RequestFailure _ e -> Left e
-    tellEvent $ These RouteHome . Just <$> eUpdated
+    setRoute $ SomeRoute rHome () <$ eUpdated
+    tellEvent $ Just <$> eUpdated
 
     el "hr" blank
     (logoutBtn, ()) <- elClass' "button" "btn btn-outline-danger" (text "Or click here to log out.")
-    tellEvent $ These RouteHome Nothing <$ domEvent Click logoutBtn
+    setRoute $ SomeRoute rHome () <$ domEvent Click logoutBtn
+    tellEvent $ Nothing <$ domEvent Click logoutBtn
 
 createEditArticlePage :: AppStateM t m => Maybe Text -> m ()
 createEditArticlePage mArticleSlug =
@@ -424,13 +450,13 @@ createEditArticlePage mArticleSlug =
       Nothing -> createArticle (asToken <$> dmUser) (Right . NewArticleRequest <$> dArticle) eSubmit
       Just a -> updateArticle (asToken <$> dmUser) (pure $ Right a) (Right . UpdateArticleRequest <$> dArticle) eSubmit
     let (eErr, eRedirect) = fanEither . ffor eRes $ \case
-          ResponseSuccess _ a _ -> Right (RouteArticle $ a ^. field @"article" . field @"slug")
+          ResponseSuccess _ a _ -> Right $ SomeRoute rArticle (a ^. field @"article" . field @"slug")
           ResponseFailure _ e _ -> Left e
           RequestFailure _ e -> Left e
-    tellEvent (This <$> eRedirect)
+    setRoute eRedirect
     dynText =<< holdDyn "" (leftmost ["" <$ eSubmit, eErr])
 
-tagInput :: forall t m. MonadWidget t m => Event t [Text] -> m (Dynamic t [Text])
+tagInput :: forall t m. AppStateM t m => Event t [Text] -> m (Dynamic t [Text])
 tagInput eInit = mdo
   dTag <- inputElement $ (def :: InputElementConfig EventResult t (DomBuilderSpace m))
     & inputElementConfig_setValue .~ ("" <$ keypress Enter dTag)
@@ -509,9 +535,9 @@ commentForm ::
   -> m (Event t SingleCommentResponse)
 commentForm dmUser articleSlug = (switchHold never =<<) . dyn . ffor dmUser $ \case
   Nothing -> do
-    appLink RouteLogin (pure mempty) (pure True) (text "Sign in")
+    appLink rLogin () (text "Sign in")
     text " or "
-    appLink RouteRegister (pure mempty) (pure True) (text "Sign up")
+    appLink rRegister () (text "Sign up")
     text " to add comments on this article."
     pure never
   Just u -> mdo
@@ -548,7 +574,7 @@ tmaybe "" = Nothing
 tmaybe x = Just x
 
 inputText ::
-     MonadWidget t m
+     AppStateM t m
   => Event t Text
   -> Map AttributeName Text
   -> m (InputElement EventResult (DomBuilderSpace m) t)
@@ -558,7 +584,7 @@ inputText eSet attrs =
     & inputElementConfig_elementConfig . elementConfig_initialAttributes .~ attrs
 
 inputTextarea ::
-     MonadWidget t m
+     AppStateM t m
   => Event t Text
   -> Map AttributeName Text
   -> m (TextAreaElement EventResult (DomBuilderSpace m) t)
@@ -569,9 +595,9 @@ inputTextarea eSet attrs =
 
 profileLink :: AppStateM t m => Text -> Dynamic t Profile -> m () -> m ()
 profileLink cls dProfile =
-  appLinkDyn (RouteProfile . (^. field @"username") <$> dProfile) (pure $ "class" =: cls) (pure True)
+  appLinkDyn rProfile ((^. field @"username") <$> dProfile) (pure $ "class" =: cls) (pure True)
 
-profileImg :: MonadWidget t m => Text -> Dynamic t Profile -> m ()
+profileImg :: AppStateM t m => Text -> Dynamic t Profile -> m ()
 profileImg cls dProfile =
   elDynAttr "img" (("class" =: cls <>) . ("src" =:) . (^. field @"image") <$> dProfile) blank
 
