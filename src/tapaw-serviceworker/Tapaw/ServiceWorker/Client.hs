@@ -129,6 +129,10 @@ instance PerformEvent t m => PerformEvent t (ServiceWorkerT t n m) where
   performEvent_ = lift . performEvent_
   performEvent = lift . performEvent
 
+instance MonadReader x m => MonadReader x (ServiceWorkerT t n m) where
+  ask = lift ask
+  local f (ServiceWorkerT a) = ServiceWorkerT $ ReaderT (mapEventWriterT (local f) . runReaderT a)
+
 runServiceWorkerT ::
      ( TriggerEvent t m
      , PerformEvent t m

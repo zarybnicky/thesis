@@ -37,7 +37,7 @@ main = run 3000 $ mainWidgetWithCss $(embedFile "src/index.css") (runAppT app)
 
 app :: MonadWidget t m => AppT t m ()
 app = do
-  dFilter <- holdDyn FilterAll =<< runRouter
+  dFilter <- runRouter
     (AppRoute (pure FilterAll) (pure FilterAll) (pure FilterActive) (pure FilterCompleted))
     (const $ pure FilterAll)
   dTasks <- getKVAll @Task

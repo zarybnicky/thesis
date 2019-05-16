@@ -82,7 +82,7 @@ renderFetchMatchers :: (JExpr, JExpr) -> (JExpr, JExpr, JExpr) -> [(RequestMatch
 renderFetchMatchers (evt, req) (method, path, qs) = mconcat . fmap (\(RequestMatcher{..}, strategy) -> [jmacro|
   if (`(renderMethodMatcher method rmMethod)` &&
       `(renderQueryMatcher qs rmQuery)` &&
-      `(renderPathMatcher path rmPath)`) {
+      `(renderPathMatcher path req rmPath)`) {
     `(renderCacheStrategy evt req strategy)`
   }
 |])
@@ -106,9 +106,9 @@ data PathMatcher
   = PathComponentMatcher PathComponentMatcher
   | PathRegexMatcher Text
 
-renderPathMatcher :: JExpr -> PathMatcher -> JExpr
-renderPathMatcher path = \case
-  PathRegexMatcher r -> [jmacroE|`(JRegEx (T.unpack r))`.test(req.url)|]
+renderPathMatcher :: JExpr -> JExpr -> PathMatcher -> JExpr
+renderPathMatcher path req = \case
+  PathRegexMatcher r -> [jmacroE|`(JRegEx (T.unpack r))`.test(`req`.url)|]
   PathComponentMatcher pc -> renderPathComponentMatcher 0 path pc
 
 data PathComponentMatcher
@@ -150,7 +150,7 @@ renderCacheStrategy evt req = \case
     return `(evt)`.respondWith(caches.open(`(c)`).then(function (cache) {
       return cache.match(`(req)`).then(function (res) {
         return res || fetch(`(req)`).then(function (res2) {
-          evt.waitUntil(cache.put(res2.clone()));
+          `(evt)`.waitUntil(cache.put(res2.clone()));
           return res2;
         });
       });
@@ -164,7 +164,7 @@ renderCacheStrategy evt req = \case
   NetworkFirst c timeout -> [jmacro|
     var network = fetch(`(req)`).then(function (res) {
       return caches.open(`(c)`).then(function (cache) {
-        evt.waitUntil(cache.put(res));
+        `(evt)`.waitUntil(cache.put(res));
         return res;
       });
     });

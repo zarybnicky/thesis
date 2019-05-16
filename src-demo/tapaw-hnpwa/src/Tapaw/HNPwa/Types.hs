@@ -1,6 +1,8 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Tapaw.HNPwa.Types
   ( UserId(..)
@@ -11,35 +13,32 @@ module Tapaw.HNPwa.Types
   , User(..)
   , AppRequest(..)
   , AppState(..)
+  , AppRoute(..)
   , Route(..)
-  , filterTypeToUrl
-  , decodeRoute
-  , encodeRoute
   ) where
 
 import Data.Aeson as A
-import Data.List (uncons)
 import Data.Map (Map)
 import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import Data.Text (Text)
-import qualified Data.Text as T
 import Data.Time (UTCTime)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
 import GHC.Generics (Generic)
 import Reflex.Dom.Core
-import Tapaw.HNPwa.Utils
-import Text.Read (readMaybe)
+import Servant.API
+import Servant.API.Generic
+import Tapaw.Servant
 
 
 newtype UserId = UserId
   { unUserId :: Text
-  } deriving (Eq, Ord, Show, FromJSON)
+  } deriving (Eq, Ord, Show, FromJSON, FromHttpApiData, ToHttpApiData)
 
 
 newtype ItemId = ItemId
   { unItemId :: Int
-  } deriving (Eq, Ord, Show, FromJSON)
+  } deriving (Eq, Ord, Show, FromJSON, FromHttpApiData, ToHttpApiData)
 
 
 data FilterType
@@ -50,13 +49,20 @@ data FilterType
   | FilterJobs
   deriving (Eq, Ord, Show)
 
-filterTypeToUrl :: FilterType -> Text
-filterTypeToUrl x = case x of
-  FilterBest -> "best"
-  FilterNew -> "new"
-  FilterShow -> "show"
-  FilterAsk -> "ask"
-  FilterJobs -> "jobs"
+instance FromHttpApiData FilterType where
+  parseUrlPiece "best" = Right FilterBest
+  parseUrlPiece "new" = Right FilterNew
+  parseUrlPiece "show" = Right FilterShow
+  parseUrlPiece "ask" = Right FilterAsk
+  parseUrlPiece "jobs" = Right FilterJobs
+  parseUrlPiece x = Left x
+
+instance ToHttpApiData FilterType where
+  toUrlPiece FilterBest = "best"
+  toUrlPiece FilterNew = "new"
+  toUrlPiece FilterShow = "show"
+  toUrlPiece FilterAsk = "ask"
+  toUrlPiece FilterJobs = "jobs"
 
 
 data ItemType
@@ -130,6 +136,11 @@ data AppRequest
   | ReqUser UserId
   deriving (Eq, Ord, Show)
 
+data Route
+  = RouteItemList FilterType Int
+  | RouteItem ItemId
+  | RouteUser UserId
+  deriving (Show, Generic)
 
 data AppState t = AppState
   { now :: Dynamic t UTCTime
@@ -139,31 +150,8 @@ data AppState t = AppState
   , pendingReqs :: Dynamic t (Set AppRequest)
   }
 
-
-data Route
-  = RouteItemList FilterType Int
-  | RouteItem ItemId
-  | RouteUser UserId
-  deriving (Show, Generic)
-
-instance Semigroup Route where
-  (<>) = const id
-
-decodeRoute :: Text -> Route
-decodeRoute x = case uncons (drop 1 $ T.splitOn "/" x) of
-  Just ("best", rest) -> RouteItemList FilterBest (parsePageNum rest)
-  Just ("new", rest) -> RouteItemList FilterNew (parsePageNum rest)
-  Just ("show", rest) -> RouteItemList FilterShow (parsePageNum rest)
-  Just ("ask", rest) -> RouteItemList FilterAsk (parsePageNum rest)
-  Just ("jobs", rest) -> RouteItemList FilterJobs (parsePageNum rest)
-  Just ("item", rest) -> RouteItem (ItemId $ parsePageNum rest)
-  Just ("user", rest) -> RouteUser (UserId . T.intercalate "" $ take 1 rest)
-  _ -> RouteItemList FilterBest 1
-  where
-    parsePageNum :: [Text] -> Int
-    parsePageNum = max 1 . fromMaybe 1 . readMaybe . T.unpack . T.intercalate "" . take 1
-
-encodeRoute :: Route -> Text
-encodeRoute (RouteItemList f p) = "/" <> filterTypeToUrl f <> "/" <> tshow p
-encodeRoute (RouteItem u) = "/item/" <> tshow (unItemId u)
-encodeRoute (RouteUser u) = "/user/" <> unUserId u
+data AppRoute r = AppRoute
+  { rList :: r :- Capture "type" FilterType :> Capture "page" Int :> App
+  , rItem :: r :- "item" :> Capture "item" ItemId :> App
+  , rUser :: r :- "user" :> Capture "user" UserId :> App
+  } deriving (Generic)

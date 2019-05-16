@@ -1,17 +1,20 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Tapaw.HNPwa
   ( frontend
+  , serviceWorker
+  , webManifest
   ) where
 
 import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (MonadReader, asks, runReaderT)
+import Control.Monad.Reader (MonadFix, MonadReader, asks, runReaderT)
 import Data.Bool (bool)
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -21,9 +24,28 @@ import Data.Text (Text)
 import Data.Time (UTCTime(..), getCurrentTime, diffUTCTime)
 import Language.Javascript.JSaddle (JSM)
 import Reflex.Dom.Core
-import Tapaw.HNPwa.Navigation (makeHistoryRouter, appLink, appLinkDyn)
+import Servant.API (toUrlPiece)
 import Tapaw.HNPwa.Types
 import Tapaw.HNPwa.Utils ((<!>), (=?), (=!), getUrlHost, pluralize, tshow)
+import Tapaw.Servant
+import Tapaw.ServiceWorker
+import Tapaw.ServiceWorker.Client
+import Tapaw.WebManifest (WebManifest, emptyManifest)
+
+serviceWorker :: ServiceWorker ()
+serviceWorker = ServiceWorker
+  { swPrecache = ["/", "/sw.js", "/all.js"]
+  , swPush = PushViewAndOpen "http://localhost:3000/"
+  , swFetch =
+    [ (matchPath PathMatchEnd, StaleWhileRevalidate "precache")
+    , (matchPath (matchSegment "sw.js" PathMatchEnd), StaleWhileRevalidate "precache")
+    , (matchPath (matchSegment "all.js" PathMatchEnd), StaleWhileRevalidate "precache")
+    , (RequestMatcher MethodAny (QueryMatcher []) (PathRegexMatcher ".*firebaseio.*"), CacheFirst "firebase")
+    ]
+  }
+
+webManifest :: WebManifest
+webManifest = emptyManifest
 
 headWidget :: DomBuilder t m => m ()
 headWidget = do
@@ -34,40 +56,49 @@ headWidget = do
   elAttr "link" ("rel" =: "stylesheet" <> "href" =: "/index.css") blank
 
 frontend :: JSM ()
-frontend = mainWidgetWithHead headWidget $ do
+frontend = mainWidgetWithHead headWidget $
+  runServiceWorkerT "/sw.js" (ServiceWorkerOptions $ Just "/") (Just ()) $ mdo
+  url0 <- getInitialRouteHistory >>= \case
+    Right x -> pure x
+    Left e -> liftIO (print e) >> pure undefined
   t0 <- liftIO getCurrentTime
   dNow <- fmap _tickInfo_lastUTC <$> clockLossy 1 t0
 
-  rec
-    let eIMRequest = fmapMaybe dedupeRequests (updated $ makeIMRequest <$> dItemMap <*> dItemLists <*> dRoute)
-    let eUMRequest = fmapMaybe dedupeRequests (updated $ makeUMRequest <$> dUserMap <*> dRoute)
-    let eILRequest = fmapMaybe dedupeRequests (updated $ makeILRequest <$> dItemLists <*> dRoute)
+  pb <- getPostBuild
+  let eIMRequest' = makeIMRequest <$> dItemMap <*> dItemLists <*> dRoute
+      eUMRequest' = makeUMRequest <$> dUserMap <*> dRoute
+      eILRequest' = makeILRequest <$> dItemLists <*> dRoute
+      eIMRequest = fmapMaybe dedupeRequests $ leftmost [updated eIMRequest', current eIMRequest' <@ pb]
+      eUMRequest = fmapMaybe dedupeRequests $ leftmost [updated eUMRequest', current eUMRequest' <@ pb]
+      eILRequest = fmapMaybe dedupeRequests $ leftmost [updated eILRequest', current eILRequest' <@ pb]
 
-    eIMResponse <- fmap (M.mapMaybe decodeXhrResponse) <$> performRequestsAsync eIMRequest
-    eUMResponse <- fmap (M.mapMaybe decodeXhrResponse) <$> performRequestsAsync eUMRequest
-    eILResponse <- fmap (M.mapMaybe decodeXhrResponse) <$> performRequestsAsync eILRequest
+  eIMResponse <- fmap (M.mapMaybe decodeXhrResponse) <$> performRequestsAsync eIMRequest
+  eUMResponse <- fmap (M.mapMaybe decodeXhrResponse) <$> performRequestsAsync eUMRequest
+  eILResponse <- fmap (M.mapMaybe decodeXhrResponse) <$> performRequestsAsync eILRequest
 
-    dItemMap   <- foldDyn (<>) M.empty eIMResponse
-    dUserMap   <- foldDyn (<>) M.empty eUMResponse
-    dItemLists <- foldDyn (<>) M.empty eILResponse
+  dItemMap   <- foldDyn (<>) M.empty eIMResponse
+  dUserMap   <- foldDyn (<>) M.empty eUMResponse
+  dItemLists <- foldDyn (<>) M.empty eILResponse
 
-    dPending <- foldDyn ($) S.empty $ mergeWith (.)
-      [ flip S.difference . S.fromList . fmap ReqItem . M.keys <$> eIMResponse
-      , flip S.difference . S.fromList . fmap ReqUser . M.keys <$> eUMResponse
-      , flip S.difference . S.fromList . fmap ReqItemList . M.keys <$> eILResponse
-      , S.union . S.fromList . fmap ReqItem . M.keys <$> eIMRequest
-      , S.union . S.fromList . fmap ReqUser . M.keys <$> eUMRequest
-      , S.union . S.fromList . fmap ReqItemList . M.keys <$> eILRequest
-      ]
-    let appState = AppState dNow dItemMap dUserMap dItemLists dPending
+  dPending <- foldDyn ($) S.empty $ mergeWith (.)
+    [ flip S.difference . S.fromList . fmap ReqItem . M.keys <$> eIMResponse
+    , flip S.difference . S.fromList . fmap ReqUser . M.keys <$> eUMResponse
+    , flip S.difference . S.fromList . fmap ReqItemList . M.keys <$> eILResponse
+    , S.union . S.fromList . fmap ReqItem . M.keys <$> eIMRequest
+    , S.union . S.fromList . fmap ReqUser . M.keys <$> eUMRequest
+    , S.union . S.fromList . fmap ReqItemList . M.keys <$> eILRequest
+    ]
+  let appState = AppState dNow dItemMap dUserMap dItemLists dPending
+  dRoute <- flip runReaderT appState . runRoutedTHistory @_ @_ @AppRoute url0 . topLevel $ do
+    _ <- flip runRouter (const $ itemList FilterBest 1) $ AppRoute
+      { rList = itemList
+      , rItem = itemView
+      , rUser = userView
+      }
+    flip runRouter (const . pure $ RouteItemList FilterBest 1) $
+      AppRoute ((pure .) . RouteItemList) (pure . RouteItem) (pure . RouteUser)
 
-    dRoute <- makeHistoryRouter (RouteItemList FilterBest 1) eSetRoute
-    ((), eSetRoute) <- flip runReaderT appState . runEventWriterT $
-      topLevel dRoute . void . dyn . ffor dRoute $ \case
-        RouteUser uid -> userView uid
-        RouteItemList f p -> itemList f p
-        RouteItem i -> itemView i
-  blank
+  pure ()
   where
     dedupeRequests x = if M.null x then Nothing else Just x
 
@@ -94,37 +125,46 @@ makeUMRequest _ _ = M.empty
 
 makeILRequest :: Map FilterType [ItemId] -> Route -> Map FilterType (XhrRequest ())
 makeILRequest m (RouteItemList k _) = case M.lookup k m of
-  Nothing -> k =: xhrRequest "GET" ("https://hacker-news.firebaseio.com/v0/" <> filterTypeToUrl k <> "stories.json") def
+  Nothing -> k =: xhrRequest "GET" ("https://hacker-news.firebaseio.com/v0/" <> toUrlPiece k <> "stories.json") def
   Just _ -> M.empty
 makeILRequest _ _ = M.empty
 
 topLevel ::
-     (EventWriter t Route m, Reflex t, DomBuilder t m, PostBuild t m)
-  => Dynamic t Route
-  -> m ()
-  -> m ()
-topLevel dRoute contents =
+     ( MonadRouted AppRoute t m
+     , Reflex t
+     , DomBuilder t m
+     , PostBuild t m
+     , MonadHold t m
+     )
+  => m a
+  -> m a
+topLevel contents =
   elAttr "div" ("id" =: "app") $ do
-    elClass "header" "header" $
-      elClass "nav" "inner" $ do
-        let sel = demux (routeToFilter <$> dRoute)
-        appLink (RouteItemList FilterBest 1) (pure mempty) (pure True)
-          (elAttr "img" ("class" =: "logo" <> "alt" =: "Logo" <> "src" =: "/logo-48.png") blank)
-        appLink (RouteItemList FilterBest 1) (demuxActive sel FilterBest) (pure True) (text "Top")
-        appLink (RouteItemList FilterNew 1) (demuxActive sel FilterNew) (pure True) (text "New")
-        appLink (RouteItemList FilterShow 1) (demuxActive sel FilterShow) (pure True) (text "Show")
-        appLink (RouteItemList FilterAsk 1) (demuxActive sel FilterAsk) (pure True) (text "Ask")
-        appLink (RouteItemList FilterJobs 1) (demuxActive sel FilterJobs) (pure True) (text "Jobs")
-        elAttr "a" ("class" =: "github" <> "href" =: "https://github.com/zarybnicky/thesis" <>
-                    "target" =: "_blank" <> "rel" =: "noopener") (text "Built with Reflex")
+    elClass "header" "header" $ elClass "nav" "inner" $ do
+      dFilter <- flip runRouter (const $ pure Nothing) $ AppRoute
+        (\f _ -> pure (Just f)) (const $ pure Nothing) (const $ pure Nothing)
+      let sel = demux dFilter
+      appLink' rList (FilterBest, 1) (pure mempty) (pure True)
+        (elAttr "img" ("class" =: "logo" <> "alt" =: "Logo" <> "src" =: "/logo-48.png") blank)
+      appLink' rList (FilterBest, 1) (demuxActive sel FilterBest) (pure True) (text "Top")
+      appLink' rList (FilterNew, 1) (demuxActive sel FilterNew) (pure True) (text "New")
+      appLink' rList (FilterShow, 1) (demuxActive sel FilterShow) (pure True) (text "Show")
+      appLink' rList (FilterAsk, 1) (demuxActive sel FilterAsk) (pure True) (text "Ask")
+      appLink' rList (FilterJobs, 1) (demuxActive sel FilterJobs) (pure True) (text "Jobs")
+      elAttr "a" ("class" =: "github" <> "href" =: "https://github.com/zarybnicky/thesis" <>
+                  "target" =: "_blank" <> "rel" =: "noopener") (text "Built with Reflex")
     divClass "view" contents
   where
     demuxActive sel f = bool mempty ("class" =: "router-link-active") <$> demuxed sel (Just f)
-    routeToFilter (RouteItemList f _) = Just f
-    routeToFilter _ = Nothing
 
 itemList ::
-     (MonadReader (AppState t) m, EventWriter t Route m, MonadWidget t m)
+     ( MonadReader (AppState t) m
+     , MonadRouted AppRoute t m
+     , DomBuilder t m
+     , PostBuild t m
+     , MonadHold t m
+     , MonadFix m
+     )
   => FilterType
   -> Int
   -> m ()
@@ -140,9 +180,9 @@ itemList filterType pageNum =
     divClass "news-list-nav" $ do
       let dCanPrev = pure (1 < pageNum)
           dCanNext = (pageNum <) <$> dMaxPage
-      appLink (RouteItemList filterType (pageNum - 1)) (disAttr dCanPrev) dCanPrev (text "< prev")
+      appLink' rList (filterType, pageNum - 1) (disAttr dCanPrev) dCanPrev (text "< prev")
       el "span" $ display (pure pageNum) >> text "/" >> display dMaxPage
-      appLink (RouteItemList filterType (pageNum + 1)) (disAttr dCanNext) dCanNext (text "more >")
+      appLink' rList (filterType, pageNum + 1) (disAttr dCanNext) dCanNext (text "more >")
     void $ divClass "news-list" $
       el "ul" (simpleList dItems itemListItem)
   where
@@ -150,7 +190,13 @@ itemList filterType pageNum =
     disAttr = fmap (bool ("class" =: "disabled") mempty)
 
 itemListItem ::
-     (EventWriter t Route m, MonadReader (AppState t) m, MonadWidget t m)
+     ( MonadRouted AppRoute t m
+     , MonadReader (AppState t) m
+     , DomBuilder t m
+     , PostBuild t m
+     , MonadHold t m
+     , MonadFix m
+     )
   => Dynamic t Item
   -> m ()
 itemListItem dItem =
@@ -160,9 +206,9 @@ itemListItem dItem =
     elClass "span" "title" $ do
       dItem' <- holdUniqDyn dItem
       _ <- dyn $ ffor dItem' $ \item -> case itemUrl item of
-        Just url -> elAttr "a"
-          ("target" =: "_blank" <> "rel" =: "noopener" <> "href" =: url) (text $ itemTitle item)
-        Nothing -> appLink (RouteItem $ itemId item) (pure mempty) (pure True) (text $ itemTitle item)
+        Just u -> elAttr "a"
+          ("target" =: "_blank" <> "rel" =: "noopener" <> "href" =: u) (text $ itemTitle item)
+        Nothing -> appLink rItem (itemId item) (text $ itemTitle item)
       hostView dItem
     el "br" blank
     elClass "span" "meta" $ do
@@ -176,12 +222,19 @@ itemListItem dItem =
       elDynAttr "span" ("class" =: "comments-link" <!> (bool mempty ("style" =: "display:none") .
                         (== ItemJob) . itemType <$> dItem)) $ do
         text "| "
-        appLinkDyn (RouteItem . itemId <$> dItem) (pure mempty) (pure True) $ do
+        appLinkDyn rItem (itemId <$> dItem) (pure mempty) (pure True) $ do
           display $ itemDescendants <$> dItem
           text " comments"
 
 itemView ::
-     (EventWriter t Route m, MonadReader (AppState t) m, MonadWidget t m)
+     ( MonadRouted AppRoute t m
+     , MonadReader (AppState t) m
+     , DomBuilder t m
+     , PostBuild t m
+     , MonadFix m
+     , MonadHold t m
+     , Prerender js t m
+     )
   => ItemId
   -> m ()
 itemView iid =
@@ -213,7 +266,17 @@ itemView iid =
         then tshow (itemDescendants item) <> " comments"
         else "No comments yet"
 
-commentView :: (EventWriter t Route m, MonadReader (AppState t) m, MonadWidget t m) => Dynamic t Item -> m ()
+commentView ::
+     ( MonadRouted AppRoute t m
+     , MonadReader (AppState t) m
+     , Prerender js t m
+     , PostBuild t m
+     , DomBuilder t m
+     , MonadHold t m
+     , MonadFix m
+     )
+  => Dynamic t Item
+  -> m ()
 commentView dItem =
   elClass "li" "comment" $ do
     dItemMap <- asks itemMap
@@ -221,7 +284,7 @@ commentView dItem =
       userLink (itemBy <$> dItem)
       text " "
       timeAgoView (itemTime <$> dItem)
-    _ <- elDynHtmlAttr' "div" ("class" =: "text") (itemText <$> dItem)
+    _ <- prerender (pure ()) (void $ elDynHtmlAttr' "div" ("class" =: "text") $ itemText <$> dItem)
     rec
       dOpen <- foldDyn (const not) True eToggle
       eToggle <- elDynAttr "div" (toggleAttrs <$> dItem <*> dOpen) $ do
@@ -242,7 +305,15 @@ commentView dItem =
         then "[+] 1 reply collapsed"
         else "[+] " <> tshow (length $ itemKids item) <> " replies collapsed"
 
-userView :: (MonadReader (AppState t) m, MonadWidget t m) => UserId -> m ()
+userView ::
+     ( MonadReader (AppState t) m
+     , Prerender js t m
+     , MonadSample t m
+     , DomBuilder t m
+     , PostBuild t m
+     )
+  => UserId
+  -> m ()
 userView uid = do
   dUserMap <- asks userMap
   void . dyn . ffor (M.lookup uid <$> dUserMap) $ \case
@@ -258,13 +329,13 @@ userView uid = do
           text (tshow (userKarma user))
         case userAbout user of
           Nothing -> blank
-          Just about -> void $ elDynHtmlAttr' "div" ("class" =: "about") (pure about)
+          Just about -> void $ prerender (pure ()) (void $ elDynHtmlAttr' "div" ("class" =: "about") $ pure about)
       elClass "p" "links" $ do
         elAttr "a" ("href" =: ("https://news.ycombinator.com/submitted?id=" <> unUserId uid)) (text "submissions")
         text " | "
         elAttr "a" ("href" =: ("https://news.ycombinator.com/threads?id=" <> unUserId uid)) (text "comments")
 
-spinner :: MonadWidget t m => Dynamic t Bool -> m ()
+spinner :: (DomBuilder t m, PostBuild t m) => Dynamic t Bool -> m ()
 spinner dShow =
   elDynAttrNS svgNS "svg" ("class" =: "spinner" <!> baseAttrs <!> "style" =! (bool "display:none" "" <$> dShow)) $
     elDynAttrNS svgNS "circle" (pure circleAttrs) blank
@@ -283,11 +354,17 @@ hostView dItem =
     dynText (maybe "" getUrlHost . itemUrl <$> dItem)
     text ")"
 
-userLink :: (EventWriter t Route m, MonadWidget t m) => Dynamic t UserId -> m ()
-userLink dUserId =
-  appLinkDyn (RouteUser <$> dUserId) (pure mempty) (pure True) (dynText $ unUserId <$> dUserId)
+userLink :: (MonadRouted AppRoute t m, PostBuild t m, DomBuilder t m) => Dynamic t UserId -> m ()
+userLink dUserId = appLinkDyn rUser dUserId (pure mempty) (pure True) (dynText $ unUserId <$> dUserId)
 
-timeAgoView :: (MonadReader (AppState t) m, MonadWidget t m) => Dynamic t UTCTime -> m ()
+timeAgoView ::
+     ( MonadReader (AppState t) m
+     , DomBuilder t m
+     , PostBuild t m
+     , MonadSample t m
+     )
+  => Dynamic t UTCTime
+  -> m ()
 timeAgoView dItemTime = do
   now' <- sample . current =<< asks now
   dynText (getTimeAgo now' <$> dItemTime)

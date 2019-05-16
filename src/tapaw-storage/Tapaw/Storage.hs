@@ -22,7 +22,7 @@ module Tapaw.Storage
   ) where
 
 import Control.Monad.Fix (MonadFix)
-import Control.Monad.Reader (MonadIO, MonadTrans(lift), ReaderT, ask, runReaderT)
+import Control.Monad.Reader (MonadIO, MonadTrans(lift), MonadReader(..), ReaderT(..), runReaderT)
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey, decode, encode)
 import qualified Data.ByteString.Lazy.Char8 as BC
 import Data.Coerce (coerce)
@@ -86,6 +86,10 @@ instance PerformEvent t m => PerformEvent t (KVStoreT t k m) where
   type Performable (KVStoreT t k m) = Performable m
   performEvent_ = lift . performEvent_
   performEvent = lift . performEvent
+
+instance MonadReader x m => MonadReader x (KVStoreT t k m) where
+  ask = lift ask
+  local f (KVStoreT a) = KVStoreT $ ReaderT (mapEventWriterT (local f) . runReaderT a)
 
 instance (Ord (StoreKey k), Monad m, Reflex t) => MonadKVStore k t (KVStoreT t k m) where
   getKVAll = KVStoreT ask

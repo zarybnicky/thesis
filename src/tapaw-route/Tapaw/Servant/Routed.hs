@@ -22,7 +22,7 @@ module Tapaw.Servant.Routed
   ) where
 
 import Control.Monad.Fix (MonadFix)
-import Control.Monad.Reader (MonadIO, MonadTrans(lift), ReaderT, ask)
+import Control.Monad.Reader (MonadIO, MonadTrans(lift), MonadReader(..), ReaderT(..), runReaderT)
 import Data.Coerce (coerce)
 import Data.Proxy (Proxy(..))
 import Language.Javascript.JSaddle (MonadJSM)
@@ -65,6 +65,10 @@ newtype RoutedT t (r :: * -> *) m a = RoutedT
 instance MonadTrans (RoutedT t k) where
   lift = RoutedT . lift . lift
 
+instance MonadReader x m => MonadReader x (RoutedT r t m) where
+  ask = lift ask
+  local f (RoutedT a) = RoutedT $ ReaderT (mapEventWriterT (local f) . runReaderT a)
+
 instance (MonadHold t m, MonadFix m, Adjustable t m) => Adjustable t (RoutedT t k m) where
   runWithReplace a b = RoutedT $ runWithReplace (coerce a) (coerceEvent b)
   traverseIntMapWithKeyWithAdjust a b c = RoutedT $ traverseIntMapWithKeyWithAdjust (coerce a) b c
@@ -89,18 +93,21 @@ instance ( GenericServant r AsApi
 runRouter ::
      forall r t m a.
      ( DomBuilder t m
-     , PostBuild t m
      , GenericServant r (AsApp (m a))
      , ToServant r (AsApp (m a)) ~ MkApp (ToServantApi r) (m a)
      , HasApp (ToServantApi r)
      , MonadRouted r t m
+     , MonadHold t m
      )
   => r (AsApp (m a))
   -> (Err -> m a)
-  -> m (Event t a)
+  -> m (Dynamic t a)
 runRouter ws onError = do
   dUrl <- getRoute
-  dyn $ either onError id . (route (Proxy @(ToServantApi r)) (toServant ws) =<<) <$> dUrl
+  url0 <- sample (current dUrl)
+  widgetHold (run url0) (run <$> updated dUrl)
+  where
+    run = either onError id . (route (Proxy @(ToServantApi r)) (toServant ws) =<<)
 
 data SomeRoute api where
   SomeRoute

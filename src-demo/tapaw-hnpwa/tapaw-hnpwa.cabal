@@ -20,6 +20,7 @@ common common
   hs-source-dirs:      src
   other-modules:       Tapaw.HNPwa
                        Tapaw.HNPwa.Types
+                       Tapaw.HNPwa.Utils
 
   build-depends:       base
                      , aeson
