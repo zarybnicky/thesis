@@ -14,6 +14,7 @@ module Tapaw.Servant.Client
   , appLink
   , appLink'
   , appLinkDyn
+  , appLinkDyn'
   , serve
   , url
   ) where
@@ -63,7 +64,7 @@ appLink ::
   -> TupleProductOf (GatherLinkArgs e)
   -> m ()
   -> m ()
-appLink r a = appLinkDyn (pure (SomeRoute r a)) (pure M.empty) (pure True)
+appLink r a = appLinkDyn' (pure (SomeRoute r a)) (pure M.empty) (pure True)
 
 appLink' ::
      ( GenericServant r AsApi
@@ -79,9 +80,25 @@ appLink' ::
   -> Dynamic t Bool
   -> m ()
   -> m ()
-appLink' r a = appLinkDyn (constDyn (SomeRoute r a))
+appLink' r a = appLinkDyn' (constDyn (SomeRoute r a))
 
 appLinkDyn ::
+     ( GenericServant r AsApi
+     , IsElem e (ToServantApi r)
+     , HasAppLink e
+     , MonadRouted r t m
+     , PostBuild t m
+     , DomBuilder t m
+     )
+  => (r AsApi -> e)
+  -> Dynamic t (TupleProductOf (GatherLinkArgs e))
+  -> Dynamic t (Map Text Text)
+  -> Dynamic t Bool
+  -> m ()
+  -> m ()
+appLinkDyn r a = appLinkDyn' (SomeRoute r <$> a)
+
+appLinkDyn' ::
      forall t r m.
      (GenericServant r AsApi, MonadRouted r t m, PostBuild t m, DomBuilder t m)
   => Dynamic t (SomeRoute r)
@@ -89,7 +106,7 @@ appLinkDyn ::
   -> Dynamic t Bool
   -> m ()
   -> m ()
-appLinkDyn dR dAttrs dDisabled inner = do
+appLinkDyn' dR dAttrs dDisabled inner = do
   modifyAttrs <- dynamicAttributesToModifyAttributes $
     ffor2 dR dAttrs (\r attrs -> "href" =: locToHash (someRouteToLoc r) <> attrs)
   (e, ()) <- element "a" ((def :: ElementConfig EventResult t (DomBuilderSpace m))
