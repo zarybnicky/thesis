@@ -69,6 +69,9 @@ instance MonadReader x m => MonadReader x (RoutedT r t m) where
   ask = lift ask
   local f (RoutedT a) = RoutedT $ ReaderT (mapEventWriterT (local f) . runReaderT a)
 
+instance EventWriter t w m => EventWriter t w (RoutedT t r m) where
+  tellEvent = lift . tellEvent
+
 instance (MonadHold t m, MonadFix m, Adjustable t m) => Adjustable t (RoutedT t k m) where
   runWithReplace a b = RoutedT $ runWithReplace (coerce a) (coerceEvent b)
   traverseIntMapWithKeyWithAdjust a b c = RoutedT $ traverseIntMapWithKeyWithAdjust (coerce a) b c

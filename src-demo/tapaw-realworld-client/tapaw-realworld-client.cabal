@@ -40,7 +40,9 @@ common common
                      , servant
                      , servant-auth
                      , servant-reflex
+                     , tapaw-route
                      , tapaw-serviceworker
+                     , tapaw-storage
                      , tapaw-webmanifest
                      , text
                      , these

@@ -91,6 +91,9 @@ instance MonadReader x m => MonadReader x (KVStoreT t k m) where
   ask = lift ask
   local f (KVStoreT a) = KVStoreT $ ReaderT (mapEventWriterT (local f) . runReaderT a)
 
+instance EventWriter t w m => EventWriter t w (KVStoreT t k m) where
+  tellEvent = lift . tellEvent
+
 instance (Ord (StoreKey k), Monad m, Reflex t) => MonadKVStore k t (KVStoreT t k m) where
   getKVAll = KVStoreT ask
   getKV dId = KVStoreT $ ffor ask (\dMap -> ffor2 dId dMap M.lookup)

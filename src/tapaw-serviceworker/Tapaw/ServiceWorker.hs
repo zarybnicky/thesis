@@ -150,7 +150,7 @@ renderCacheStrategy evt req = \case
     return `(evt)`.respondWith(caches.open(`(c)`).then(function (cache) {
       return cache.match(`(req)`).then(function (res) {
         return res || fetch(`(req)`).then(function (res2) {
-          `(evt)`.waitUntil(cache.put(res2.clone()));
+          `(evt)`.waitUntil(cache.put(`(req)`, res2.clone()));
           return res2;
         });
       });
@@ -164,7 +164,7 @@ renderCacheStrategy evt req = \case
   NetworkFirst c timeout -> [jmacro|
     var network = fetch(`(req)`).then(function (res) {
       return caches.open(`(c)`).then(function (cache) {
-        `(evt)`.waitUntil(cache.put(res));
+        `(evt)`.waitUntil(cache.put(`(req)`, res.clone()));
         return res;
       });
     });
