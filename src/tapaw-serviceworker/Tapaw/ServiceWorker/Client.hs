@@ -113,6 +113,7 @@ newtype ServiceWorkerT t n m a = ServiceWorkerT
              , NotReady t
              , TriggerEvent t
              , DomBuilder t
+             , Prerender js t
              )
 
 instance MonadTrans (ServiceWorkerT t n) where

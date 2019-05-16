@@ -71,6 +71,7 @@ newtype KVStoreT t k m a = KVStoreT
              , NotReady t
              , DomBuilder t
              , TriggerEvent t
+             , Prerender js t
              )
 
 instance MonadTrans (KVStoreT t k) where

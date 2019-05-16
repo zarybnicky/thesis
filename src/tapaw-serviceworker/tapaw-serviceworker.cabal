@@ -20,7 +20,6 @@ library
   exposed-modules:   Tapaw.ServiceWorker
                      Tapaw.ServiceWorker.Client
                      Tapaw.ServiceWorker.Client.Types
-                     Tapaw.ServiceWorker.Server
 
   build-depends:     base
                    , aeson
