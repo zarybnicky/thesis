@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -51,7 +52,9 @@ newtype AppT t m a = AppT
              , Monad
              , MonadFix
              , MonadIO
+#ifndef ghcjs_HOST_OS
              , MonadJSM
+#endif
              , MonadSample t
              , MonadHold t
              , PostBuild t
