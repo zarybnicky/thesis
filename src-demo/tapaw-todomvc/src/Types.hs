@@ -23,6 +23,7 @@ module Types
 import Data.Aeson (FromJSON, ToJSON)
 import Control.Monad.Reader (MonadIO, MonadFix, MonadTrans(lift))
 import Data.Coerce (coerce)
+import Data.Either (fromRight)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import GHCJS.DOM (currentWindowUnchecked)
@@ -30,7 +31,7 @@ import GHCJS.DOM.Window (getLocalStorage)
 import GHCJS.DOM.Types (MonadJSM)
 import Servant.API ((:>))
 import Servant.API.Generic ((:-))
-import Tapaw.Servant (App, Loc(..), MonadRouted, RoutedT, runRoutedTHash)
+import Tapaw.Servant (App, Loc(..), MonadRouted, RoutedT, runRoutedTHash, getInitialRouteHash)
 import Tapaw.Storage (MonadKVStore(..), KVStoreT, StoreKey, runKVStoreTStorage)
 import Reflex.Dom.Core
 
@@ -91,7 +92,8 @@ runAppT ::
   -> m a
 runAppT f = do
   storage <- getLocalStorage =<< currentWindowUnchecked
-  runKVStoreTStorage storage "todosReflex" $ runRoutedTHash (Loc [] []) (unAppT f)
+  url <- fromRight (Loc [] []) <$> getInitialRouteHash
+  runKVStoreTStorage storage "todosReflex" $ runRoutedTHash url (unAppT f)
 
 
 data Task = Task
@@ -106,4 +108,4 @@ data TaskFilter
   = FilterAll
   | FilterActive
   | FilterCompleted
-  deriving Eq
+  deriving (Eq, Ord, Show)

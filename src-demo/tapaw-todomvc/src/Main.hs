@@ -27,7 +27,6 @@ import Reflex.Dom.Core
 
 import Types (AppT(..), AppRoute(..), Task(..), TaskFilter(..), runAppT)
 
-
 taskFilter :: TaskFilter -> Map Int Task -> Map Int Task
 taskFilter FilterAll = id
 taskFilter FilterActive = M.filter (not . completed)
@@ -38,10 +37,9 @@ main = run 3000 $ mainWidgetWithCss $(embedFile "src/index.css") (runAppT app)
 
 app :: MonadWidget t m => AppT t m ()
 app = do
-  eFilter <- runRouter
-    (AppRoute (pure FilterAll) (pure FilterAll) (pure FilterAll) (pure FilterAll))
+  dFilter <- holdDyn FilterAll =<< runRouter
+    (AppRoute (pure FilterAll) (pure FilterAll) (pure FilterActive) (pure FilterCompleted))
     (const $ pure FilterAll)
-  dFilter <- holdDyn FilterAll eFilter
   dTasks <- getKVAll @Task
 
   elClass "section" "todoapp" $ do
@@ -50,7 +48,7 @@ app = do
     (eToggleAll, eEdit) <- taskList (taskFilter <$> dFilter <*> dTasks)
     eClearCompleted <- navigation dFilter dTasks
     putKV eEdit
-    putKV $ (\k v -> (k, Just v)) <$> bNextIdx <@> eNewItem
+    putKV $ traceEvent "add"  $ (\k v -> (k, Just v)) <$> bNextIdx <@> eNewItem
     putKVAll $ flip ($) <$> current dTasks <@> leftmost
       [ toggleAll <$ eToggleAll
       , M.filter (not . completed) <$ eClearCompleted
@@ -200,7 +198,7 @@ inputBox =
           ("class" =: "new-todo" <> "autofocus" =: "autofocus" <>
            "placeholder" =: "What needs to be done?")
         & inputElementConfig_setValue .~ ("" <$ keypress Enter textbox)
-    pure . ffilter T.null $ T.strip <$> current (value textbox) <@ keypress Enter textbox
+    pure . ffilter (not . T.null) $ T.strip <$> current (value textbox) <@ keypress Enter textbox
 
 infoFooter :: DomBuilder t m => m ()
 infoFooter =

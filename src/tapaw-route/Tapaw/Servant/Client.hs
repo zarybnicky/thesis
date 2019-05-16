@@ -32,10 +32,11 @@ import qualified Data.Text as T
 import GHCJS.DOM (currentWindowUnchecked)
 import GHCJS.DOM.EventM (on)
 import GHCJS.DOM.History (pushState)
-import GHCJS.DOM.Location (getHref, getHash, setHash)
+import GHCJS.DOM.Location (getHref, getHash)
 import GHCJS.DOM.Types (MonadJSM)
 import GHCJS.DOM.Window (getHistory, getLocation)
 import GHCJS.DOM.WindowEventHandlers (popState, hashChange)
+import Language.Javascript.JSaddle ((<#), jsg, liftJSM)
 import Reflex.Dom.Core
 import Servant.API (IsElem)
 import Servant.API.Generic (AsApi, GenericServant, ToServantApi)
@@ -142,7 +143,7 @@ runRoutedTHash loc0 f = do
   window <- currentWindowUnchecked
   location <- getLocation window
   rec
-    performEvent_ $ setHash location . locToHash <$> eUrl
+    performEvent_ $ liftJSM . (jsg ("location" :: Text) <# ("hash" :: Text)) . locToHash <$> eUrl
     ps <- wrapDomEvent window (`on` hashChange) (hashToLoc <$> getHash location)
     loc <- holdDyn (Right loc0) (leftmost [ps, Right <$> eUrl])
     (a, eUrl) <- runEventWriterT $ runReaderT (unRoutedT f) loc
@@ -155,8 +156,8 @@ getInitialRouteHistory = do
 
 getInitialRouteHash :: MonadJSM m => m (Either Err Loc)
 getInitialRouteHash = do
-  href <- getHref =<< getLocation =<< currentWindowUnchecked
-  pure $ hashToLoc href
+  hash <- getHash =<< getLocation =<< currentWindowUnchecked
+  pure $ hashToLoc hash
 
 
 hashToLoc :: Text -> Either Err Loc
@@ -167,7 +168,7 @@ hashToLoc x = case parseRelativeRef laxURIParserOptions (pre x) of
     , locQuery = bimap b2s b2s <$> queryPairs (rrQuery uri)
     }
   where
-    pre = s2b . T.dropWhile (== '!')
+    pre = s2b . T.dropWhile (\c -> c == '!' || c == '#')
 
 locToHash :: Loc -> Text
 locToHash loc = b2s . ("!" <>) . serializeURIRef' $ RelativeRef
