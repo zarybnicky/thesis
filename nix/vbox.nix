@@ -43,7 +43,9 @@ let
       environment.systemPackages = [
         pkgs.direnv
         pkgs.nixops
-      ] ++ builtins.attrValues (import ../src-snippets);
+      ] ++ builtins.attrValues (import ../src-snippets)
+        ++ builtins.attrValues (import ../src-demo/release.nix)
+        ++ builtins.attrValues (import ../src/release.nix);
     }];
   };
 in baseSystem.config.system.build.virtualBoxOVA

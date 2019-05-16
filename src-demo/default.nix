@@ -21,6 +21,7 @@
     mockery = if self.ghc.isGhcjs or false then null else super.mockery;
     generic-lens = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) super.generic-lens;
     extra = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) super.extra;
+    servant = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) super.servant;
     http-date = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) super.http-date;
     jsaddle-warp = if self.ghc.isGhcjs or false then self.callHackage "jsaddle-warp" "0.9.6.0" {} else super.jsaddle-warp;
     parseargs = dontCheck super.parseargs;
