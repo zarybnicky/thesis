@@ -34,13 +34,15 @@ import Tapaw.WebManifest (WebManifest, emptyManifest)
 
 serviceWorker :: ServiceWorker ()
 serviceWorker = ServiceWorker
-  { swPrecache = ["/", "/sw.js", "/all.js"]
+  { swPrecache = ["/", "/sw.js", "/all.js", "/index.css"]
   , swPush = PushViewAndOpen "http://localhost:3000/"
   , swFetch =
     [ (matchPath PathMatchEnd, StaleWhileRevalidate "precache")
     , (matchPath (matchSegment "sw.js" PathMatchEnd), StaleWhileRevalidate "precache")
     , (matchPath (matchSegment "all.js" PathMatchEnd), StaleWhileRevalidate "precache")
+    , (matchPath (matchSegment "index.css" PathMatchEnd), StaleWhileRevalidate "precache")
     , (RequestMatcher MethodAny (QueryMatcher []) (PathRegexMatcher ".*firebaseio.*"), CacheFirst "firebase")
+    , (matchPath PathMatchAny, StaleWhileRevalidate "precache")
     ]
   }
 
@@ -54,6 +56,7 @@ headWidget = do
   elAttr "meta" ("name" =: "viewport" <> "content" =: "width=device-width,initial-scale=1") blank
   elAttr "meta" ("charset" =: "utf-8") blank
   elAttr "link" ("rel" =: "stylesheet" <> "href" =: "/index.css") blank
+  elAttr "link" ("rel" =: "manifest" <> "href" =: "/site.webmanifest") blank
 
 frontend :: JSM ()
 frontend = mainWidgetWithHead headWidget $

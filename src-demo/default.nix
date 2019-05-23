@@ -4,11 +4,12 @@
     tapaw-todomvc = ./tapaw-todomvc;
     tapaw-hnpwa = ./tapaw-hnpwa;
     tapaw-realworld-client = ./tapaw-realworld-client;
+    app = ./tapaw-realworld-client/server/app;   # = realworld-server
   };
 
   shells = {
     ghc = builtins.attrNames packages;
-    ghcjs = builtins.attrNames packages;
+    ghcjs = [ "tapaw-7guis" "tapaw-todomvc" "tapaw-hnpwa" "tapaw-realworld-client" ];
   };
 
   tools = _: [
@@ -25,6 +26,10 @@
     http-date = (if self.ghc.isGhcjs or false then dontCheck else (x: x)) super.http-date;
     jsaddle-warp = if self.ghc.isGhcjs or false then self.callHackage "jsaddle-warp" "0.9.6.0" {} else super.jsaddle-warp;
     parseargs = dontCheck super.parseargs;
+    classy-prelude-yesod = dontHaddock super.classy-prelude-yesod;
+    esqueleto = dontHaddock (dontCheck super.esqueleto);
+    jwt = self.callHackage "jwt" "0.9.0" {};
+
     tapaw-route = super.callCabal2nix "tapaw-route" ../src/tapaw-route {};
     tapaw-serviceworker = super.callCabal2nix "tapaw-serviceworker" ../src/tapaw-serviceworker {};
     tapaw-storage = super.callCabal2nix "tapaw-storage" ../src/tapaw-storage {};
@@ -59,6 +64,13 @@
         ${pkgs.nodejs}/bin/node $out/bin/gen.jsexe/all.js
         cp ${./tapaw-hnpwa/static}/* .
         popd
+      '';
+    });
+
+    app = overrideCabal super.app (drv: {
+      postFixup = ''
+        mkdir $out/config
+        cp -r ${./tapaw-realworld-client/server/app/config}/* $out/config/
       '';
     });
 

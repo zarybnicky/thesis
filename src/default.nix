@@ -3,8 +3,6 @@
     tapaw-route = ./tapaw-route;
     tapaw-serviceworker = ./tapaw-serviceworker;
     tapaw-storage = ./tapaw-storage;
-    tapaw-storage-jsaddle = ./tapaw-storage-jsaddle;
-    tapaw-storage-persistent = ./tapaw-storage-persistent;
     tapaw-webmanifest = ./tapaw-webmanifest;
   };
 

@@ -46,13 +46,14 @@ import Tapaw.WebManifest (WebManifest, emptyManifest)
 
 serviceWorker :: ServiceWorker ()
 serviceWorker = ServiceWorker
-  { swPrecache = ["/", "/sw.js", "/all.js"]
-  , swPush = PushViewAndOpen "http://localhost:8000/"
+  { swPrecache = ["/", "/sw.js", "/all.js", "/index.css"]
+  , swPush = PushViewAndOpen "https://realworld.tapaw.dev/"
   , swFetch =
     [ (matchPath PathMatchEnd, StaleWhileRevalidate "precache")
     , (matchPath (matchSegment "sw.js" PathMatchEnd), StaleWhileRevalidate "precache")
     , (matchPath (matchSegment "all.js" PathMatchEnd), StaleWhileRevalidate "precache")
-    , (RequestMatcher MethodAny (QueryMatcher []) (PathRegexMatcher ".*firebaseio.*"), CacheFirst "firebase")
+    , (matchPath (matchSegment "index.css" PathMatchEnd), StaleWhileRevalidate "precache")
+    , (matchPath PathMatchAny, StaleWhileRevalidate "precache")
     ]
   }
 
@@ -68,6 +69,7 @@ headWidget = do
   elAttr "link" ("rel" =: "stylesheet" <> "href" =: "//code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css") blank
   elAttr "link" ("rel" =: "stylesheet" <> "href" =: "//fonts.googleapis.com/css?family=Titillium+Web:700|Source+Serif+Pro:400,700|Merriweather+Sans:400,700|Source+Sans+Pro:400,300,600,700,300italic,400italic,600italic,700italic") blank
   elAttr "link" ("rel" =: "stylesheet" <> "href" =: "/index.css") blank
+  elAttr "link" ("rel" =: "manifest" <> "href" =: "/site.webmanifest") blank
 
 frontend :: JSM ()
 frontend = mainWidgetWithHead headWidget app
@@ -84,7 +86,7 @@ app = runServiceWorkerT "/sw.js" (ServiceWorkerOptions $ Just "/") (Just ()) $ d
   storage <- DOM.getLocalStorage window
   t0 <- liftIO getCurrentTime
   dNow <- fmap _tickInfo_lastUTC <$> clockLossy 1 t0
-  let baseUrl = constDyn (BaseFullUrl Http "localhost" 3000 "/api") :: Dynamic t BaseUrl
+  let baseUrl = constDyn (BaseFullUrl Https "realworld.tapaw.dev" 443 "/api") :: Dynamic t BaseUrl
 
   userToken <- liftJSM (readUserToken storage)
   rec

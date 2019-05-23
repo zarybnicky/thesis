@@ -1,6 +1,6 @@
 var FILE_CACHE_NAME = 'file-cache';
 var DATA_CACHE_NAME = 'data-cache';
-var REQUIRED_FILES = ['index.html', 'all.js'];
+var REQUIRED_FILES = ['index.html', 'all.js', 'index.css'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
