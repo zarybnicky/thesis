@@ -107,8 +107,9 @@ appLinkDyn' ::
   -> m ()
   -> m ()
 appLinkDyn' dR dAttrs dDisabled inner = do
+  renderFn <- getRouteRenderer
   modifyAttrs <- dynamicAttributesToModifyAttributes $
-    ffor2 dR dAttrs (\r attrs -> "href" =: locToHash (someRouteToLoc r) <> attrs)
+    ffor2 dR dAttrs (\r attrs -> "href" =: renderFn (someRouteToLoc r) <> attrs)
   (e, ()) <- element "a" ((def :: ElementConfig EventResult t (DomBuilderSpace m))
     & modifyAttributes .~ fmapCheap mapKeysToAttributeName modifyAttrs
     & elementConfig_eventSpec %~
@@ -118,9 +119,12 @@ appLinkDyn' dR dAttrs dDisabled inner = do
         (const preventDefault)) inner
   setRoute $ current dR <@ gate (current dDisabled) (domEvent Click e)
 
-runRoutedTFrozen :: PerformEvent t m => Loc -> RoutedT t r m a -> m a
-runRoutedTFrozen loc f = do
-  (a, _) <- runEventWriterT $ runReaderT (unRoutedT f) (pure $ Right loc)
+runRoutedTFrozen :: PerformEvent t m => (URI, Loc) -> RoutedT t r m a -> m a
+runRoutedTFrozen (uri0, loc) f = do
+  (a, _) <- runEventWriterT $ runReaderT (unRoutedT f)
+    ( pure $ Right loc
+    , uriToText . locToUri uri0
+    )
   pure a
 
 runRoutedTHistory ::
@@ -142,7 +146,10 @@ runRoutedTHistory (uri0, loc0) f = do
     performEvent_ $ pushState history () ("" :: Text) . Just . uriToText . locToUri uri0 <$> eUrl
     ps <- wrapDomEvent window (`on` popState) $ fmap uriToLoc . textToUri <$> getHref location
     loc <- holdDyn (Right loc0) (leftmost [ps, Right <$> eUrl])
-    (a, eUrl) <- runEventWriterT $ runReaderT (unRoutedT f) loc
+    (a, eUrl) <- runEventWriterT $ runReaderT (unRoutedT f)
+      ( loc
+      , uriToText . locToUri uri0
+      )
   pure a
 
 runRoutedTHash ::
@@ -163,7 +170,10 @@ runRoutedTHash loc0 f = do
     performEvent_ $ liftJSM . (jsg ("location" :: Text) <# ("hash" :: Text)) . locToHash <$> eUrl
     ps <- wrapDomEvent window (`on` hashChange) (hashToLoc <$> getHash location)
     loc <- holdDyn (Right loc0) (leftmost [ps, Right <$> eUrl])
-    (a, eUrl) <- runEventWriterT $ runReaderT (unRoutedT f) loc
+    (a, eUrl) <- runEventWriterT $ runReaderT (unRoutedT f)
+      ( loc
+      , \x -> "#" <> locToHash x
+      )
   pure a
 
 getInitialRouteHistory :: MonadJSM m => m (Either Err (URI, Loc))

@@ -35,7 +35,7 @@ app :: MonadWidget t m => m ()
 app = do
   i <- fromRight undefined <$> getInitialRouteHistory
   runRoutedTHistory i $ do
-    _ <- runRouter widgets errorPage
+    _ <- runRouterM widgets errorPage
     pure ()
 
 errorPage :: DomBuilder t m => Err -> m ()

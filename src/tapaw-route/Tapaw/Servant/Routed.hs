@@ -19,12 +19,21 @@ module Tapaw.Servant.Routed
   , SomeRoute(..)
   , someRouteToLoc
   , runRouter
+  , runRouterM
   ) where
 
 import Control.Monad.Fix (MonadFix)
-import Control.Monad.Reader (MonadIO, MonadTrans(lift), MonadReader(..), ReaderT(..), runReaderT)
+import Control.Monad.Reader
+  ( MonadIO
+  , MonadReader(..)
+  , MonadTrans(lift)
+  , ReaderT(..)
+  , asks
+  , runReaderT
+  )
 import Data.Coerce (coerce)
 import Data.Proxy (Proxy(..))
+import Data.Text (Text)
 import Language.Javascript.JSaddle (MonadJSM)
 import Reflex.Dom.Core
 import Tapaw.Servant.AsApp (AsApp, HasApp, MkApp, route)
@@ -43,8 +52,12 @@ class MonadRouted (r :: * -> *) t m | m -> r t where
   default getRoute :: (m ~ f m', Monad m', MonadTrans f, MonadRouted r t m') => m (Dynamic t (Either Err Loc))
   getRoute = lift getRoute
 
+  getRouteRenderer :: m (Loc -> Text)
+  default getRouteRenderer :: (m ~ f m', Monad m', MonadTrans f, MonadRouted r t m') => m (Loc -> Text)
+  getRouteRenderer = lift getRouteRenderer
+
 newtype RoutedT t (r :: * -> *) m a = RoutedT
-  { unRoutedT :: ReaderT (Dynamic t (Either Err Loc)) (EventWriterT t Loc m) a
+  { unRoutedT :: ReaderT (Dynamic t (Either Err Loc), Loc -> Text) (EventWriterT t Loc m) a
   } deriving ( Functor
              , Applicative
              , Monad
@@ -91,9 +104,26 @@ instance ( GenericServant r AsApi
          ) =>
          MonadRouted r t (RoutedT t r m) where
   setRoute e = RoutedT $ tellEvent (someRouteToLoc <$> e)
-  getRoute = RoutedT ask
+  getRoute = RoutedT (asks fst)
+  getRouteRenderer = RoutedT (asks snd)
 
 runRouter ::
+     forall r t m a.
+     ( GenericServant r (AsApp a)
+     , ToServant r (AsApp a) ~ MkApp (ToServantApi r) a
+     , HasApp (ToServantApi r)
+     , MonadRouted r t m
+     , Reflex t
+     , Monad m
+     )
+  => r (AsApp a)
+  -> (Err -> a)
+  -> m (Dynamic t a)
+runRouter ws onError = fmap run <$> getRoute
+  where
+    run = either onError id . (route (Proxy @(ToServantApi r)) (toServant ws) =<<)
+
+runRouterM ::
      forall r t m a.
      ( DomBuilder t m
      , GenericServant r (AsApp (m a))
@@ -105,7 +135,7 @@ runRouter ::
   => r (AsApp (m a))
   -> (Err -> m a)
   -> m (Dynamic t a)
-runRouter ws onError = do
+runRouterM ws onError = do
   dUrl <- getRoute
   url0 <- sample (current dUrl)
   widgetHold (run url0) (run <$> updated dUrl)
