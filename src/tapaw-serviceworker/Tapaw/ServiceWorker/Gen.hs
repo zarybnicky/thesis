@@ -4,7 +4,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Tapaw.ServiceWorker
+module Tapaw.ServiceWorker.Gen
   ( CacheStrategy(..)
   , PushBehavior(..)
   , RequestMatcher(..)

@@ -17,9 +17,9 @@ library
                     -Wmonomorphism-restriction
                     -fwarn-tabs
 
-  exposed-modules:   Tapaw.ServiceWorker
-                     Tapaw.ServiceWorker.Client
+  exposed-modules:   Tapaw.ServiceWorker.Client
                      Tapaw.ServiceWorker.Client.Types
+                     Tapaw.ServiceWorker.Gen
 
   build-depends:     base
                    , aeson

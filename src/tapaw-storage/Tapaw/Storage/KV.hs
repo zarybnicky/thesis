@@ -10,7 +10,7 @@
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Tapaw.Storage
+module Tapaw.Storage.KV
   ( MonadKVStore(..)
   , StoreKey
 

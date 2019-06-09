@@ -23,19 +23,17 @@ xzaryb00@stud.fit.vutbr.cz}
 \begin{frame}{Úvod}
   \begin{itemize}
     \item Haskell v prohlížeči
-    \item Interaktivní, offline, přístupné aplikace
+    \item Moderní, offline přístupné aplikace
     \item Open-source knihovny pro komunitu
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Motivace}
   \begin{itemize}
-    \item Funkcionální jazyky v prohlížeči
-      \medskip
     \item Časté dotazy v komunitě Haskellu
     \item Základy jsou k dispozici, mnoho ale chybí
       \medskip
-    \item PWA = technologie pro přístupnější webové aplikace
+    \item PWA = standard přístupnějších webových aplikací
   \end{itemize}
 \end{frame}
 
@@ -44,7 +42,7 @@ xzaryb00@stud.fit.vutbr.cz}
     \item Rešerže
       \begin{itemize}
         \item moderní webové frameworky
-        \item knihovny chybějící v Haskellu
+        \item co chybí v Haskellu
       \end{itemize}\medskip
     \item Knihovny
       \begin{itemize}
@@ -67,13 +65,13 @@ xzaryb00@stud.fit.vutbr.cz}
     \centering
     \begin{minipage}{.5\textwidth}
       \centering
-      \includegraphics[width=.9\linewidth]{../doc-final-thesis/obrazky-figures/placeholder.pdf}
+      \includegraphics[width=.9\linewidth]{img/screen-route.png}
       \captionof{figure}{Router}
     \end{minipage}%
     \begin{minipage}{.5\textwidth}
       \centering
-      \includegraphics[width=.9\linewidth]{../doc-final-thesis/obrazky-figures/placeholder.pdf}
-      \captionof{figure}{Storage}
+      \includegraphics[width=.9\linewidth]{img/screen-serviceworker.png}
+      \captionof{figure}{Service Worker}
     \end{minipage}
   \end{figure}
 
@@ -81,12 +79,12 @@ xzaryb00@stud.fit.vutbr.cz}
     \centering
     \begin{minipage}{.5\textwidth}
       \centering
-      \includegraphics[width=.9\linewidth]{../doc-final-thesis/obrazky-figures/placeholder.pdf}
-      \captionof{figure}{Service Worker}
+      \includegraphics[width=.9\linewidth]{img/screen-storage.png}
+      \captionof{figure}{Storage}
     \end{minipage}%
     \begin{minipage}{.5\textwidth}
       \centering
-      \includegraphics[width=.9\linewidth]{../doc-final-thesis/obrazky-figures/placeholder.pdf}
+      \includegraphics[width=.9\linewidth]{img/screen-webmanifest.png}
       \captionof{figure}{WebManifest}
     \end{minipage}
   \end{figure}
@@ -116,9 +114,18 @@ xzaryb00@stud.fit.vutbr.cz}
 
 \begin{frame}{Další kroky}
   \begin{itemize}
-    \item Publikace knihoven
-    \item Tvorba aplikací, které mě do této oblasti přivedly
-    \item ...práce dle odezvy komunity
+    \item Publikace knihoven...
+    \item ...a práce dle odezvy komunity
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Shrnutí}
+  \begin{itemize}
+    \item 4 publikovatelné knihovny
+    \item 3 demonstrační aplikace
+    \medskip
+    \item komponenty nezbytné pro SPA (router, storage)
+    \item komponenty nezbytné pro PWA (StorageWorker, WebManifest)
   \end{itemize}
 \end{frame}
 
@@ -133,10 +140,11 @@ xzaryb00@stud.fit.vutbr.cz}
       \begin{itemize}
         \item Hackage účet
         \item Licence
+        \item Rozsahy verzí závislostí
       \end{itemize}
     \item Očekávané od kvalitních balíčků
       \begin{itemize}
-        \item Úplná dokumentace
+        \item API dokumentace
         \item Ukázky použití
         \item Sada testů
         \item Continuous Integration

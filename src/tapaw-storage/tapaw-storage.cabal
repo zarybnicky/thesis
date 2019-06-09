@@ -17,7 +17,7 @@ library
                     -Wmonomorphism-restriction
                     -fwarn-tabs
 
-  exposed-modules:   Tapaw.Storage
+  exposed-modules:   Tapaw.Storage.KV
 
   build-depends:     base
                    , aeson
