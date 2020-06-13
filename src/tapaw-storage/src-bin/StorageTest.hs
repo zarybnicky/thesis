@@ -14,7 +14,7 @@ import GHC.Generics (Generic)
 import GHCJS.DOM (currentWindowUnchecked)
 import GHCJS.DOM.Window (getLocalStorage)
 import Reflex.Dom.Core
-import Tapaw.Storage (StoreKey, getKVAll, putKV, runKVStoreTStorage)
+import Tapaw.Storage.KV (StoreKey, getKVAll, putKV, runKVStoreTStorage)
 
 main :: IO ()
 main = run 3000 $ mainWidget $ do

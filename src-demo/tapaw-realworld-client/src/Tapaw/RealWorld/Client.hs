@@ -40,7 +40,7 @@ import Tapaw.RealWorld.Client.API
 import Tapaw.RealWorld.Client.Types
 import Tapaw.RealWorld.Client.Utils ((=!), form, formAttr, tshow, link)
 import Tapaw.Servant
-import Tapaw.ServiceWorker
+import Tapaw.ServiceWorker.Gen
 import Tapaw.ServiceWorker.Client
 import Tapaw.WebManifest (WebManifest, emptyManifest)
 
@@ -97,7 +97,7 @@ app = runServiceWorkerT "/sw.js" (ServiceWorkerOptions $ Just "/") (Just ()) $ d
     (dRoute, eSetUser) <- runEventWriterT . runAppT appState $ do
       eUser0 <- getCurrentUser (pure $ maybe (Left "no token") Right userToken) =<< getPostBuild
       tellEvent $ fmapMaybe reqSuccess eUser0 ^!. field @"user" . re _Just
-      topLevel . void . flip runRouter (const homePage) $ AppRoute
+      topLevel . void . flip runRouterM (const homePage) $ AppRoute
         { rHome = homePage
         , rLogin = loginPage
         , rRegister = registerPage
@@ -107,10 +107,9 @@ app = runServiceWorkerT "/sw.js" (ServiceWorkerOptions $ Just "/") (Just ()) $ d
         , rEditor = createEditArticlePage
         , rArticle = articlePage
         }
-      flip runRouter (const $ pure RouteHome) $ AppRoute
-        (pure RouteHome) (pure RouteLogin) (pure RouteRegister) (pure RouteSettings)
-        (pure . RouteEditor) (pure . RouteArticle) (pure . RouteProfile)
-        (pure . RouteProfileFavorites)
+      flip runRouter (const RouteHome) $ AppRoute
+        RouteHome RouteLogin RouteRegister RouteSettings
+        RouteEditor RouteArticle RouteProfile RouteProfileFavorites
 
   performEvent_ $ saveUserToken storage <$> fmapMaybe id (updated dUser) ^!. field @"token"
 

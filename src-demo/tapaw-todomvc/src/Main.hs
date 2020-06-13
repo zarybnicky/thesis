@@ -22,7 +22,7 @@ import GHCJS.DOM.HTMLElement (HTMLElement(..), focus)
 import GHCJS.DOM.Types (MonadJSM)
 import Language.Javascript.JSaddle.Warp (run)
 import Tapaw.Servant (MonadRouted, appLink', runRouter)
-import Tapaw.Storage (MonadKVStore(..))
+import Tapaw.Storage.KV (MonadKVStore(..))
 import Reflex.Dom.Core
 
 import Types (AppT(..), AppRoute(..), Task(..), TaskFilter(..), runAppT)
@@ -38,8 +38,8 @@ main = run 3000 $ mainWidgetWithCss $(embedFile "src/index.css") (runAppT app)
 app :: MonadWidget t m => AppT t m ()
 app = do
   dFilter <- runRouter
-    (AppRoute (pure FilterAll) (pure FilterAll) (pure FilterActive) (pure FilterCompleted))
-    (const $ pure FilterAll)
+    (AppRoute FilterAll FilterAll FilterActive FilterCompleted)
+    (const FilterAll)
   dTasks <- getKVAll @Task
 
   elClass "section" "todoapp" $ do

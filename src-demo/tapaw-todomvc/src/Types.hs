@@ -33,7 +33,7 @@ import GHCJS.DOM.Types (MonadJSM)
 import Servant.API ((:>))
 import Servant.API.Generic ((:-))
 import Tapaw.Servant (App, Loc(..), MonadRouted, RoutedT, runRoutedTHash, getInitialRouteHash)
-import Tapaw.Storage (MonadKVStore(..), KVStoreT, StoreKey, runKVStoreTStorage)
+import Tapaw.Storage.KV (MonadKVStore(..), KVStoreT, StoreKey, runKVStoreTStorage)
 import Reflex.Dom.Core
 
 

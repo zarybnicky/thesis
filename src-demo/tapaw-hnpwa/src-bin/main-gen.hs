@@ -3,7 +3,7 @@ module Main where
 import Data.Aeson (encode)
 import qualified Data.ByteString.Lazy.Char8 as BLC
 import Tapaw.HNPwa (serviceWorker, webManifest)
-import Tapaw.ServiceWorker (generateWorker)
+import Tapaw.ServiceWorker.Gen (generateWorker)
 
 main :: IO ()
 main = do

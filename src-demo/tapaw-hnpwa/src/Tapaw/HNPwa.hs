@@ -28,7 +28,7 @@ import Servant.API (toUrlPiece)
 import Tapaw.HNPwa.Types
 import Tapaw.HNPwa.Utils ((<!>), (=?), (=!), getUrlHost, pluralize, tshow)
 import Tapaw.Servant
-import Tapaw.ServiceWorker
+import Tapaw.ServiceWorker.Gen
 import Tapaw.ServiceWorker.Client
 import Tapaw.WebManifest (WebManifest, emptyManifest)
 
@@ -93,13 +93,13 @@ frontend = mainWidgetWithHead headWidget $
     ]
   let appState = AppState dNow dItemMap dUserMap dItemLists dPending
   dRoute <- flip runReaderT appState . runRoutedTHistory @_ @_ @AppRoute url0 . topLevel $ do
-    _ <- flip runRouter (const $ itemList FilterBest 1) $ AppRoute
+    _ <- flip runRouterM (const $ itemList FilterBest 1) $ AppRoute
       { rList = itemList
       , rItem = itemView
       , rUser = userView
       }
-    flip runRouter (const . pure $ RouteItemList FilterBest 1) $
-      AppRoute ((pure .) . RouteItemList) (pure . RouteItem) (pure . RouteUser)
+    flip runRouter (const $ RouteItemList FilterBest 1) $
+      AppRoute RouteItemList RouteItem RouteUser
 
   pure ()
   where
@@ -137,15 +137,14 @@ topLevel ::
      , Reflex t
      , DomBuilder t m
      , PostBuild t m
-     , MonadHold t m
      )
   => m a
   -> m a
 topLevel contents =
   elAttr "div" ("id" =: "app") $ do
     elClass "header" "header" $ elClass "nav" "inner" $ do
-      dFilter <- flip runRouter (const $ pure Nothing) $ AppRoute
-        (\f _ -> pure (Just f)) (const $ pure Nothing) (const $ pure Nothing)
+      dFilter <- flip runRouter (const Nothing) $ AppRoute
+        (\f _ -> Just f) (const Nothing) (const Nothing)
       let sel = demux dFilter
       appLink' rList (FilterBest, 1) (pure mempty) (pure True)
         (elAttr "img" ("class" =: "logo" <> "alt" =: "Logo" <> "src" =: "/logo-48.png") blank)

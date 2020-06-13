@@ -64,3 +64,4 @@ executable route-test
                    , reflex-dom-core
                    , text
                    , servant
+                   , uri-bytestring

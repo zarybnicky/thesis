@@ -21,12 +21,16 @@ import Servant.API
 import Servant.API.Generic
 import Tapaw.Servant
 import Tapaw.Servant.AsGenerator
+import URI.ByteString
 
 main :: IO ()
-main = runGen "out" (runRoutedTFrozen $ Loc [] []) appHead widgets $ do
+main = runGen "out" (runRoutedTFrozen (baseUri, Loc [] [])) appHead widgets $ do
   gen showUserRoute 2
   gen homeRoute
   gen (adminRoute .> editUserRoute) "text"
+  where
+    baseUri :: URIRef Absolute
+    baseUri = fromRight undefined $ parseURI laxURIParserOptions "http://www.example.org"
 
 appHead :: DomBuilder t m => m ()
 appHead = el "title" $ text "Static app"
