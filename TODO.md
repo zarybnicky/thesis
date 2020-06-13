@@ -1,0 +1,119 @@
+- Create an 'Elements of Web Frameworks' blogpost:
+  - Summarize my priorities in words (1-3)
+  - Outline my rationale for deciding on priorities (1-2)
+  - Add examples and screenshots where possible (3-5)
+  - Add links where possible (2-4)
+  - Proofread the article (1-3)
+- Create several prototypes/examples:
+  - Create a CI'd demo on a Hydra (2-8)
+  - Create a CD'd demo using Hail (2-8)
+  - Create a desktop app demo (1-7)
+  - Create a mobile app demo (3-8)
+  - Create an example scaffold/skeleton (1-3)
+  - Create a remote console demo (CloudHaskell) (2-5)
+  - Create a dynamic render-on-demand JAM-alike demo (2-4) - tonn.cz PoC
+  - Create an integration test demo (1-3)
+  - Create an end-to-end test demo (3-6)
+  - Create a criterion demo (1-3)
+  - Create a weigh demo (1-3)
+  - Create a performance evolution demo (5-10)
+- 7guis (low priority):
+  - CRUD: clean up design, add CSS
+  - CRUD: extract reusable parts from code
+  - CRUD: select next item after eDelete
+  - Circles: CSS
+  - Circles: extract components, refactor, simplify
+  - Cells: refactor and simplify code
+  - Cells: Add graphics (CSS + markup)
+  - Cells: add spreadsheet functions and ranges
+    https://markkarpov.com/megaparsec/parsing-simple-imperative-language.html
+- TodoMVC (low priority):
+  - Include license of original TodoMVC CSS
+  - Break up TodoMVC into modules
+  - Simplify navigation component (TodoMVC)
+  - Extract checkbox component
+  - Extract a standalone DB component
+  - Extract the domain model, create tests
+- HNPWA:
+  - Convert code to a CssWriter Monad, extend Static DomBuilder
+  - Switch to the 'unofficial HN API'
+  - Extract domain model, create tests
+  - Read/write to IndexedDb
+  - Simplify and speed up(!) dataflow
+- RealWorld:
+  - Build markdown view - mmark and foldl (MonadWidget m => FoldlM)
+  - Add pagination (everywhere)
+  - Wire up date views
+  - Add edit/delete buttons to own articles
+  - Add Yesod to Docker OR fix what's wrong with the Node code
+  - Run integration tests
+  - Create a Nix-based Docker container with Yesod code ?
+  - Compare with QFPL's RealWorld
+- Storage:
+  - DMap for multi-entity storage? With Vinyl/OpenUnion as the index?
+  - Persistent interpreter for the effect
+  - RPC interpreter
+  - Caching interpreter (local storage + rpc as backup)
+  - Look up Datascript for inspiration on queries
+  - Set up hydra on bravo.z (upgrade nixpkgs, check Jabber, set up DNS, add services.hydra)
+  - https://github.com/lukeed/pwa (lukeed/pwa)
+- Router:
+  - Multi-frontend router/prerender
+  - Asset gathering/prefetch/HTTP Push
+  - ToServant <-> list of accessors isomorphism
+  - SubApp combinator - that would make subroutes a lot easier, just search for the corresponding type on the typelevel...
+  - Embed router into an app beneath toplevel, manage nested routers in user defined fashion (admin site vs user section)
+  - HasGenerator = given a toplevel app, interpret routing effect
+  - Finish allLinks combinator (links in a record)
+  - Prerender CLI
+  - Tie up (pre)render and server, implement an App instance for ServerT using a context item
+- ServiceWorker:
+  - Routing - Regex/function => caching strategy (plugins, expiration, ...)
+  - <link> widgets (3rd party resources require CORS = crossorigin)
+  - Background sync
+  - Offline analytics
+  - Push notifications
+  - PushT transformer (or effect) for Servant
+  - Parametric AppSW combinator
+  - MatchStatic - support lists
+- Next research:
+  - Research validation groups, create a demo in src-snippets/
+  - Research freer, create a short demo in src-snippets/ using freer-simple
+  - Research vessel (HKD), create a demo in src-snippets/
+  - Research routing using obelisk-route, create a demo in src-snippets/
+  - Research code generation using Swagger, Hydra, gRPC - where possible, create demos in src-snippets/
+  - Research Hackage packaging best practices, make a checklist
+  - Create a short demo for using NetworkInfo API in src-snippets/
+  - Create a demo of Snack + Reflex-dom in src-snippets/
+  - Create a POC for a manually stepping reflex-host for unit tests
+  - Implement a CSS prerender demo with a "component" function in src-snippets/
+  - Research asset gathering and config injection in obelisk, create a POC in src-snippets
+  - Implement a POC for: Asset gathering -> prerender + routing (maybe even MIME-typed?) -> http2 push per route
+  - Research https://github.com/kosmikus/hkd-sop and try to use HKD in Routes/RPC (Map RouteResult (x :: Routes))
+  - Serializable operations - freer <~> aeson (kind-generic)
+  - Prepare a printable 'Quickref' for Reflex+Reflex-dom
+  - Set up hydra-build-results/ for thesis & presentation, point README there
+  - Set up hydra expressions
+  - Synchronized pomodoro app as the final task
+  - Create a debugConsole to the Storage effect (introspection)
+  - Create a demo of storage as RequesterT with pluggable backends (map, acid) - intent - DataScript-like functionality, supporting prerender - HasStorage X => ..., fetch @X query :: m (Dynamic t (Maybe X)), DMap of Dynamics as a core? (max. 3C now)
+  - obelisk-route-servant - TH interop from Servant types to GADT?
+  - Try to replace ./nix with nix-path or niv, report back on issues
+  - Statically compiled deploy
+  - Check out reflex's chromeDriver setup, replicate it
+  - Try out static HTML generation with Reflex (a la blog)
+  - Benchmarks evolution, commit impack
+  - Memory benchmark for GHCJS (weigh?)
+  - Continuous deployment using Hail
+  - Continuous integration using Hydra
+- Follow-up:
+  - Service worker generation using Workbox?
+  - JAM - prebuilt statically and rebuilt on-demand
+  - WebIDL generation - for WebManifest and ServiceWorker (jmacro/jshark + webbits + domconv-webkit)
+  - End-to-end tests, assertions for back- and frontend both
+  - Encode Servant types from an obelisk route type
+  - Publish and clean up packages, RFCs
+  - Recycle/repurpose thesis text for blog posts
+  - Hydra/Gitlab tests for libs, apps
+  - PR for ghc86 in reflex
+  - Publish to LinkedIn
